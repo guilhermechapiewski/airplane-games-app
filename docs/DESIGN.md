@@ -51,12 +51,15 @@ docs/                         Design notes
 | Block Puzzle | `blocks` | — |
 | Tile Match (Mahjong solitaire) | `tileMatch` | — |
 | Minesweeper | `minesweeper` | — |
-| Chess | `chess` | ✅ vs. human on same device |
-| Word Guess | `wordGuess` | ✅ friend picks the secret word |
+| Chess | `chess` | ✅ vs. computer (levels) or vs. human on same device |
+| Word Guess | `wordGuess` | ✅ computer or a friend picks the secret word |
 | Nonograms | `nonograms` | — |
 | Word Search | `wordSearch` | — |
 | Snake | `snake` | — |
-| Hangman | `hangman` | ✅ friend picks the secret word |
+| Hangman | `hangman` | ✅ computer or a friend picks the secret word |
+
+**Opponent rule:** any game with an opponent offers both *vs. computer* and
+*pass & play vs. a human* on the same device.
 
 ## Conventions
 
