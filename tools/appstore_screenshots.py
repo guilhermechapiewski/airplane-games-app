@@ -46,7 +46,7 @@ SHOTS = [
      ["-openGame", "wordGuess", "-demoState"], 4),
     ("06-nonograms", "Reveal 44 hidden pictures", ("#FF6F61", "#D6453A"),
      ["-openGame", "nonograms", "-nonogramsDemo", "3", "m-pine-tree"], 4),
-    ("07-minesweeper", "Minesweeper with a safe first tap", ("#8A9BB5", "#56657E"),
+    ("07-minesweeper", "Minesweeper with no guessing", ("#8A9BB5", "#56657E"),
      ["-openGame", "minesweeper", "-minesweeperDemo", "beginner", "playing"], 4),
     ("08-snake", "Snake, 2048, Block Puzzle and more", ("#7BD957", "#3FA33A"),
      ["-openGame", "snake", "-snakeDemo"], 4),

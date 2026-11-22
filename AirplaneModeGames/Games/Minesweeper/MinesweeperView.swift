@@ -167,6 +167,7 @@ struct MinesweeperView: View {
         sections: [
             .init(title: "Revealing", symbol: "hand.tap", points: [
                 "Tap a square to reveal it. Your first tap is always safe and opens an area.",
+                "Every board can be cleared by logic alone: you'll never be stuck with a 50/50 guess.",
                 "A number tells you how many mines touch that square, including diagonals.",
                 "Empty squares open up their neighbors automatically.",
             ]),

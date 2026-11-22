@@ -1,7 +1,8 @@
 /// Minesweeper: uncover every safe cell of a field without touching a mine.
 ///
 /// Mines are placed lazily on the first reveal so the first tap is always safe and
-/// opens an area (the tapped cell and its neighbours are kept mine-free).
+/// opens an area (the tapped cell and its neighbours are kept mine-free). The board is also
+/// "no-guess": from that first tap it can be cleared by logic alone (see `Solver`).
 public enum Minesweeper {
     public enum Level: String, CaseIterable, Codable, Sendable, Identifiable {
         case beginner, intermediate, expert
@@ -188,16 +189,26 @@ public enum Minesweeper {
 
         private func index(_ p: GridPoint) -> Int { p.row * cols + p.col }
 
-        /// Places mines uniformly at random, keeping `safe` and (when room allows) its neighbours clear.
+        /// Tries this many random layouts for one that needs no guessing. About one expert layout
+        /// in ten qualifies, so running out (under 1e-18 for expert) would need astronomical luck;
+        /// the last layout is kept then.
+        static let maxLayoutAttempts = 500
+
+        /// Places mines at random, keeping `safe` and (when room allows) its neighbours clear,
+        /// and redraws until the board can be cleared from `safe` without guessing.
         mutating func generate(safeAround safe: GridPoint) {
             var excluded = Set([safe] + neighbors(of: safe))
             if rows * cols - excluded.count < mineCount { excluded = [safe] }
             var candidates = allPoints.filter { !excluded.contains($0) }
-            candidates.shuffle(using: &rng)
-            placeMines(at: Set(candidates.prefix(mineCount)))
+            for _ in 0..<Self.maxLayoutAttempts {
+                candidates.shuffle(using: &rng)
+                placeMines(at: Set(candidates.prefix(mineCount)))
+                if Solver.solvesWithoutGuessing(self, from: safe) { return }
+            }
         }
 
         private mutating func placeMines(at mines: Set<GridPoint>) {
+            for i in cells.indices { cells[i].isMine = false }
             for p in mines { cells[index(p)].isMine = true }
             for p in allPoints {
                 cells[index(p)].adjacent = neighbors(of: p).filter { mines.contains($0) }.count

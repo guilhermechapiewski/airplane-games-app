@@ -19,7 +19,7 @@ no accounts, no in-app purchases and no tracking.
 | **Solitaire** | Classic Klondike, draw 1 or draw 3, with auto-complete |
 | **Block Puzzle** | Fit blocks on the board and clear rows and columns |
 | **Tile Match** | Match pairs of free tiles across six original layouts |
-| **Minesweeper** | Safe first tap, flag mode and pinch to zoom |
+| **Minesweeper** | Every board solvable by logic, never a 50/50 guess |
 | **Chess** | Play the computer at five levels, or a friend on the same device |
 | **Word Guess** | Find the five-letter word in six tries |
 | **Nonograms** | 44 original picture puzzles, all solvable by logic |

@@ -12,7 +12,7 @@ No ads. No accounts. No tracking. No internet connection — ever.
 | **Solitaire** | Klondike draw 1 / draw 3, solver-checked winnable deals, auto-complete |
 | **Block Puzzle** | Drag pieces onto an 8×8 board, row & column clears, combos and streaks |
 | **Tile Match** | Mahjong-style tile matching, 6 original layouts, always-solvable deals |
-| **Minesweeper** | Safe first tap, chording, flag mode, pinch to zoom |
+| **Minesweeper** | No-guess boards (always solvable by logic), safe first tap, chording, flag mode, pinch to zoom |
 | **Chess** | vs. computer (5 levels) or pass & play, full rules, move list |
 | **Word Guess** | 5-letter word in 6 tries, hard mode, high-contrast colors, pass & play |
 | **Nonograms** | 44 original picture puzzles, all solvable by logic alone |
