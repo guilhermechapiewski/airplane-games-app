@@ -105,25 +105,31 @@ public enum Hangman {
 
     /// Relative difficulty of guessing an entry: short entries with few distinct, rare letters are hardest.
     public static func difficultyScore(_ entry: String) -> Double {
-        let unique = Set(entry.filter { alphabet.contains($0) })
+        // Integer arithmetic (tenths) keeps the score independent of Set iteration order,
+        // so sorting by it is a strict, deterministic ordering.
+        let letters = entry.filter { alphabet.contains($0) }
+        let unique = Set(letters)
         let common = Set("etaoinshrdlu")
         let rare = Set("jqxzkvwyb")
-        var score = 12.0 - Double(unique.count)
-        for c in unique {
-            if rare.contains(c) { score += 1.6 } else if !common.contains(c) { score += 0.6 }
-        }
-        // Repeated letters give away more per guess.
-        let total = entry.filter { alphabet.contains($0) }.count
-        score -= Double(total - unique.count) * 0.4
-        return score
+        let rareCount = unique.filter { rare.contains($0) }.count
+        let uncommonCount = unique.filter { !rare.contains($0) && !common.contains($0) }.count
+        let repeats = letters.count - unique.count
+        var tenths: Int = 120
+        tenths -= 10 * unique.count
+        tenths += 16 * rareCount
+        tenths += 6 * uncommonCount
+        tenths -= 4 * repeats
+        return Double(tenths) / 10
     }
 
     /// Entries for a difficulty: the easiest, middle or hardest third of the pool (by `difficultyScore`).
     public static func pool(for difficulty: Difficulty, in entries: [String]) -> [String] {
-        let sorted = entries.sorted {
-            let a = difficultyScore($0), b = difficultyScore($1)
-            return a == b ? $0 < $1 : a < b
+        let scored: [(entry: String, score: Double)] = entries.map { ($0, difficultyScore($0)) }
+        let ordered = scored.sorted { (a: (entry: String, score: Double), b: (entry: String, score: Double)) -> Bool in
+            if a.score != b.score { return a.score < b.score }
+            return a.entry < b.entry
         }
+        let sorted: [String] = ordered.map { $0.entry }
         guard sorted.count >= 3 else { return sorted }
         let third = sorted.count / 3
         switch difficulty {

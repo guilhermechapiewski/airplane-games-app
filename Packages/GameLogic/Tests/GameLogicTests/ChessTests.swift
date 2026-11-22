@@ -374,14 +374,25 @@ struct ChessEngineTests {
     }
 
     @Test func cancellationStopsSearchQuickly() async {
-        let start = Date()
-        let task = Task.detached {
-            C.Engine.search(C.Position.start, maxDepth: 30, timeLimit: 30)
+        // The task cancels itself before searching, so the check is independent of
+        // thread-pool scheduling under parallel test load.
+        let result = await Task.detached { () -> C.Engine.Result in
+            withUnsafeCurrentTask { $0?.cancel() }
+            return C.Engine.search(C.Position.start, maxDepth: 30, timeLimit: 30)
+        }.value
+        #expect(result.nodes <= 2048, "search visited \(result.nodes) nodes after cancellation")
+    }
+
+    @Test func shouldStopIsPolledPromptly() {
+        final class Counter: @unchecked Sendable { var polls = 0 }
+        let counter = Counter()
+        let result = C.Engine.search(C.Position.start, maxDepth: 30, timeLimit: 30) {
+            counter.polls += 1
+            return counter.polls > 5
         }
-        try? await Task.sleep(for: .milliseconds(150))
-        task.cancel()
-        _ = await task.value
-        #expect(Date().timeIntervalSince(start) < 2)
+        // Polled every 1024 nodes: stopping after 5 polls bounds the work.
+        #expect(result.nodes <= 7 * 1024)
+        #expect(result.move != nil)
     }
 
     @Test func noMoveWhenGameIsOver() {
