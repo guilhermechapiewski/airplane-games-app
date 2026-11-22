@@ -50,17 +50,20 @@ struct SudokuView: View {
     /// Phones and iPad portrait: header, board, tools, a single-row number pad.
     private func tallLayout(_ size: CGSize) -> some View {
         let compact = size.height < 640
-        // Give the number pad whatever height the (width-limited) board leaves over.
-        let board = min(size.width, 680) - 32
-        let leftover = size.height - board - 200
-        let keyHeight: CGFloat = min(78, max(46, leftover))
+        // Header, toolbar, spacing and padding take roughly this much height.
+        let reserved: CGFloat = compact ? 180 : 214
+        // The board is as wide as it can be (capped on iPad); the number pad gets
+        // whatever height is left over, then the board shrinks if even that is too tall.
+        let widest = min(size.width - 32, 860)
+        let keyHeight = compact ? 46 : min(78, max(46, size.height - widest - reserved))
+        let column = max(240, min(widest, size.height - reserved - keyHeight))
         return VStack(spacing: compact ? 10 : 16) {
             header
             boardArea
             SudokuToolbar(model: model)
-            SudokuNumberPad(model: model, columns: 9, keyHeight: compact ? 46 : keyHeight)
+            SudokuNumberPad(model: model, columns: 9, keyHeight: keyHeight)
         }
-        .frame(maxWidth: 680)
+        .frame(maxWidth: column)
         .padding(.horizontal, 16)
         .padding(.vertical, compact ? 8 : 14)
         .frame(maxWidth: .infinity)
@@ -69,22 +72,21 @@ struct SudokuView: View {
     /// Landscape iPad (and large landscape phones): board on the left, controls beside it.
     private func wideLayout(_ size: CGSize) -> some View {
         let panel = min(340, size.width * 0.34)
-        let keyHeight = min(84, max(40, (size.height - 230) / 3))
+        let side = floor(max(200, min(size.height - 32, size.width - panel - 76)))
+        // Header, toolbar and spacing take ~190pt; the 3×3 pad gets the rest.
+        let keyHeight = min(84, max(40, (side - 190) / 3))
         return HStack(spacing: 28) {
             boardArea
+                .frame(width: side, height: side)
             VStack(spacing: 18) {
                 header
                 Spacer(minLength: 0)
                 SudokuToolbar(model: model)
                 SudokuNumberPad(model: model, columns: 3, keyHeight: keyHeight)
-                Spacer(minLength: 0)
             }
-            .frame(width: panel)
+            .frame(width: panel, height: side)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
-        .frame(maxWidth: 1180)
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var boardArea: some View {
@@ -120,6 +122,7 @@ struct SudokuView: View {
             .accessibilityLabel(model.isPaused ? "Resume" : "Pause")
             .accessibilityIdentifier("sudoku.pause")
         }
+        .opacity(model.hintBanner == nil ? 1 : 0)
         .overlay { hintBanner }
     }
 
