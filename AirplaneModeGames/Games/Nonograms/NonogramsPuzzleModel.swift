@@ -239,6 +239,9 @@ final class NonogramsPuzzleModel {
         isSolved = true
         justSolved = true
         focus = nil
+        hinted = nil
+        flagged = []
+        checkMessage = nil
         // Clean up stray crosses so the picture reads clearly.
         board = .solved(puzzle)
         let previousBest = progress.entry(puzzle).bestTime

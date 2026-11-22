@@ -67,7 +67,7 @@ struct NonogramBoard: View {
             ForEach(0..<model.puzzle.height, id: \.self) { r in
                 let clue = model.puzzle.rowClues[r]
                 let done = !model.isSolved && model.isRowDone(r)
-                HStack(spacing: layout.cell * 0.16) {
+                HStack(spacing: layout.cell * 0.3) {
                     ForEach(Array(displayClue(clue).enumerated()), id: \.offset) { _, n in
                         clueText(n, layout: layout)
                     }
@@ -198,7 +198,7 @@ struct NonogramBoard: View {
         init(puzzle: Nonograms.Puzzle, available: CGSize) {
             func units(_ clue: [Int]) -> CGFloat {
                 let numbers = clue.isEmpty ? [0] : clue
-                return numbers.reduce(CGFloat(0.36)) { $0 + ($1 >= 10 ? 0.78 : 0.5) + 0.16 }
+                return numbers.reduce(CGFloat(0.36)) { $0 + ($1 >= 10 ? 0.78 : 0.5) + 0.3 }
             }
             let leftUnits = max(1.2, puzzle.rowClues.map(units).max() ?? 1)
             let topUnits = max(1.2, CGFloat(puzzle.columnClues.map { max(1, $0.count) }.max() ?? 1) * 0.66 + 0.3)
@@ -237,9 +237,10 @@ private struct NonoCellView: View, Equatable {
             Rectangle().fill(focused && !solved ? NonoPalette.focus : .clear)
 
             if mark == .filled {
-                RoundedRectangle(cornerRadius: solved ? size * 0.08 : size * 0.16, style: .continuous)
+                // Solved cells overlap slightly so the picture reads as one seamless shape.
+                RoundedRectangle(cornerRadius: solved ? 0 : size * 0.16, style: .continuous)
                     .fill(solved ? color : NonoPalette.ink)
-                    .padding(solved ? 0 : max(1, size * 0.07))
+                    .padding(solved ? -0.5 : max(1, size * 0.07))
                     .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.7).delay(revealDelay), value: solved)
                     .transition(.scale(scale: 0.4).combined(with: .opacity))
             } else if mark == .crossed && !solved {

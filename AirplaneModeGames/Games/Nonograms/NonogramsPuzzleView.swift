@@ -13,6 +13,7 @@ struct NonogramsPuzzleView: View {
     var body: some View {
         VStack(spacing: 12) {
             header
+                .frame(maxWidth: 720)
             NonogramBoard(model: model)
                 .frame(maxWidth: 720, maxHeight: .infinity)
                 .overlay(alignment: .bottom) { toast }
@@ -63,8 +64,10 @@ struct NonogramsPuzzleView: View {
             .accessibilityElement(children: .combine)
             .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.6), value: model.isSolved)
 
-            TimelineView(.periodic(from: .now, by: 1)) { context in
-                StatPill(title: "Time", value: (model.isSolved && model.justSolved ? model.finalTime : model.clock.elapsed(at: context.date)).clockString)
+            if !model.isSolved || model.justSolved {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    StatPill(title: "Time", value: (model.isSolved ? model.finalTime : model.clock.elapsed(at: context.date)).clockString)
+                }
             }
             if let best = model.bestTime {
                 StatPill(title: "Best", value: best.clockString)

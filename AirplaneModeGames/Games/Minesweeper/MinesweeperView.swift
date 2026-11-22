@@ -13,6 +13,7 @@ struct MinesweeperView: View {
     var body: some View {
         VStack(spacing: 12) {
             header
+                .frame(maxWidth: boardMaxWidth)
             MinesweeperBoard(model: model, zoomRequest: $zoomRequest) { zoomable, zoomed in
                 canZoom = zoomable
                 isZoomed = zoomed
