@@ -66,8 +66,13 @@ final class StatsStore {
         store.save(all, key: Self.key)
     }
 
+    /// Game-specific statistics stored outside `StatsStore` that "Reset All Statistics" also clears.
+    /// (Puzzle progress such as solved Nonograms is gameplay state, not statistics, and is kept.)
+    static let auxiliaryKeys = ["wordGuess.distribution", "chess.records"]
+
     func reset() {
         all = [:]
         store.remove(key: Self.key)
+        Self.auxiliaryKeys.forEach { store.remove(key: $0) }
     }
 }
