@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class AppSmokeTests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
