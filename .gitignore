@@ -15,3 +15,6 @@ Package.resolved
 *.ipa
 *.dSYM.zip
 *.dSYM
+
+# Claude Code local worktrees
+.claude/
