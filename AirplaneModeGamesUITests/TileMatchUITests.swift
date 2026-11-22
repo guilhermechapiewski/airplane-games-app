@@ -19,6 +19,13 @@ final class TileMatchUITests: XCTestCase {
         return app.buttons.matching(NSPredicate(format: format))
     }
 
+    /// State changes after a tap land asynchronously; poll instead of reading `isEnabled` once.
+    private func waitUntil(_ element: XCUIElement, enabled: Bool, _ message: String, timeout: TimeInterval = 5) {
+        let predicate = NSPredicate(format: "enabled == %@", NSNumber(value: enabled))
+        let result = XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: element)], timeout: timeout)
+        XCTAssertEqual(result, .completed, message)
+    }
+
     private func attachScreenshot(_ name: String) {
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         shot.name = name
@@ -45,21 +52,22 @@ final class TileMatchUITests: XCTestCase {
         XCTAssertEqual(hinted.count, 2, "hint highlights a pair")
         attachScreenshot("hint")
 
-        let first = hinted.element(boundBy: 0), second = hinted.element(boundBy: 1)
+        // Pin the pair by identifier: selecting a tile raises it, which reorders the live `hinted` query.
+        let ids = (0..<2).map { hinted.element(boundBy: $0).identifier }
+        let first = app.buttons[ids[0]], second = app.buttons[ids[1]]
         first.tap()
         XCTAssertEqual(tiles(app, value: "selected").count, 1)
         attachScreenshot("selected")
         second.tap()
 
-        XCTAssertTrue(undo.waitForExistence(timeout: 2))
-        XCTAssertTrue(undo.isEnabled, "a match can be undone")
+        waitUntil(undo, enabled: true, "a match can be undone")
         XCTAssertNotEqual(before, counter.label, "two tiles were removed")
 
         undo.tap()
-        XCTAssertFalse(undo.isEnabled)
+        waitUntil(undo, enabled: false, "undo is spent")
 
         app.buttons["Shuffle"].tap()
-        XCTAssertTrue(undo.isEnabled, "a shuffle can be undone")
+        waitUntil(undo, enabled: true, "a shuffle can be undone")
         attachScreenshot("shuffled")
     }
 
