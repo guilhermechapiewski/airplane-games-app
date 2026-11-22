@@ -6,8 +6,10 @@ struct HangmanView: View {
     @State private var showCategories = false
     @FocusState private var focused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     private let accent = GameID.hangman.accent
+    private var isRegular: Bool { sizeClass == .regular }
 
     var body: some View {
         VStack(spacing: 12) {
@@ -24,7 +26,7 @@ struct HangmanView: View {
                 header
                 BalloonScene(balloons: model.state.livesLeft, won: model.state.status == .won, reduceMotion: reduceMotion)
                     .aspectRatio(1.45, contentMode: .fit)
-                    .frame(maxWidth: 560)
+                    .frame(maxWidth: isRegular ? 780 : 560)
                     .layoutPriority(-1)
                 if let hint = model.state.hint {
                     Label(hint, systemImage: "lightbulb.fill")
@@ -35,8 +37,8 @@ struct HangmanView: View {
                         .accessibilityLabel("Hint: \(hint)")
                 }
                 Spacer(minLength: 0)
-                PhraseView(state: model.state, accent: accent, reduceMotion: reduceMotion)
-                    .frame(maxWidth: 620)
+                PhraseView(state: model.state, accent: accent, maxTile: isRegular ? 56 : 40, reduceMotion: reduceMotion)
+                    .frame(maxWidth: isRegular ? 900 : 620)
                 Spacer(minLength: 0)
                 bottomArea
             }
@@ -105,7 +107,7 @@ struct HangmanView: View {
             Spacer(minLength: 4)
             LivesView(lives: model.state.livesLeft)
         }
-        .frame(maxWidth: 560)
+        .frame(maxWidth: isRegular ? 780 : 560)
     }
 
     private func chip(_ title: String, systemImage: String, showsChevron: Bool = false) -> some View {
@@ -134,7 +136,7 @@ struct HangmanView: View {
             .frame(height: 150)
         } else {
             HangmanKeyboard(model: model, accent: accent)
-                .frame(maxWidth: 560)
+                .frame(maxWidth: isRegular ? 680 : 560)
         }
     }
 
@@ -235,6 +237,7 @@ private struct LivesView: View {
 private struct PhraseView: View {
     let state: Hangman.State
     let accent: Color
+    let maxTile: CGFloat
     let reduceMotion: Bool
 
     var body: some View {
@@ -242,7 +245,7 @@ private struct PhraseView: View {
         let longest = max(words.map(\.count).max() ?? 1, 6)
         GeometryReader { geo in
             let gap: CGFloat = 5
-            let tile = min(40, (geo.size.width - gap * CGFloat(longest - 1)) / CGFloat(longest))
+            let tile = min(maxTile, (geo.size.width - gap * CGFloat(longest - 1)) / CGFloat(longest))
             WrapLayout(spacing: tile * 0.7, lineSpacing: tile * 0.35) {
                 ForEach(Array(words.enumerated()), id: \.offset) { _, word in
                     HStack(spacing: gap) {
@@ -256,7 +259,7 @@ private struct PhraseView: View {
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
-        .frame(minHeight: 60, idealHeight: 120, maxHeight: 150)
+        .frame(minHeight: 60, idealHeight: 120, maxHeight: maxTile * 4)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Answer")
         .accessibilityValue(spoken)

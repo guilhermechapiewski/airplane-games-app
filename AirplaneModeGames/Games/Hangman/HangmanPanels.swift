@@ -33,6 +33,8 @@ struct HangmanSecretCard: View {
                 }
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
+                // Not a password: keep AutoFill and "Save Password" prompts away.
+                .textContentType(.oneTimeCode)
                 .focused($focus, equals: 0)
                 .submitLabel(.next)
                 .onSubmit { focus = 1 }

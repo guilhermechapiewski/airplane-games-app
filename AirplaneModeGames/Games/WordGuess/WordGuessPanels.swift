@@ -76,6 +76,8 @@ struct WordGuessSecretCard: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             SecureField("Secret 5-letter word", text: $word)
+                // Not a password: keep AutoFill and "Save Password" prompts away.
+                .textContentType(.oneTimeCode)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .keyboardType(.asciiCapable)

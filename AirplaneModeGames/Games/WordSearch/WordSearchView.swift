@@ -18,11 +18,11 @@ struct WordSearchView: View {
             header
             if let state = model.state {
                 WordSearchGrid(model: model, state: state, reduceMotion: reduceMotion)
-                    .frame(maxWidth: 620)
+                    .frame(maxWidth: sizeClass == .regular ? 780 : 620)
                     .opacity(model.isGenerating ? 0.35 : 1)
                     .overlay { if model.isGenerating { ProgressView() } }
                 WordListView(model: model, state: state, reduceMotion: reduceMotion)
-                    .frame(maxWidth: 620)
+                    .frame(maxWidth: sizeClass == .regular ? 780 : 620)
                 Spacer(minLength: 0)
                 controls
             } else {
@@ -85,7 +85,7 @@ struct WordSearchView: View {
                 StatPill(title: "Time", value: model.clock.elapsed().clockString)
             }
         }
-        .frame(maxWidth: 620)
+        .frame(maxWidth: sizeClass == .regular ? 780 : 620)
     }
 
     private var controls: some View {

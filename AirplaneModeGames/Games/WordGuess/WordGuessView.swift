@@ -7,7 +7,9 @@ struct WordGuessView: View {
     @AppStorage(WordGuessModel.highContrastKey) private var highContrast = false
     @FocusState private var boardFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
+    private var isRegular: Bool { sizeClass == .regular }
     private var palette: WordGuessPalette { WordGuessPalette(highContrast: highContrast) }
     private let accent = GameID.wordGuess.accent
 
@@ -81,7 +83,7 @@ struct WordGuessView: View {
                 ScoreChip(match: model.match, accent: accent)
             }
         }
-        .frame(maxWidth: 520)
+        .frame(maxWidth: isRegular ? 700 : 520)
         .accessibilityElement(children: .combine)
     }
 
@@ -92,7 +94,7 @@ struct WordGuessView: View {
             let gap: CGFloat = 6
             let byWidth = (geo.size.width - gap * 4) / 5
             let byHeight = (geo.size.height - gap * 5) / 6
-            let tile = max(20, min(byWidth, byHeight, 68))
+            let tile = max(20, min(byWidth, byHeight, isRegular ? 96 : 68))
             VStack(spacing: gap) {
                 ForEach(0..<WordGuess.maxGuesses, id: \.self) { row in
                     rowView(row, tile: tile, gap: gap)
@@ -170,8 +172,9 @@ struct WordGuessView: View {
             .frame(height: 170)
         } else {
             WordGuessKeyboard(keyboard: model.keyboard, palette: palette, enabled: model.canType,
+                              keyHeight: isRegular ? 66 : 58,
                               onLetter: model.type, onEnter: model.submit, onDelete: model.deleteLetter)
-                .frame(maxWidth: 560)
+                .frame(maxWidth: isRegular ? 700 : 560)
         }
     }
 
@@ -445,6 +448,7 @@ private struct WordGuessKeyboard: View {
     let keyboard: [Character: WordGuess.LetterState]
     let palette: WordGuessPalette
     let enabled: Bool
+    let keyHeight: CGFloat
     let onLetter: (Character) -> Void
     let onEnter: () -> Void
     let onDelete: () -> Void
@@ -455,7 +459,7 @@ private struct WordGuessKeyboard: View {
         GeometryReader { geo in
             let gap: CGFloat = 6
             let unit = (geo.size.width - gap * 9) / 10
-            let height = min(58, max(42, geo.size.height / 3 - gap))
+            let height = min(keyHeight, max(42, geo.size.height / 3 - gap))
             VStack(spacing: gap) {
                 ForEach(0..<3, id: \.self) { r in
                     HStack(spacing: gap) {
@@ -475,7 +479,7 @@ private struct WordGuessKeyboard: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
-        .frame(height: 3 * 58 + 2 * 6)
+        .frame(height: 3 * keyHeight + 2 * 6)
     }
 
     private func letterKey(_ ch: Character, width: CGFloat, height: CGFloat) -> some View {
