@@ -63,11 +63,24 @@ struct GameChrome: ViewModifier {
                 StatsSheet(game: game, variants: statsVariants)
                     .presentationDetents([.medium, .large])
             }
-            .onAppear { onActiveChange?(scenePhase == .active) }
+            .onAppear {
+                warmUpFeedback()
+                onActiveChange?(scenePhase == .active)
+            }
             .onDisappear { onActiveChange?(false) }
-            .onChange(of: scenePhase) { _, phase in onActiveChange?(phase == .active) }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { warmUpFeedback() }
+                onActiveChange?(phase == .active)
+            }
             .onChange(of: showRules) { _, shown in onActiveChange?(!shown && !showStats && scenePhase == .active) }
             .onChange(of: showStats) { _, shown in onActiveChange?(!shown && !showRules && scenePhase == .active) }
+    }
+
+    /// The audio engine stops in the background; restart it (and wake the haptics) before the
+    /// player's first touch rather than during it.
+    private func warmUpFeedback() {
+        SoundEngine.shared.warmUp()
+        Haptics.prepare()
     }
 }
 

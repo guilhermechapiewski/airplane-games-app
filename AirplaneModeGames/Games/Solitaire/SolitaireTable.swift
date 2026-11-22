@@ -87,7 +87,23 @@ private struct Placement {
 private struct DragState {
     var lead: Solitaire.Card
     var ids: [Int]
+}
+
+/// The finger's offset during a drag. Kept out of `DragState` so per-frame updates only
+/// re-render the dragged cards (via `DragFollow`), not the whole 52-card table.
+@Observable @MainActor
+private final class DragOffset {
     var translation: CGSize = .zero
+}
+
+/// Moves a dragged card with the finger; reads `DragOffset` so only these views update per frame.
+private struct DragFollow: ViewModifier {
+    let offset: DragOffset
+    let active: Bool
+
+    func body(content: Content) -> some View {
+        content.offset(active ? offset.translation : .zero)
+    }
 }
 
 struct SolitaireTable: View {
@@ -95,6 +111,7 @@ struct SolitaireTable: View {
     let showsCascade: Bool
 
     @State private var drag: DragState?
+    @State private var dragOffset = DragOffset()
     @Environment(\.reduceMotion) private var reduceMotion
     private static let space = "solitaireTable"
 
@@ -180,7 +197,6 @@ struct SolitaireTable: View {
     private func cardView(_ card: Solitaire.Card, _ p: Placement, _ layout: TableLayout) -> some View {
         let dragIndex = drag?.ids.firstIndex(of: card.id)
         let isDragged = dragIndex != nil
-        let offset = isDragged ? drag?.translation ?? .zero : .zero
         let z = isDragged ? 2000 + Double(dragIndex ?? 0) : model.raisedIDs.contains(card.id) ? 1000 + p.z : p.z
         let highlighted = hintSources.contains(card.id)
 
@@ -197,8 +213,11 @@ struct SolitaireTable: View {
             .shadow(color: .black.opacity(isDragged ? 0.35 : 0.22), radius: isDragged ? 10 : 0.8,
                     y: isDragged ? 8 : 0.6)
             .scaleEffect(isDragged && !reduceMotion ? 1.05 : 1)
+            // Animate only the lift (scale and shadow); the position must track the finger exactly.
+            .animation(.easeOut(duration: 0.12), value: isDragged)
             .modifier(ShakeEffect(trigger: model.shakeCount(card.id), enabled: !reduceMotion))
-            .position(x: p.center.x + offset.width, y: p.center.y + offset.height)
+            .position(p.center)
+            .modifier(DragFollow(offset: dragOffset, active: isDragged))
             .zIndex(z)
             .allowsHitTesting(p.pile != .stock && model.isInteractive)
             .onTapGesture {
@@ -224,25 +243,29 @@ struct SolitaireTable: View {
             .onChanged { value in
                 if drag == nil {
                     guard let lifted = model.liftedCards(for: card) else { return }
-                    withAnimation(.easeOut(duration: 0.12)) {
-                        drag = DragState(lead: lifted[0], ids: lifted.map(\.id))
-                    }
+                    dragOffset.translation = value.translation
+                    drag = DragState(lead: lifted[0], ids: lifted.map(\.id))
                     Haptics.select()
                 }
-                guard drag?.ids.first == card.id || drag?.ids.contains(card.id) == true else { return }
-                drag?.translation = value.translation
+                guard drag?.ids.contains(card.id) == true else { return }
+                dragOffset.translation = value.translation
             }
             .onEnded { _ in finishDrag(layout) }
     }
 
     private func finishDrag(_ layout: TableLayout) {
         guard let current = drag else { return }
+        let translation = dragOffset.translation
         let s = model.state
-        guard let (pile, index) = s.location(of: current.lead) else { drag = nil; return }
+        guard let (pile, index) = s.location(of: current.lead) else {
+            drag = nil
+            dragOffset.translation = .zero
+            return
+        }
         let count = current.ids.count
         let start = placementCenter(pile: pile, index: index, layout: layout)
-        let dropped = layout.frame(center: CGPoint(x: start.x + current.translation.width,
-                                                   y: start.y + current.translation.height))
+        let dropped = layout.frame(center: CGPoint(x: start.x + translation.width,
+                                                   y: start.y + translation.height))
         var best: (pile: Solitaire.Pile, area: CGFloat)?
         var zones: [(Solitaire.Pile, CGRect)] = (0..<7).map { (.tableau($0), layout.dropZone(column: $0, in: s.tableau[$0])) }
         if count == 1 { zones += (0..<4).map { (.foundation($0), layout.dropZone(foundation: $0)) } }
@@ -253,14 +276,18 @@ struct SolitaireTable: View {
             guard area > (best?.area ?? 0), s.isLegal(Solitaire.Move(from: pile, to: target, count: count)) else { continue }
             best = (target, area)
         }
-        let moved = hypot(current.translation.width, current.translation.height)
+        let moved = hypot(translation.width, translation.height)
         if let best {
             withAnimation(SolitaireModel.cardAnimation) {
                 drag = nil
+                dragOffset.translation = .zero
                 model.drop(current.lead, on: best.pile)
             }
         } else {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) { drag = nil }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
+                drag = nil
+                dragOffset.translation = .zero
+            }
             if moved > layout.cardWidth * 0.4 {
                 model.reject(s.cards(in: pile).suffix(count))
             }

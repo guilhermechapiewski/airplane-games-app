@@ -60,15 +60,26 @@ final class SoundEngine {
         }
         let player = players[nextPlayer]
         nextPlayer = (nextPlayer + 1) % players.count
-        player.stop()
-        player.scheduleBuffer(buffer, at: nil, options: [])
-        player.play()
+        // `.interrupts` replaces whatever this node was playing without a synchronous `stop()`,
+        // which blocks the main thread on the audio render thread.
+        player.scheduleBuffer(buffer, at: nil, options: .interrupts)
+        if !player.isPlaying { player.play() }
+    }
+
+    /// Sets up the audio engine ahead of the first sound so the first tap doesn't pay for it.
+    func warmUp() {
+        guard AppSettings.shared.soundEnabled else { return }
+        configureIfNeeded()
+        if isConfigured, !engine.isRunning { try? engine.start() }
     }
 
     private func configureIfNeeded() {
         guard !isConfigured else { return }
+        let session = AVAudioSession.sharedInstance()
         // `.ambient` mixes with other audio and respects the silent switch.
-        try? AVAudioSession.sharedInstance().setCategory(.ambient, options: [.mixWithOthers])
+        try? session.setCategory(.ambient, options: [.mixWithOthers])
+        // A ~5 ms hardware buffer instead of the default ~20 ms keeps clicks in sync with touches.
+        try? session.setPreferredIOBufferDuration(0.005)
         for _ in 0..<6 {
             let player = AVAudioPlayerNode()
             engine.attach(player)

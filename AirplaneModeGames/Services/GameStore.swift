@@ -4,8 +4,13 @@ import Foundation
 ///
 /// Writes are atomic and protected with `completeUntilFirstUserAuthentication`.
 /// Each game owns a key (its `GameID.rawValue` by convention).
+///
+/// Games save after nearly every move, so encoding and writing happen on a serial background
+/// queue to keep touches responsive. Reads, existence checks and removals go through the same
+/// queue, so they always observe earlier saves.
 struct GameStore: Sendable {
     let directory: URL
+    private static let queue = DispatchQueue(label: "GameStore", qos: .utility)
 
     static let shared = GameStore()
 
@@ -25,31 +30,40 @@ struct GameStore: Sendable {
         return directory.appendingPathComponent(safe).appendingPathExtension("json")
     }
 
-    func save<T: Encodable>(_ value: T, key: String) {
-        do {
-            let data = try JSONEncoder().encode(value)
-            try data.write(to: url(for: key), options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
-        } catch {
-            assertionFailure("GameStore save failed for \(key): \(error)")
+    func save<T: Encodable & Sendable>(_ value: T, key: String) {
+        let url = url(for: key)
+        Self.queue.async {
+            do {
+                let data = try JSONEncoder().encode(value)
+                try data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+            } catch {
+                assertionFailure("GameStore save failed for \(key): \(error)")
+            }
         }
     }
 
     func load<T: Decodable>(_ type: T.Type, key: String) -> T? {
-        guard let data = try? Data(contentsOf: url(for: key)) else { return nil }
+        let url = url(for: key)
+        guard let data = Self.queue.sync(execute: { try? Data(contentsOf: url) }) else { return nil }
         // A save from an older, incompatible version is discarded rather than crashing.
         return try? JSONDecoder().decode(type, from: data)
     }
 
     func exists(key: String) -> Bool {
-        FileManager.default.fileExists(atPath: url(for: key).path)
+        let path = url(for: key).path
+        return Self.queue.sync { FileManager.default.fileExists(atPath: path) }
     }
 
     func remove(key: String) {
-        try? FileManager.default.removeItem(at: url(for: key))
+        let url = url(for: key)
+        Self.queue.async { try? FileManager.default.removeItem(at: url) }
     }
 
     func removeAll() {
-        try? FileManager.default.removeItem(at: directory)
-        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let directory = directory
+        Self.queue.sync {
+            try? FileManager.default.removeItem(at: directory)
+            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        }
     }
 }

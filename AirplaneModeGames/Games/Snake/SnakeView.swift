@@ -154,14 +154,19 @@ struct SnakeView: View {
             .accessibilityIdentifier("snakeBoard")
     }
 
+    /// Finger travel that counts as a swipe. Small enough to register within a frame or two of
+    /// a flick, large enough that a resting thumb's jitter doesn't steer.
+    private static let swipeThreshold: CGFloat = 12
+
     /// Turns as soon as the finger has travelled far enough, so one continuous swipe can
     /// chain several turns (e.g. a quick U-turn).
     private var swipe: some Gesture {
-        DragGesture(minimumDistance: 8)
+        // Below the threshold so it never delays a turn, but nonzero so overlay buttons still get taps.
+        DragGesture(minimumDistance: 6)
             .onChanged { value in
                 let anchor = swipeAnchor ?? value.startLocation
                 let dx = value.location.x - anchor.x, dy = value.location.y - anchor.y
-                guard max(abs(dx), abs(dy)) > 22 else {
+                guard max(abs(dx), abs(dy)) > Self.swipeThreshold else {
                     if swipeAnchor == nil { swipeAnchor = anchor }
                     return
                 }

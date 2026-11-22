@@ -19,6 +19,11 @@ struct AirplaneModeGamesApp: App {
                 .preferredColorScheme(settings.appearance.colorScheme)
                 .fontDesign(.rounded)
                 .providesReduceMotion()
+                .task {
+                    // Build the sound effects after the first frame instead of on the first tap.
+                    try? await Task.sleep(for: .milliseconds(300))
+                    SoundEngine.shared.warmUp()
+                }
         }
     }
 }

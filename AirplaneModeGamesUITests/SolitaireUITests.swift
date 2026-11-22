@@ -44,6 +44,39 @@ final class SolitaireUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["How to Play"].waitForExistence(timeout: 3))
     }
 
+    /// Drags a tableau card onto its foundation by touch (not the accessibility action), and
+    /// checks that an illegal drop springs the card back to where it was.
+    @MainActor func testDragCardToFoundation() {
+        let app = launch(["-solitaireScenario", "autocomplete"])
+        XCTAssertTrue(app.buttons["autoComplete"].waitForExistence(timeout: 10))
+        let ranks = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"]
+        let cards = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'card.'"))
+        let foundations = cards.matching(NSPredicate(format: "value == 'Foundation'")).allElementsBoundByIndex
+        XCTAssertFalse(foundations.isEmpty)
+
+        // Illegal drop: a column card released over empty table space returns to its column.
+        let anyColumnCard = cards.matching(NSPredicate(format: "value BEGINSWITH 'Column'")).firstMatch
+        let before = anyColumnCard.frame
+        anyColumnCard.press(forDuration: 0.05, thenDragTo: app.buttons["autoComplete"])
+        let returned = expectation(for: NSPredicate(format: "frame == %@", NSValue(cgRect: before)), evaluatedWith: anyColumnCard)
+        wait(for: [returned], timeout: 3)
+
+        // Legal drop: find a column card that is the next card for some foundation.
+        for foundation in foundations {
+            let parts = foundation.label.components(separatedBy: " of ")
+            guard parts.count == 2, let rank = ranks.firstIndex(of: parts[0]), rank + 1 < ranks.count else { continue }
+            let match = cards.matching(NSPredicate(format: "label == %@ AND value BEGINSWITH 'Column'",
+                                                   "\(ranks[rank + 1]) of \(parts[1])")).firstMatch
+            guard match.exists else { continue }
+            // Pin by identifier: once it lands, the card no longer matches the "Column" query.
+            let next = cards[match.identifier]
+            next.press(forDuration: 0.05, thenDragTo: foundation)
+            let landed = expectation(for: NSPredicate(format: "value == 'Foundation'"), evaluatedWith: next)
+            if XCTWaiter().wait(for: [landed], timeout: 3) == .completed { return }
+        }
+        XCTFail("no column card could be dragged onto a foundation")
+    }
+
     @MainActor func testAutoCompleteWins() {
         let app = launch(["-solitaireScenario", "autocomplete"])
         let auto = app.buttons["autoComplete"]
