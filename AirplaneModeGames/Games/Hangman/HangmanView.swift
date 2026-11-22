@@ -55,7 +55,8 @@ struct HangmanView: View {
             .presentationDetents([.medium, .large])
         }
         .gameChrome(.hangman, rules: Self.rules, stats: Self.statsVariants, newGame: newGameOptions,
-                    onActiveChange: model.setActive)
+                    onActiveChange: model.setActive,
+                    freshStart: { model.mode == .friend ? model.newFriendGame() : model.newComputerGame() })
         .focusable(model.phase == .playing)
         .focused($focused)
         .focusEffectDisabled()

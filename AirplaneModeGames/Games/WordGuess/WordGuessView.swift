@@ -60,7 +60,8 @@ struct WordGuessView: View {
                         NewGameOption(title: WordGuessMode.computer.title, systemImage: "cpu") { model.newComputerGame() },
                         NewGameOption(title: WordGuessMode.friend.title, systemImage: "person.2.fill") { model.newFriendMatch() },
                     ],
-                    onActiveChange: model.setActive)
+                    onActiveChange: model.setActive,
+                    freshStart: { model.mode == .friend ? model.newFriendMatch() : model.newComputerGame() })
         .focusable(model.phase == .playing)
         .focused($boardFocused)
         .focusEffectDisabled()

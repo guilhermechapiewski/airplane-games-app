@@ -24,7 +24,8 @@ struct TwentyFortyEightView: View {
                     stats: [StatsVariant(showsScore: true)],
                     newGame: [NewGameOption(title: "New Game") { withAnimation { model.newGame() } }],
                     onActiveChange: model.setActive,
-                    swipeBack: .all)
+                    swipeBack: .all,
+                    freshStart: { model.newGame() })
         .focusable()
         .focusEffectDisabled()
         .onKeyPress(.upArrow) { model.move(.up); return .handled }

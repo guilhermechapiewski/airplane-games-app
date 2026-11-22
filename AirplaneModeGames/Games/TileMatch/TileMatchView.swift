@@ -26,7 +26,8 @@ struct TileMatchView: View {
                             withAnimation(.easeOut(duration: 0.2)) { model.newGame(layout: id) }
                         }
                     },
-                    onActiveChange: model.setActive)
+                    onActiveChange: model.setActive,
+                    freshStart: { model.newGame() })
     }
 
     private func tap(_ id: Int) {

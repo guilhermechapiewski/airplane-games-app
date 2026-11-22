@@ -1,13 +1,14 @@
 import SwiftUI
 
 struct RootView: View {
-    @State private var path: [GameID] = []
+    @State private var path: [GameRoute] = []
 
     var body: some View {
         NavigationStack(path: $path) {
             HomeView(path: $path)
-                .navigationDestination(for: GameID.self) { game in
-                    GameDestination(game: game)
+                .navigationDestination(for: GameRoute.self) { route in
+                    GameDestination(game: route.game)
+                        .environment(\.gameLaunch, route.launch)
                 }
         }
         .onAppear(perform: openGameFromLaunchArguments)
@@ -18,7 +19,7 @@ struct RootView: View {
         let args = ProcessInfo.processInfo.arguments
         guard path.isEmpty, let i = args.firstIndex(of: "-openGame"), i + 1 < args.count,
               let game = GameID(rawValue: args[i + 1]) else { return }
-        path = [game]
+        path = [GameRoute(game: game)]
     }
 }
 

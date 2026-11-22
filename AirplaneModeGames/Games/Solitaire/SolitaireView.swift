@@ -32,7 +32,8 @@ struct SolitaireView: View {
                             model.newGame(mode)
                         }
                     },
-                    onActiveChange: model.setActive)
+                    onActiveChange: model.setActive,
+                    freshStart: { model.newGame() })
         .onAppear { model.reduceMotion = reduceMotion }
         .onChange(of: reduceMotion) { _, value in model.reduceMotion = value }
         .animation(.easeOut(duration: 0.25), value: model.showStuck)

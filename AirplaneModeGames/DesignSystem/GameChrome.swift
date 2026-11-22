@@ -18,10 +18,15 @@ struct GameChrome: ViewModifier {
     let newGameOptions: [NewGameOption]
     var onActiveChange: ((Bool) -> Void)?
     var swipeBack: SwipeBackBlock = .content
+    /// Starts a new game with the current settings, used when the player chose to start over
+    /// from the home screen. Same as the menu's New Game (abandoned games count in stats).
+    var freshStart: (() -> Void)?
 
     @State private var showRules = false
     @State private var showStats = false
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.gameLaunch) private var launch
+    @State private var handledLaunch = false
 
     func body(content: Content) -> some View {
         content
@@ -66,6 +71,10 @@ struct GameChrome: ViewModifier {
                     .presentationDetents([.medium, .large])
             }
             .onAppear {
+                if !handledLaunch {
+                    handledLaunch = true
+                    if launch == .fresh { freshStart?() }
+                }
                 warmUpFeedback()
                 onActiveChange?(scenePhase == .active)
             }
@@ -93,9 +102,11 @@ extension View {
         stats: [StatsVariant] = [StatsVariant()],
         newGame: [NewGameOption],
         onActiveChange: ((Bool) -> Void)? = nil,
-        swipeBack: SwipeBackBlock = .content
+        swipeBack: SwipeBackBlock = .content,
+        freshStart: (() -> Void)? = nil
     ) -> some View {
         modifier(GameChrome(game: game, rules: rules, statsVariants: stats,
-                            newGameOptions: newGame, onActiveChange: onActiveChange, swipeBack: swipeBack))
+                            newGameOptions: newGame, onActiveChange: onActiveChange, swipeBack: swipeBack,
+                            freshStart: freshStart))
     }
 }

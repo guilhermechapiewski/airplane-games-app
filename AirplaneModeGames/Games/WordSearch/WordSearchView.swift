@@ -47,7 +47,8 @@ struct WordSearchView: View {
                     newGame: WordSearchModel.difficulties.map { d in
                         NewGameOption(title: d.title, systemImage: Self.symbol(for: d)) { model.newGame(difficulty: d) }
                     } + [NewGameOption(title: "Choose Theme…", systemImage: "square.grid.2x2") { showThemes = true }],
-                    onActiveChange: model.setActive)
+                    onActiveChange: model.setActive,
+                    freshStart: { model.newGame() })
     }
 
     static func symbol(for d: Difficulty) -> String {

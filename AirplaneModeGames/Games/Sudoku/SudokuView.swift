@@ -22,7 +22,8 @@ struct SudokuView: View {
                             model.newGame(level)
                         }
                     },
-                    onActiveChange: model.setActive)
+                    onActiveChange: model.setActive,
+                    freshStart: { model.newGame(model.difficulty) })
         .focusable()
         .focused($focused)
         .focusEffectDisabled()

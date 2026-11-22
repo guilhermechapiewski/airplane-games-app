@@ -6,6 +6,7 @@ struct NonogramsView: View {
     @State private var progress = NonogramsProgress.shared
     @State private var opened: OpenPuzzle?
     @State private var didAutoResume = false
+    @Environment(\.gameLaunch) private var launch
 
     private let accent = GameID.nonograms.accent
 
@@ -33,13 +34,14 @@ struct NonogramsView: View {
                 .id(open.id)
         }
         .onAppear {
-            // Coming back via "Resume" on the home screen continues the last puzzle.
+            // Coming back via "Continue Playing" on the home screen continues the last puzzle;
+            // the Nonograms card opens the library instead.
             guard !didAutoResume else { return }
             didAutoResume = true
             #if DEBUG
             applyDemoArguments()
             #endif
-            if let session = progress.session, let puzzle = Nonograms.puzzle(id: session.puzzleID) {
+            if launch == .resume, let session = progress.session, let puzzle = Nonograms.puzzle(id: session.puzzleID) {
                 open(puzzle)
             }
         }

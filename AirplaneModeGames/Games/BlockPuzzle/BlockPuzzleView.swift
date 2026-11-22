@@ -63,7 +63,8 @@ struct BlockPuzzleView: View {
                     onActiveChange: { active in
                         if !active { cancelDrag() }
                         model.setActive(active)
-                    })
+                    },
+                    freshStart: { startNewGame() })
     }
 
     // MARK: Layout

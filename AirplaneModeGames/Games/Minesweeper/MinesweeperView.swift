@@ -31,7 +31,8 @@ struct MinesweeperView: View {
                     newGame: Minesweeper.Level.allCases.map { level in
                         NewGameOption(title: "\(level.title) · \(level.cols)×\(level.rows)") { start(level) }
                     },
-                    onActiveChange: model.setActive)
+                    onActiveChange: model.setActive,
+                    freshStart: { start(model.level) })
         .confirmationDialog("Start a new \(pendingLevel?.title ?? "") game?",
                             isPresented: Binding(get: { pendingLevel != nil }, set: { if !$0 { pendingLevel = nil } }),
                             titleVisibility: .visible) {

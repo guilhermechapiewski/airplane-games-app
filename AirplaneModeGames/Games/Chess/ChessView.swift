@@ -25,7 +25,8 @@ struct ChessView: View {
                         NewGameOption(title: "Set Up New Game…", systemImage: "slider.horizontal.3") { model.showSetup = true },
                         NewGameOption(title: "Rematch", systemImage: "arrow.clockwise") { withAnimation { model.rematch() } },
                     ],
-                    onActiveChange: model.setActive)
+                    onActiveChange: model.setActive,
+                    freshStart: { model.rematch() })
         .sheet(isPresented: $model.showSetup) {
             ChessSetupSheet(model: model)
                 .presentationDetents([.large])

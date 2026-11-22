@@ -290,6 +290,11 @@ final class SudokuModel {
 
     private func persist() {
         guard let game, !isSolved, !isGenerating else { return }
+        // An untouched puzzle isn't a game in progress (no "Continue Playing", no erase prompt).
+        guard game.hasProgress else {
+            store.remove(key: gameID.saveKey)
+            return
+        }
         store.save(Saved(game: game, clock: clock, selected: selected, notesMode: notesMode, isPaused: isPaused),
                    key: gameID.saveKey)
     }

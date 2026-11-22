@@ -80,4 +80,48 @@ final class AppSmokeTests: XCTestCase {
         XCTAssertTrue(app.buttons["gameMenu"].exists, "a swipe went back to the home screen")
         XCTAssertTrue(app.buttons["Undo"].isEnabled, "off-board swipes moved the tiles")
     }
+
+    /// "Continue Playing" resumes; a game's card starts over, after confirming when a game is in progress.
+    func testCardStartsNewGameAfterConfirmingAndChipResumes() {
+        let app = launch()
+        let card = app.buttons["game.twentyFortyEight"]
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.tap()
+        let board = app.otherElements["board2048"]
+        XCTAssertTrue(board.waitForExistence(timeout: 5))
+        for _ in 0..<2 { board.swipeLeft(); board.swipeUp(); board.swipeRight(); board.swipeDown() }
+        let undo = app.buttons["Undo"]
+        XCTAssertTrue(undo.isEnabled)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        // The card asks before erasing the game in progress; Cancel stays on the home screen.
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.tap()
+        XCTAssertTrue(app.staticTexts["Start a new 2048 game?"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Your 2048 game in progress will be erased. This can't be undone."].exists)
+        // iOS 26+ shows the dialog as a popover without a Cancel button; tapping outside dismisses it.
+        if app.buttons["Cancel"].exists {
+            app.buttons["Cancel"].tap()
+        } else {
+            app.otherElements["PopoverDismissRegion"].firstMatch.tap()
+        }
+        XCTAssertTrue(app.buttons["confirmNewGame"].firstMatch.waitForNonExistence(timeout: 3))
+        XCTAssertFalse(board.exists)
+
+        // Continue Playing restores it.
+        app.buttons["Resume 2048"].tap()
+        XCTAssertTrue(board.waitForExistence(timeout: 5))
+        XCTAssertTrue(undo.isEnabled, "the saved game was restored")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        // Confirming starts over.
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.tap()
+        app.buttons["confirmNewGame"].firstMatch.tap()
+        XCTAssertTrue(board.waitForExistence(timeout: 5))
+        XCTAssertFalse(undo.isEnabled, "a new game has no moves to undo")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["Resume 2048"].exists, "the erased game is no longer in progress")
+    }
 }

@@ -44,7 +44,8 @@ struct SnakeView: View {
                     },
                     newGame: newGameOptions,
                     onActiveChange: model.setActive,
-                    swipeBack: .all)
+                    swipeBack: .all,
+                    freshStart: { model.newGame(autoStart: false) })
         .focusable()
         .focusEffectDisabled()
         .onKeyPress(keys: [.upArrow, .downArrow, .leftArrow, .rightArrow, .space]) { press in

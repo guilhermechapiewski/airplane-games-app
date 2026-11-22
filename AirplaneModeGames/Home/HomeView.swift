@@ -1,9 +1,11 @@
 import SwiftUI
 
 struct HomeView: View {
-    @Binding var path: [GameID]
+    @Binding var path: [GameRoute]
     @State private var inProgress: Set<GameID> = []
     @State private var showSettings = false
+    /// A game whose card was tapped while it has a game in progress, awaiting confirmation.
+    @State private var confirmNewGame: GameID?
 
     private let columns = [GridItem(.adaptive(minimum: 158, maximum: 260), spacing: 14)]
 
@@ -15,7 +17,7 @@ struct HomeView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
                                 ForEach(continueGames) { game in
-                                    ContinueChip(game: game) { path.append(game) }
+                                    ContinueChip(game: game) { path.append(GameRoute(game: game)) }
                                 }
                             }
                             .padding(.horizontal, 20)
@@ -26,7 +28,7 @@ struct HomeView: View {
                 LazyVGrid(columns: columns, spacing: 14) {
                     ForEach(GameID.allCases) { game in
                         GameCard(game: game, inProgress: inProgress.contains(game)) {
-                            path.append(game)
+                            openFromCard(game)
                         }
                     }
                 }
@@ -48,11 +50,38 @@ struct HomeView: View {
             }
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
+        .confirmationDialog(
+            confirmNewGame.map { "Start a new \($0.title) game?" } ?? "",
+            isPresented: Binding(get: { confirmNewGame != nil }, set: { if !$0 { confirmNewGame = nil } }),
+            titleVisibility: .visible,
+            presenting: confirmNewGame
+        ) { game in
+            Button("Start New Game", role: .destructive) { path.append(GameRoute(game: game, launch: .fresh)) }
+                .accessibilityIdentifier("confirmNewGame")
+            Button("Resume Game") { path.append(GameRoute(game: game)) }
+            Button("Cancel", role: .cancel) {}
+        } message: { game in
+            Text("Your \(game.title) game in progress will be erased. This can't be undone.")
+        }
         .onAppear(perform: refresh)
         .onChange(of: path) { _, newValue in if newValue.isEmpty { refresh() } }
     }
 
     private var continueGames: [GameID] { GameID.allCases.filter { inProgress.contains($0) } }
+
+    /// A game's card starts a new game. If one is in progress, confirm before erasing it.
+    private func openFromCard(_ game: GameID) {
+        if game == .nonograms {
+            // Nonograms keeps every picture's progress in its library, so nothing is erased:
+            // the card opens the library rather than jumping back into the last puzzle.
+            path.append(GameRoute(game: game, launch: .fresh))
+        } else if inProgress.contains(game) {
+            confirmNewGame = game
+        } else {
+            // Nothing saved, so the game starts fresh on its own.
+            path.append(GameRoute(game: game))
+        }
+    }
 
     private func refresh() {
         inProgress = Set(GameID.allCases.filter { GameStore.shared.exists(key: $0.saveKey) })
