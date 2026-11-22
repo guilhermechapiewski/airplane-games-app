@@ -8,7 +8,11 @@ let package = Package(
         .library(name: "GameLogic", targets: ["GameLogic"]),
     ],
     targets: [
-        .target(name: "GameLogic"),
+        .target(
+            name: "GameLogic",
+            exclude: ["Resources/WORDLISTS.md"],
+            resources: [.process("Resources")]
+        ),
         .testTarget(
             name: "GameLogicTests",
             dependencies: ["GameLogic"]
