@@ -137,7 +137,11 @@ struct SnakeView: View {
         SnakeBoardView(model: model, reduceMotion: reduceMotion)
             .frame(width: side, height: side)
             .shadow(color: .black.opacity(0.08), radius: 14, y: 6)
-            .overlay { boardOverlay }
+            .overlay {
+                boardOverlay
+                    .animation(reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.7),
+                               value: model.phase)
+            }
             .contentShape(Rectangle())
             .gesture(swipe)
             .accessibilityElement(children: .contain)
@@ -194,7 +198,6 @@ struct SnakeView: View {
                 .shadow(color: .black.opacity(0.25), radius: 10)
                 .id(n)
                 .transition(reduceMotion ? .opacity : .scale(scale: 1.6).combined(with: .opacity))
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: n)
                 .accessibilityLabel("Starting in \(n)")
         case .paused:
             VStack(spacing: 14) {
