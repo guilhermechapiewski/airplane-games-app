@@ -53,6 +53,16 @@ final class ChessUITests: XCTestCase {
         XCTAssertTrue(moveList(app).staticTexts["e4"].exists)
     }
 
+    func testDragAndDropMove() {
+        let app = launch()
+        startGame(app, mode: "passAndPlay")
+        let g1 = square(app, "g1")
+        XCTAssertTrue(g1.waitForExistence(timeout: 5))
+        g1.press(forDuration: 0.2, thenDragTo: square(app, "f3"))
+        XCTAssertTrue(moveList(app).staticTexts["Nf3"].waitForExistence(timeout: 3))
+        XCTAssertEqual(square(app, "f3").label, "f3, white knight")
+    }
+
     func testComputerReplies() {
         let app = launch()
         startGame(app, mode: "computer")

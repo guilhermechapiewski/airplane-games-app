@@ -79,8 +79,14 @@ final class ChessModel {
     private(set) var changeCount = 0
     private(set) var records: [String: ChessRecord]
     var autoRotate: Bool {
-        didSet { UserDefaults.standard.set(autoRotate, forKey: Self.autoRotateKey) }
+        didSet {
+            UserDefaults.standard.set(autoRotate, forKey: Self.autoRotateKey)
+            syncOrientation()
+        }
     }
+    /// Which side is drawn at the bottom of the board. In pass & play it follows the
+    /// side to move shortly after each move (when auto-rotate is on).
+    private(set) var bottomSide: Side = .white
 
     private var clock = GameClock()
     private var aiTask: Task<Void, Never>?
@@ -113,6 +119,25 @@ final class ChessModel {
         applyDebugLaunchArguments()
         #endif
         syncTokens()
+        bottomSide = targetBottomSide
+    }
+
+    private var orientationTask: Task<Void, Never>?
+
+    /// Updates the board orientation, optionally after a pause so the last move can be seen.
+    private func syncOrientation(delayed: Bool = false) {
+        orientationTask?.cancel()
+        let target = targetBottomSide
+        guard target != bottomSide else { return }
+        guard delayed else {
+            bottomSide = target
+            return
+        }
+        orientationTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(650))
+            guard let self, !Task.isCancelled, !self.isOver else { return }
+            self.bottomSide = self.targetBottomSide
+        }
     }
 
     #if DEBUG
@@ -150,8 +175,7 @@ final class ChessModel {
     var sideToMove: Side { game.sideToMove }
     var isOver: Bool { outcome != nil }
 
-    /// Which side is drawn at the bottom of the board.
-    var bottomSide: Side {
+    private var targetBottomSide: Side {
         switch setup.mode {
         case .computer: setup.humanSide
         case .passAndPlay: autoRotate ? sideToMove : .white
@@ -286,6 +310,7 @@ final class ChessModel {
         changeCount += 1
         clock.start()
         syncTokens()
+        syncOrientation(delayed: true)
 
         let after = position
         if after.isInCheck {
@@ -361,6 +386,7 @@ final class ChessModel {
         pendingPromotion = nil
         changeCount += 1
         syncTokens()
+        syncOrientation()
         Feedback.play(.flip)
         persist()
     }
@@ -393,6 +419,7 @@ final class ChessModel {
         changeCount += 1
         store.remove(key: gameID.saveKey)
         syncTokens()
+        syncOrientation()
         Feedback.play(.flip)
         scheduleComputerIfNeeded()
     }

@@ -175,7 +175,7 @@ struct ChessMoveStrip: View {
                 .frame(minHeight: 34)
             }
             .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .onChange(of: pairs.count) { _, _ in
+            .onChange(of: model.game.moves.count) { _, _ in
                 withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(pairs.last?.id, anchor: .trailing) }
             }
             .onAppear { proxy.scrollTo(pairs.last?.id, anchor: .trailing) }
@@ -222,12 +222,13 @@ struct ChessMoveTable: View {
                 }
                 .padding(.vertical, 6)
             }
-            .onChange(of: pairs.count) { _, _ in
+            .onChange(of: model.game.moves.count) { _, _ in
                 withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(pairs.last?.id, anchor: .bottom) }
             }
             .onAppear { proxy.scrollTo(pairs.last?.id, anchor: .bottom) }
         }
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(Theme.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Moves")
         .accessibilityIdentifier("moveList")
