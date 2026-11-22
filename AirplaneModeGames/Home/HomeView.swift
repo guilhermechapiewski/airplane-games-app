@@ -23,12 +23,10 @@ struct HomeView: View {
                         .padding(.horizontal, -20)
                     }
                 }
-                section("All Games") {
-                    LazyVGrid(columns: columns, spacing: 14) {
-                        ForEach(GameID.allCases) { game in
-                            GameCard(game: game, inProgress: inProgress.contains(game)) {
-                                path.append(game)
-                            }
+                LazyVGrid(columns: columns, spacing: 14) {
+                    ForEach(GameID.allCases) { game in
+                        GameCard(game: game, inProgress: inProgress.contains(game)) {
+                            path.append(game)
                         }
                     }
                 }
