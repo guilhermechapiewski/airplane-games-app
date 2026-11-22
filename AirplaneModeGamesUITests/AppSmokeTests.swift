@@ -124,4 +124,30 @@ final class AppSmokeTests: XCTestCase {
         XCTAssertTrue(card.waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["Resume 2048"].exists, "the erased game is no longer in progress")
     }
+
+    /// Long-pressing a game in progress offers to discard it, after confirming.
+    func testLongPressDiscardsAGameInProgress() {
+        let app = launch()
+        let card = app.buttons["game.twentyFortyEight"]
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.tap()
+        let board = app.otherElements["board2048"]
+        XCTAssertTrue(board.waitForExistence(timeout: 5))
+        for _ in 0..<2 { board.swipeLeft(); board.swipeUp(); board.swipeRight(); board.swipeDown() }
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        let chip = app.buttons["Resume 2048"]
+        XCTAssertTrue(chip.waitForExistence(timeout: 5))
+        chip.press(forDuration: 1.2)
+        app.buttons["Discard Game"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Discard your 2048 game?"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Your progress will be erased. This can't be undone."].exists)
+        app.buttons["confirmDiscard"].firstMatch.tap()
+        XCTAssertTrue(chip.waitForNonExistence(timeout: 3), "the discarded game is gone from Continue Playing")
+
+        // Opening the card now starts fresh, with no prompt.
+        card.tap()
+        XCTAssertTrue(board.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["Undo"].isEnabled)
+    }
 }

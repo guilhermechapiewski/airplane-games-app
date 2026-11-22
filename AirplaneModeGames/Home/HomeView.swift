@@ -1,4 +1,5 @@
 import SwiftUI
+import GameLogic
 
 struct HomeView: View {
     @Binding var path: [GameRoute]
@@ -6,6 +7,8 @@ struct HomeView: View {
     @State private var showSettings = false
     /// A game whose card was tapped while it has a game in progress, awaiting confirmation.
     @State private var confirmNewGame: GameID?
+    /// A game the player long-pressed and chose to discard, awaiting confirmation.
+    @State private var confirmDiscard: GameID?
 
     private let columns = [GridItem(.adaptive(minimum: 158, maximum: 260), spacing: 14)]
 
@@ -18,6 +21,7 @@ struct HomeView: View {
                             HStack(spacing: 12) {
                                 ForEach(continueGames) { game in
                                     ContinueChip(game: game) { path.append(GameRoute(game: game)) }
+                                        .contextMenu { discardButton(game) }
                                 }
                             }
                             .padding(.horizontal, 20)
@@ -30,6 +34,7 @@ struct HomeView: View {
                         GameCard(game: game, inProgress: inProgress.contains(game)) {
                             openFromCard(game)
                         }
+                        .contextMenu { if inProgress.contains(game) { discardButton(game) } }
                     }
                 }
             }
@@ -63,6 +68,17 @@ struct HomeView: View {
         } message: { game in
             Text("Your \(game.title) game in progress will be erased. This can't be undone.")
         }
+        .alert(
+            confirmDiscard.map { "Discard your \($0.title) game?" } ?? "",
+            isPresented: Binding(get: { confirmDiscard != nil }, set: { if !$0 { confirmDiscard = nil } }),
+            presenting: confirmDiscard
+        ) { game in
+            Button("Discard Game", role: .destructive) { discard(game) }
+                .accessibilityIdentifier("confirmDiscard")
+            Button("Cancel", role: .cancel) {}
+        } message: { _ in
+            Text("Your progress will be erased. This can't be undone.")
+        }
         .onAppear(perform: refresh)
         .onChange(of: path) { _, newValue in if newValue.isEmpty { refresh() } }
     }
@@ -81,6 +97,29 @@ struct HomeView: View {
             // Nothing saved, so the game starts fresh on its own.
             path.append(GameRoute(game: game))
         }
+    }
+
+    /// Long-press menu item for a game in progress.
+    private func discardButton(_ game: GameID) -> some View {
+        Button(role: .destructive) { confirmDiscard = game } label: {
+            Label("Discard Game", systemImage: "trash")
+        }
+    }
+
+    /// Erases a game in progress without opening it. Statistics are left as they are.
+    private func discard(_ game: GameID) {
+        if game == .nonograms {
+            // Nonograms also keeps the board on the picture itself; reset that picture too.
+            let progress = NonogramsProgress.shared
+            if let session = progress.session, let puzzle = Nonograms.puzzle(id: session.puzzleID) {
+                progress.update(puzzle) { $0.board = nil; $0.elapsed = 0 }
+            }
+            progress.clearSession()
+        } else {
+            GameStore.shared.remove(key: game.saveKey)
+        }
+        Haptics.impact()
+        withAnimation(.snappy) { refresh() }
     }
 
     private func refresh() {
