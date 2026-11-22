@@ -120,7 +120,7 @@ struct MinesweeperView: View {
 
     private var controls: some View {
         HStack(spacing: 14) {
-            ModeToggle(mode: Binding(get: { model.mode }, set: { model.mode = $0 }))
+            ModeToggle(mode: Binding(get: { model.mode }, set: { model.setMode($0) }))
             Spacer(minLength: 0)
             if canZoom {
                 ToolButton(title: isZoomed ? "Fit" : "Zoom",

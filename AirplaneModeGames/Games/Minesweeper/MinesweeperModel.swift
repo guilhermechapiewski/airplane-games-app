@@ -21,9 +21,7 @@ final class MinesweeperModel {
     private(set) var level: Logic.Level
     private(set) var state: Logic.State
     private(set) var clock = GameClock()
-    var mode: Mode = .reveal {
-        didSet { if oldValue != mode { persist() } }
-    }
+    private(set) var mode: Mode = .reveal
 
     /// Per-cell animation delays for the latest reveal ripple / explosion.
     private(set) var revealDelays: [GridPoint: Double] = [:]
@@ -60,11 +58,14 @@ final class MinesweeperModel {
     }
 
     #if DEBUG
+    private static var demoApplied = false
+
     /// `-minesweeperDemo <level> <playing|lost|won>` sets up a board for screenshots.
     private func applyDemoArguments() {
         let args = ProcessInfo.processInfo.arguments
-        guard let i = args.firstIndex(of: "-minesweeperDemo"), i + 2 < args.count,
+        guard !Self.demoApplied, let i = args.firstIndex(of: "-minesweeperDemo"), i + 2 < args.count,
               let demoLevel = Logic.Level(rawValue: args[i + 1]) else { return }
+        Self.demoApplied = true
         level = demoLevel
         state = Logic.State(level: demoLevel, seed: 7)
         let center = GridPoint(row: demoLevel.rows / 2, col: demoLevel.cols / 2)
@@ -168,6 +169,12 @@ final class MinesweeperModel {
         mode = .reveal
         boardID += 1
         store.remove(key: game.saveKey)
+    }
+
+    func setMode(_ newMode: Mode) {
+        guard newMode != mode else { return }
+        mode = newMode
+        persist()
     }
 
     func setActive(_ active: Bool) {
