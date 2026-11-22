@@ -10,7 +10,6 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                header
                 if !continueGames.isEmpty {
                     section("Continue Playing") {
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -33,13 +32,15 @@ struct HomeView: View {
                         }
                     }
                 }
-                footer
             }
             .padding(20)
         }
         .background(Theme.background.ignoresSafeArea())
+        // Title is kept for VoiceOver and back-button context but hidden so the grid starts at the top.
         .navigationTitle("Airplane Games")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .principal) { Color.clear.accessibilityHidden(true) }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showSettings = true } label: {
                     Image(systemName: "gearshape.fill")
@@ -57,25 +58,6 @@ struct HomeView: View {
 
     private func refresh() {
         inProgress = Set(GameID.allCases.filter { GameStore.shared.exists(key: $0.saveKey) })
-    }
-
-    private var header: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "airplane")
-                .foregroundStyle(.tint)
-            Text("No Wi‑Fi needed · No ads · No tracking")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private var footer: some View {
-        Text("Everything stays on your device.")
-            .font(.footnote)
-            .foregroundStyle(.tertiary)
-            .frame(maxWidth: .infinity)
-            .padding(.top, 8)
     }
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {

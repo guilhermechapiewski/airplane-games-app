@@ -19,6 +19,11 @@ final class AppSmokeTests: XCTestCase {
         XCTAssertTrue(app.buttons["game.sudoku"].exists)
         app.buttons["settingsButton"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
+        app.buttons["aboutLink"].tap()
+        XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["Report a Bug or Send Feedback"].exists)
+        app.navigationBars["About"].buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
         app.buttons["Done"].tap()
     }
 
@@ -29,8 +34,10 @@ final class AppSmokeTests: XCTestCase {
         for id in ids {
             let card = app.buttons["game.\(id)"]
             var attempts = 0
-            while !card.isHittable && attempts < 6 { app.swipeUp(); attempts += 1 }
+            while !card.isHittable && attempts < 6 { app.swipeUp(velocity: .slow); attempts += 1 }
             card.tap()
+            // A tap that lands while the scroll view is still decelerating only stops the scroll.
+            if !app.buttons["gameMenu"].waitForExistence(timeout: 2) { card.tap() }
             XCTAssertTrue(app.buttons["gameMenu"].waitForExistence(timeout: 5), "\(id) did not open")
             // Some games (e.g. Chess) greet first-time players with a setup sheet.
             let cancel = app.buttons["Cancel"]

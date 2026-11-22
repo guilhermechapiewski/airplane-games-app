@@ -5,15 +5,6 @@ struct SettingsView: View {
     @Bindable private var settings = AppSettings.shared
     @State private var confirmReset = false
 
-    private static let repositoryURL = URL(string: "https://github.com/guilhermechapiewski/airplane-games-app")!
-    private static let issuesURL = URL(string: "https://github.com/guilhermechapiewski/airplane-games-app/issues/new")!
-
-    private var version: String {
-        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "\(v) (\(b))"
-    }
-
     var body: some View {
         NavigationStack {
             Form {
@@ -33,27 +24,13 @@ struct SettingsView: View {
                         Label("Reset All Statistics", systemImage: "trash")
                     }
                 }
-                Section("About") {
-                    LabeledContent("Version", value: version)
-                    VStack(alignment: .leading, spacing: 6) {
-                        Label("Your privacy", systemImage: "lock.shield.fill").font(.headline)
-                        Text("Airplane Games works entirely offline. It has no ads, no accounts, no analytics and no network access. Your games and statistics never leave this device.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                Section {
+                    NavigationLink {
+                        AboutView()
+                    } label: {
+                        Label("About", systemImage: "info.circle.fill")
                     }
-                    .padding(.vertical, 4)
-                    VStack(alignment: .leading, spacing: 6) {
-                        Label("Open source", systemImage: "chevron.left.forwardslash.chevron.right").font(.headline)
-                        Text("Released under the MIT License.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                        Link("github.com/guilhermechapiewski/airplane-games-app", destination: Self.repositoryURL)
-                            .font(.footnote)
-                    }
-                    .padding(.vertical, 4)
-                    Link(destination: Self.issuesURL) {
-                        Label("Report a Bug or Send Feedback", systemImage: "ladybug.fill")
-                    }
+                    .accessibilityIdentifier("aboutLink")
                 }
             }
             .navigationTitle("Settings")
