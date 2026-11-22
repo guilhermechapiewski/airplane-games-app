@@ -4,7 +4,7 @@ import GameLogic
 struct ChessView: View {
     @State private var model = ChessModel()
     @State private var confirmResign = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
 
     var body: some View {
         @Bindable var model = model

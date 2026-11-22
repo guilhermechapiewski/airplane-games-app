@@ -3,7 +3,7 @@ import GameLogic
 
 struct TileMatchView: View {
     @State private var model = TileMatchModel()
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
 
     private var accent: Color { GameID.tileMatch.accent }
 

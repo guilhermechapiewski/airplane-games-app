@@ -5,7 +5,7 @@ struct HangmanView: View {
     @State private var model = HangmanModel()
     @State private var showCategories = false
     @FocusState private var focused: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     private let accent = GameID.hangman.accent

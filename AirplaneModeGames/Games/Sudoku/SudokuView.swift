@@ -4,7 +4,7 @@ import GameLogic
 struct SudokuView: View {
     @State private var model = SudokuModel()
     @FocusState private var focused: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
 
     var body: some View {
         GeometryReader { geo in

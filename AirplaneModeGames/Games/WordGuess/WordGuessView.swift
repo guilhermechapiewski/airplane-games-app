@@ -6,7 +6,7 @@ struct WordGuessView: View {
     @State private var showOptions = false
     @AppStorage(WordGuessModel.highContrastKey) private var highContrast = false
     @FocusState private var boardFocused: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     private var isRegular: Bool { sizeClass == .regular }

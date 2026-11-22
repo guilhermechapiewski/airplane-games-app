@@ -10,7 +10,7 @@ struct MinesweeperBoard: View {
     @Binding var zoomRequest: ZoomRequest?
     var onZoomableChange: (Bool, Bool) -> Void = { _, _ in }
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
 
     @State private var zoom: CGFloat = 1

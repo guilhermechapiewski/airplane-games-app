@@ -97,7 +97,7 @@ struct ChessPlayerBar: View {
 
 /// Three gently pulsing dots.
 struct ThinkingDots: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1 / 20, paused: reduceMotion)) { timeline in

@@ -10,7 +10,7 @@ struct BlockPuzzleView: View {
     @State private var slotFrames: [Int: CGRect] = [:]
     /// True while a tray drag gesture is live; resets on its own if the system cancels it.
     @GestureState private var gestureActive = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
 
     nonisolated private static let space = "blockPuzzle"
     /// Tray pieces are drawn at this fraction of a board cell.

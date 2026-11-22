@@ -50,7 +50,8 @@ put a game-local helper in your own folder instead and mention the need in your 
 - [ ] Auto-save & resume exactly where the player left off (including timer/undo where sensible).
 - [ ] Undo where it makes sense. Difficulty levels where it makes sense.
 - [ ] Polished, original visuals with tasteful animations (spring/easeOut, 0.1–0.35s). Respect
-      `accessibilityReduceMotion`.
+      Reduce Motion via `@Environment(\.reduceMotion)` (not `\.accessibilityReduceMotion`; UI tests
+      force it on so looping animations never stall XCUITest).
 - [ ] Looks great in **light and dark mode**, on small iPhones (iPhone 17e / SE size), large
       iPhones, and **iPad** (center the board, cap its width, use space well).
 - [ ] VoiceOver: meaningful labels/values for cells and controls; custom actions where gestures
@@ -72,8 +73,8 @@ put a game-local helper in your own folder instead and mention the need in your 
 Each parallel task gets its own simulator and DerivedData path — use the ones assigned to you.
 
 ```sh
-# Logic tests (fast, macOS)
-swift test --package-path Packages/GameLogic
+# Logic tests (fast, macOS, optimized)
+tools/test.sh unit
 
 # Build the app
 xcodebuild -project AirplaneModeGames.xcodeproj -scheme AirplaneModeGames \

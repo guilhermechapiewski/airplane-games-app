@@ -4,7 +4,7 @@ import GameLogic
 struct WordSearchView: View {
     @State private var model = WordSearchModel()
     @State private var showThemes = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     private let accent = GameID.wordSearch.accent

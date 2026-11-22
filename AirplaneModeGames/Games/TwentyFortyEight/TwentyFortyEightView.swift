@@ -3,7 +3,7 @@ import GameLogic
 
 struct TwentyFortyEightView: View {
     @State private var model = TwentyFortyEightModel()
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 16) {

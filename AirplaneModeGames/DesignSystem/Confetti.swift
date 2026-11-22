@@ -5,7 +5,7 @@ struct ConfettiView: View {
     var colors: [Color] = [.yellow, .pink, .mint, .orange, .purple, .blue]
     var count = 90
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
     @State private var start = Date()
     @State private var pieces: [Piece] = []
 

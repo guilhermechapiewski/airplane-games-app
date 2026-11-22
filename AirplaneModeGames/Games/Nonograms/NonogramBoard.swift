@@ -5,7 +5,7 @@ import GameLogic
 struct NonogramBoard: View {
     let model: NonogramsPuzzleModel
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @State private var dragging = false
 

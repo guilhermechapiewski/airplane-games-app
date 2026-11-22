@@ -3,7 +3,7 @@ import GameLogic
 
 struct SolitaireView: View {
     @State private var model = SolitaireModel()
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     private let accent = GameID.solitaire.accent

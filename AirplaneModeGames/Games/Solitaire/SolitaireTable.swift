@@ -95,7 +95,7 @@ struct SolitaireTable: View {
     let showsCascade: Bool
 
     @State private var drag: DragState?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
     private static let space = "solitaireTable"
 
     var body: some View {
@@ -391,7 +391,7 @@ private struct ShakeEffect: ViewModifier {
 private struct HintRing: View {
     let width: CGFloat
     @State private var pulse = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
 
     var body: some View {
         RoundedRectangle(cornerRadius: width * SolitaireMetrics.cornerRatio, style: .continuous)

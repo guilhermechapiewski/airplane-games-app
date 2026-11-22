@@ -7,7 +7,7 @@ struct SnakeView: View {
     @State private var model = SnakeModel()
     @AppStorage("snake.showDPad") private var showDPad = false
     @State private var swipeAnchor: CGPoint?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
 
     private let accent = GameID.snake.accent
 

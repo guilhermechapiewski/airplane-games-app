@@ -35,18 +35,17 @@ Open `AirplaneModeGames.xcodeproj` in Xcode and run the `AirplaneModeGames` sche
 
 ## Testing
 
-Game logic lives in a dependency-free Swift package and can be tested from the command line:
-
 ```sh
-swift test --package-path Packages/GameLogic
+tools/test.sh          # everything
+tools/test.sh unit     # GameLogic tests on macOS, optimized build (~5 s warm)
+tools/test.sh ui       # UI tests across 4 parallel simulator clones (~5 min)
+tools/test.sh ui -only-testing:AirplaneModeGamesUITests/SnakeUITests
 ```
 
-UI tests run through Xcode or:
-
-```sh
-xcodebuild test -project AirplaneModeGames.xcodeproj -scheme AirplaneModeGames \
-  -destination 'platform=iOS Simulator,name=iPhone 17'
-```
+`DEVICE=<simulator name>` and `WORKERS=<n>` override the simulator and the number of clones.
+Under UI tests (`-uiTesting`) the app behaves as if Reduce Motion were on, so looping SwiftUI
+animations can't keep XCUITest waiting for the app to go idle; views read `\.reduceMotion`
+rather than `\.accessibilityReduceMotion` for this reason.
 
 ## Architecture
 
@@ -55,9 +54,6 @@ xcodebuild test -project AirplaneModeGames.xcodeproj -scheme AirplaneModeGames \
 - `AirplaneModeGames/` — SwiftUI app: shared design system and services, one folder per game.
 - `docs/DESIGN.md` — principles and layout; `docs/GAME_GUIDE.md` — how to add a game.
 - `tools/` — app icon renderer, simulator launcher (`run-sim.sh`), screenshot contact sheets.
-
-Note: simulator UI tests occasionally stall for minutes inside XCUITest's "wait for idle"
-on some Xcode/simulator versions; they pass on retry.
 
 ## Privacy
 

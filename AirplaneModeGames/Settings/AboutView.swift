@@ -33,6 +33,7 @@ struct AboutView: View {
                 Link(destination: Self.issuesURL) {
                     Label("Report a Bug or Send Feedback", systemImage: "ladybug.fill")
                 }
+                .accessibilityIdentifier("reportBugLink")
             }
         }
         .navigationTitle("About")

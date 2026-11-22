@@ -21,7 +21,7 @@ final class AppSmokeTests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
         app.buttons["aboutLink"].tap()
         XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.buttons["Report a Bug or Send Feedback"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["reportBugLink"].waitForExistence(timeout: 3))
         app.navigationBars["About"].buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
         app.buttons["Done"].tap()

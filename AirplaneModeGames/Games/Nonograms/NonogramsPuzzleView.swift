@@ -6,7 +6,7 @@ struct NonogramsPuzzleView: View {
     let onSelect: (Nonograms.Puzzle) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceMotion) private var reduceMotion
 
     private let accent = GameID.nonograms.accent
 
