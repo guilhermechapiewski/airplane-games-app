@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class TileMatchUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
@@ -81,5 +82,50 @@ final class TileMatchUITests: XCTestCase {
         pebble.tap()
         XCTAssertTrue(app.staticTexts["Pebble"].waitForExistence(timeout: 3) || app.otherElements["tileMatchBoard"].exists)
         attachScreenshot("pebble")
+    }
+
+    func testLargestLayoutFitsOnScreenInBothOrientations() {
+        let app = launch()
+        XCTAssertTrue(app.otherElements["tileMatchBoard"].waitForExistence(timeout: 5))
+        app.buttons["gameMenu"].tap()
+        app.buttons["New Game"].tap()
+        let fortress = app.buttons["Fortress · 144"]
+        XCTAssertTrue(fortress.waitForExistence(timeout: 3))
+        fortress.tap()
+        for orientation in [UIDeviceOrientation.portrait, .landscapeLeft] {
+            XCUIDevice.shared.orientation = orientation
+            XCTAssertTrue(app.otherElements["tileMatchBoard"].waitForExistence(timeout: 3))
+            let window = app.windows.firstMatch.frame
+            let query = tiles(app)
+            let count = query.count
+            XCTAssertGreaterThan(count, 20)
+            // Sample across the painter's order (first, last and every 12th) to keep the test quick.
+            for i in Array(stride(from: 0, to: count, by: 12)) + [count - 1] {
+                let tile = query.element(boundBy: i)
+                XCTAssertTrue(window.contains(tile.frame), "\(tile.identifier) is off-screen in \(orientation.rawValue)")
+            }
+            attachScreenshot("fortress-\(orientation.rawValue)")
+        }
+        XCUIDevice.shared.orientation = .portrait
+    }
+
+    func testPlayingHintsClearsTheBoard() {
+        let app = launch()
+        XCTAssertTrue(app.otherElements["tileMatchBoard"].waitForExistence(timeout: 5))
+        app.buttons["gameMenu"].tap()
+        app.buttons["New Game"].tap()
+        app.buttons["Pebble · 36"].tap()
+        for _ in 0..<18 {
+            app.buttons["Hint"].tap()
+            let hinted = tiles(app, value: "hinted")
+            guard hinted.count == 2 else { break }
+            let ids = [hinted.element(boundBy: 0).identifier, hinted.element(boundBy: 1).identifier]
+            app.buttons[ids[0]].tap()
+            app.buttons[ids[1]].tap()
+        }
+        XCTAssertTrue(app.staticTexts["Board Cleared!"].waitForExistence(timeout: 4))
+        attachScreenshot("win")
+        app.buttons["Play Again"].tap()
+        XCTAssertTrue(app.otherElements["tileMatchBoard"].waitForExistence(timeout: 3))
     }
 }

@@ -46,12 +46,15 @@ struct TileMatchView: View {
                 .accessibilityLabel("Available moves")
                 .accessibilityValue("\(model.availableMatches)")
             Spacer(minLength: 0)
-            Text(model.layout.title)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .accessibilityLabel("Layout \(model.layout.title)")
+            // The layout name only shows when there is room for all of it.
+            ViewThatFits(in: .horizontal) {
+                Text(model.layout.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .fixedSize()
+                    .accessibilityLabel("Layout \(model.layout.title)")
+                Color.clear.frame(width: 0, height: 0)
+            }
         }
         .animation(.snappy, value: model.tilesLeft)
         .animation(.snappy, value: model.availableMatches)
