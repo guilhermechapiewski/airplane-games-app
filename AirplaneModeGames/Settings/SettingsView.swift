@@ -5,6 +5,9 @@ struct SettingsView: View {
     @Bindable private var settings = AppSettings.shared
     @State private var confirmReset = false
 
+    private static let repositoryURL = URL(string: "https://github.com/guilhermechapiewski/airplane-games-app")!
+    private static let issuesURL = URL(string: "https://github.com/guilhermechapiewski/airplane-games-app/issues/new")!
+
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
@@ -41,12 +44,16 @@ struct SettingsView: View {
                     .padding(.vertical, 4)
                     VStack(alignment: .leading, spacing: 6) {
                         Label("Open source", systemImage: "chevron.left.forwardslash.chevron.right").font(.headline)
-                        Text("Released under the MIT License.\ngithub.com/guilhermechapiewski")
+                        Text("Released under the MIT License.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
-                            .textSelection(.enabled)
+                        Link("github.com/guilhermechapiewski/airplane-games-app", destination: Self.repositoryURL)
+                            .font(.footnote)
                     }
                     .padding(.vertical, 4)
+                    Link(destination: Self.issuesURL) {
+                        Label("Report a Bug or Send Feedback", systemImage: "ladybug.fill")
+                    }
                 }
             }
             .navigationTitle("Settings")
