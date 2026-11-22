@@ -17,6 +17,7 @@ struct GameChrome: ViewModifier {
     let statsVariants: [StatsVariant]
     let newGameOptions: [NewGameOption]
     var onActiveChange: ((Bool) -> Void)?
+    var swipeBack: SwipeBackBlock = .content
 
     @State private var showRules = false
     @State private var showStats = false
@@ -25,6 +26,7 @@ struct GameChrome: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(Theme.background.ignoresSafeArea())
+            .blocksSwipeBack(swipeBack)
             .navigationTitle(game.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -90,9 +92,10 @@ extension View {
         rules: HowToPlay,
         stats: [StatsVariant] = [StatsVariant()],
         newGame: [NewGameOption],
-        onActiveChange: ((Bool) -> Void)? = nil
+        onActiveChange: ((Bool) -> Void)? = nil,
+        swipeBack: SwipeBackBlock = .content
     ) -> some View {
         modifier(GameChrome(game: game, rules: rules, statsVariants: stats,
-                            newGameOptions: newGame, onActiveChange: onActiveChange))
+                            newGameOptions: newGame, onActiveChange: onActiveChange, swipeBack: swipeBack))
     }
 }

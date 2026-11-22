@@ -24,7 +24,7 @@ struct SnakeView: View {
                     DPad(tint: accent) { model.turn($0) }
                         .transition(.scale(scale: 0.8).combined(with: .opacity))
                 } else {
-                    Text("Swipe on the board to steer")
+                    Text("Swipe anywhere to steer")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -33,6 +33,9 @@ struct SnakeView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             .frame(width: geo.size.width, height: geo.size.height)
+            // Swipe anywhere on the screen to steer; buttons and the D-pad keep their own touches.
+            .contentShape(Rectangle())
+            .gesture(swipe)
         }
         .overlay { overlay }
         .gameChrome(.snake, rules: Self.rules,
@@ -40,7 +43,8 @@ struct SnakeView: View {
                         StatsVariant(key: $0.rawValue, title: $0.title, showsWins: false, showsScore: true)
                     },
                     newGame: newGameOptions,
-                    onActiveChange: model.setActive)
+                    onActiveChange: model.setActive,
+                    swipeBack: .all)
         .focusable()
         .focusEffectDisabled()
         .onKeyPress(keys: [.upArrow, .downArrow, .leftArrow, .rightArrow, .space]) { press in
@@ -142,8 +146,6 @@ struct SnakeView: View {
                     .animation(reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.7),
                                value: model.phase)
             }
-            .contentShape(Rectangle())
-            .gesture(swipe)
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Snake board")
             .accessibilityValue(accessibilityValue)

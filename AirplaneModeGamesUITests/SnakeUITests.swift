@@ -36,6 +36,12 @@ final class SnakeUITests: XCTestCase {
         // Steer away from the right-hand wall.
         board.swipeUp()
         XCTAssertEqual(pause.label, "Pause")
+
+        // A swipe from the left screen edge steers instead of going back to the home screen.
+        let window = app.windows.firstMatch
+        window.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+            .press(forDuration: 0.01, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.6, dy: 0.5)))
+        XCTAssertTrue(pause.exists, "an edge swipe went back to the home screen")
     }
 
     func testDPadToggleAndRules() {

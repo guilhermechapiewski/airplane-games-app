@@ -60,4 +60,24 @@ final class AppSmokeTests: XCTestCase {
         app.buttons["How to Play"].tap()
         XCTAssertTrue(app.navigationBars["How to Play"].waitForExistence(timeout: 3))
     }
+
+    /// Swipes that start off the board (including at the left screen edge) move the tiles and
+    /// never pop back to the home screen.
+    func test2048SwipesAnywhereWithoutGoingBack() {
+        let app = launch(["-openGame", "twentyFortyEight"])
+        XCTAssertTrue(app.otherElements["board2048"].waitForExistence(timeout: 5))
+        let window = app.windows.firstMatch
+        func swipe(from: CGVector, to: CGVector) {
+            window.coordinate(withNormalizedOffset: from)
+                .press(forDuration: 0.01, thenDragTo: window.coordinate(withNormalizedOffset: to))
+        }
+        for _ in 0..<3 {
+            swipe(from: CGVector(dx: 0.01, dy: 0.5), to: CGVector(dx: 0.7, dy: 0.5))    // right, from the edge
+            swipe(from: CGVector(dx: 0.02, dy: 0.75), to: CGVector(dx: 0.02, dy: 0.35)) // up, beside the board
+            swipe(from: CGVector(dx: 0.98, dy: 0.5), to: CGVector(dx: 0.3, dy: 0.5))    // left
+            swipe(from: CGVector(dx: 0.98, dy: 0.35), to: CGVector(dx: 0.98, dy: 0.75)) // down
+        }
+        XCTAssertTrue(app.buttons["gameMenu"].exists, "a swipe went back to the home screen")
+        XCTAssertTrue(app.buttons["Undo"].isEnabled, "off-board swipes moved the tiles")
+    }
 }

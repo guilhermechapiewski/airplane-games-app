@@ -4,6 +4,8 @@ import GameLogic
 struct TwentyFortyEightView: View {
     @State private var model = TwentyFortyEightModel()
     @Environment(\.reduceMotion) private var reduceMotion
+    /// Whether the current swipe has already moved the tiles (one move per swipe).
+    @State private var swipeHandled = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -14,11 +16,15 @@ struct TwentyFortyEightView: View {
             controls
         }
         .padding(20)
+        // Swipe anywhere on the screen; the Undo and New buttons keep their own taps.
+        .contentShape(Rectangle())
+        .gesture(swipe)
         .overlay { overlay }
         .gameChrome(.twentyFortyEight, rules: Self.rules,
                     stats: [StatsVariant(showsScore: true)],
                     newGame: [NewGameOption(title: "New Game") { withAnimation { model.newGame() } }],
-                    onActiveChange: model.setActive)
+                    onActiveChange: model.setActive,
+                    swipeBack: .all)
         .focusable()
         .focusEffectDisabled()
         .onKeyPress(.upArrow) { model.move(.up); return .handled }
@@ -58,15 +64,6 @@ struct TwentyFortyEightView: View {
         }
         .aspectRatio(1, contentMode: .fit)
         .frame(maxWidth: 520)
-        .gesture(
-            DragGesture(minimumDistance: 16)
-                .onEnded { value in
-                    let dx = value.translation.width, dy = value.translation.height
-                    guard max(abs(dx), abs(dy)) > 24 else { return }
-                    let dir: Direction = abs(dx) > abs(dy) ? (dx > 0 ? .right : .left) : (dy > 0 ? .down : .up)
-                    model.move(dir)
-                }
-        )
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityDescription)
         .accessibilityAction(named: "Swipe up") { model.move(.up) }
@@ -74,6 +71,20 @@ struct TwentyFortyEightView: View {
         .accessibilityAction(named: "Swipe left") { model.move(.left) }
         .accessibilityAction(named: "Swipe right") { model.move(.right) }
         .accessibilityIdentifier("board2048")
+    }
+
+    /// Moves as soon as the finger has travelled far enough, rather than waiting for it to lift.
+    private var swipe: some Gesture {
+        DragGesture(minimumDistance: 10)
+            .onChanged { value in
+                guard !swipeHandled else { return }
+                let dx = value.translation.width, dy = value.translation.height
+                guard max(abs(dx), abs(dy)) > 20 else { return }
+                swipeHandled = true
+                let dir: Direction = abs(dx) > abs(dy) ? (dx > 0 ? .right : .left) : (dy > 0 ? .down : .up)
+                model.move(dir)
+            }
+            .onEnded { _ in swipeHandled = false }
     }
 
     private var accessibilityDescription: String {
