@@ -62,8 +62,10 @@ struct WordSearchView: View {
         HStack(spacing: 10) {
             Button { showThemes = true } label: {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(model.difficulty.title) · \(model.categoryID == nil ? "Random theme" : "Theme")")
+                    Text("\(model.difficulty.title) · \(model.categoryID == nil ? "Random" : "Theme")")
                         .font(.caption2.weight(.bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                         .foregroundStyle(.secondary)
                         .textCase(.uppercase)
                     HStack(spacing: 6) {
