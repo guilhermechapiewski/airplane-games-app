@@ -29,8 +29,17 @@ struct GameDestination: View {
     var body: some View {
         switch game {
         case .twentyFortyEight: TwentyFortyEightView()
-        default:
-            ComingSoonView(game: game)
+        case .sudoku: SudokuView()
+        case .solitaire: SolitaireView()
+        case .blocks: BlockPuzzleView()
+        case .tileMatch: TileMatchView()
+        case .minesweeper: MinesweeperView()
+        case .chess: ChessView()
+        case .wordGuess: WordGuessView()
+        case .nonograms: NonogramsView()
+        case .wordSearch: WordSearchView()
+        case .snake: SnakeView()
+        case .hangman: HangmanView()
         }
     }
 }
