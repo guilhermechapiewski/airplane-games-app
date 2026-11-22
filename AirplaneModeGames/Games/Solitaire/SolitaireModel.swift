@@ -225,7 +225,8 @@ final class SolitaireModel {
                 if outcome.cards.first.map({ $0.rank % 4 == 0 }) == true { Haptics.tap() }
                 try? await Task.sleep(for: .milliseconds(self.reduceMotion ? 40 : 85))
             }
-            guard let self else { return }
+            // A new game may have been started meanwhile.
+            guard let self, self.phase == .autoCompleting else { return }
             if self.state.isWon { self.win() } else { self.phase = .playing }
         }
     }
@@ -394,7 +395,12 @@ final class SolitaireModel {
     }
 
     private func persist() {
-        guard phase != .won, phase != .celebrating, state.moveCount > 0 else { return }
+        guard phase != .won, phase != .celebrating else { return }
+        guard state.moveCount > 0 else {
+            // Undone back to the deal: nothing worth resuming.
+            store.remove(key: game.saveKey)
+            return
+        }
         store.save(Saved(state: state, history: history, clock: clock, provenWinnable: provenWinnable), key: game.saveKey)
     }
 }

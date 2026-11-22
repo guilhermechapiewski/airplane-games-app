@@ -194,7 +194,7 @@ struct SolitaireView: View {
             .init(title: "Scoring", symbol: "star", points: [
                 "Waste to column +5, any card to a foundation +10, revealing a card +5.",
                 "Taking a card back off a foundation −15. Turning the waste over −100 (Draw 1) or −20 (Draw 3).",
-                "Win fast for a time bonus. Every deal is checked to be winnable.",
+                "Win fast for a time bonus. Deals are checked by a solver so they can be won.",
             ]),
             .init(title: "Help", symbol: "lightbulb", points: [
                 "Hint highlights a useful move. Undo takes back as many moves as you need.",
