@@ -31,7 +31,10 @@ final class AppSmokeTests: XCTestCase {
             var attempts = 0
             while !card.isHittable && attempts < 6 { app.swipeUp(); attempts += 1 }
             card.tap()
-            XCTAssertTrue(app.navigationBars.buttons.firstMatch.waitForExistence(timeout: 5), "\(id) did not open")
+            XCTAssertTrue(app.buttons["gameMenu"].waitForExistence(timeout: 5), "\(id) did not open")
+            // Some games (e.g. Chess) greet first-time players with a setup sheet.
+            let cancel = app.buttons["Cancel"]
+            if cancel.waitForExistence(timeout: 1) { cancel.tap() }
             app.navigationBars.buttons.element(boundBy: 0).tap()
             XCTAssertTrue(app.buttons["settingsButton"].waitForExistence(timeout: 5))
         }
