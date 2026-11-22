@@ -10,6 +10,15 @@ struct RootView: View {
                     GameDestination(game: game)
                 }
         }
+        .onAppear(perform: openGameFromLaunchArguments)
+    }
+
+    /// `-openGame <id>` jumps straight into a game (used by UI tests and screenshots).
+    private func openGameFromLaunchArguments() {
+        let args = ProcessInfo.processInfo.arguments
+        guard path.isEmpty, let i = args.firstIndex(of: "-openGame"), i + 1 < args.count,
+              let game = GameID(rawValue: args[i + 1]) else { return }
+        path = [game]
     }
 }
 
@@ -19,6 +28,7 @@ struct GameDestination: View {
 
     var body: some View {
         switch game {
+        case .twentyFortyEight: TwentyFortyEightView()
         default:
             ComingSoonView(game: game)
         }
