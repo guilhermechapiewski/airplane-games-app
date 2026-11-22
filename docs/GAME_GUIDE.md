@@ -63,6 +63,9 @@ put a game-local helper in your own folder instead and mention the need in your 
 - [ ] No networking, no third-party code, no assets copied from other games; original names/look.
 - [ ] **Opponent rule:** any game with an opponent offers both vs. computer and pass & play.
 - [ ] Swift 6 strict concurrency clean, **zero warnings**.
+- [ ] Model `init` is cheap and side-effect free: `@State private var model = Model()` re-evaluates
+      the initializer whenever the parent view is re-created (SwiftUI keeps only the first
+      instance). Don't save, record stats or start tasks from `init`.
 
 ## Commands
 
