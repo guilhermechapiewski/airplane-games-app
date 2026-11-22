@@ -23,6 +23,8 @@
 /* Begin PBXFileReference section */
 		AA0000000000000000000F01 /* AirplaneModeGames.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AirplaneModeGames.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0000000000000000000F02 /* AirplaneModeGamesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AirplaneModeGamesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0000000000000000000F03 /* Project.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Project.xcconfig; sourceTree = "<group>"; };
+		AA0000000000000000000F04 /* Local.example.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.example.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -62,8 +64,18 @@
 			children = (
 				AA0000000000000000000501 /* AirplaneModeGames */,
 				AA0000000000000000000502 /* AirplaneModeGamesUITests */,
+				AA0000000000000000000103 /* Config */,
 				AA0000000000000000000102 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000103 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000000000000000000F03 /* Project.xcconfig */,
+				AA0000000000000000000F04 /* Local.example.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		AA0000000000000000000102 /* Products */ = {
@@ -209,6 +221,7 @@
 /* Begin XCBuildConfiguration section */
 		AA0000000000000000000E01 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AA0000000000000000000F03 /* Project.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -237,6 +250,7 @@
 		};
 		AA0000000000000000000E02 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AA0000000000000000000F03 /* Project.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;

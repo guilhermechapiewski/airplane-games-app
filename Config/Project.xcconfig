@@ -1,0 +1,7 @@
+// Project-wide settings shared by every target and configuration.
+//
+// Signing is owner-specific, so it lives in the git-ignored Config/Local.xcconfig (copy
+// Config/Local.example.xcconfig). Set the team there, not in Xcode's Signing & Capabilities
+// pane: Xcode writes that choice into project.pbxproj, which is public.
+
+#include? "Local.xcconfig"
