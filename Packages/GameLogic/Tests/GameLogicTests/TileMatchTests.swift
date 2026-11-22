@@ -143,10 +143,10 @@ struct TileMatchTests {
     }
 
     @Test func generationIsFast() {
-        let start = Date()
+        let start = threadCPUTime()
         _ = T.State.newGame(layout: .fortress, seed: 7)
         // Generous bound for debug builds on CI; typically a few milliseconds.
-        #expect(Date().timeIntervalSince(start) < 0.5)
+        #expect(threadCPUTime() - start < 0.5)
     }
 
     // MARK: Moves
