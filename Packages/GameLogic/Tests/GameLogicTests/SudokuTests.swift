@@ -168,11 +168,18 @@ struct SudokuTests {
     }
 
     @Test func expertGenerationIsFast() {
-        let start = Date()
+        // Measure this thread's CPU time, not wall time, so suites running in
+        // parallel (competing for cores) can't make the check flaky.
+        func threadCPUTime() -> Double {
+            var ts = timespec()
+            clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts)
+            return Double(ts.tv_sec) + Double(ts.tv_nsec) / 1e9
+        }
+        let start = threadCPUTime()
         for seed in 0..<6 { _ = S.generate(difficulty: .expert, seed: UInt64(seed) + 1000) }
         // Release builds take ~20 ms per expert puzzle; the bound is generous for
-        // unoptimized test builds running in parallel.
-        #expect(Date().timeIntervalSince(start) / 6 < 4)
+        // unoptimized test builds.
+        #expect((threadCPUTime() - start) / 6 < 4)
     }
 
     // MARK: Game
