@@ -112,7 +112,12 @@ struct SolitaireTable: View {
 
     @State private var drag: DragState?
     @State private var dragOffset = DragOffset()
+    /// True while any card's drag gesture is active. Unlike `onEnded`, it also resets when the
+    /// system cancels a drag (a notification or Control Center pulled down mid-drag, a second
+    /// finger...), which would otherwise leave the lifted cards stuck a few points off.
+    @GestureState private var isDragging = false
     @Environment(\.reduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     private static let space = "solitaireTable"
 
     var body: some View {
@@ -143,6 +148,20 @@ struct SolitaireTable: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("solitaireTable")
+        // A finished drag has been dropped by `onEnded`; anything still lifted was cancelled.
+        .onGestureCancelled(isDragging) { cancelDrag() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { cancelDrag() }
+        }
+    }
+
+    /// Returns lifted cards to their pile without moving anything.
+    private func cancelDrag() {
+        guard drag != nil else { return }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
+            drag = nil
+            dragOffset.translation = .zero
+        }
     }
 
     // MARK: Placement
@@ -240,6 +259,7 @@ struct SolitaireTable: View {
 
     private func dragGesture(for card: Solitaire.Card, layout: TableLayout) -> some Gesture {
         DragGesture(minimumDistance: 4, coordinateSpace: .named(Self.space))
+            .tracking($isDragging)
             .onChanged { value in
                 if drag == nil {
                     guard let lifted = model.liftedCards(for: card) else { return }

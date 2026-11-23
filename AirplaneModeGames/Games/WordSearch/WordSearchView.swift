@@ -161,6 +161,7 @@ private struct WordSearchGrid: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var dragStart: GridPoint?
     @State private var dragEnd: GridPoint?
+    @GestureState private var dragActive = false
 
     var body: some View {
         let puzzle = state.puzzle
@@ -202,6 +203,7 @@ private struct WordSearchGrid: View {
             .frame(width: side, height: side)
             .contentShape(Rectangle())
             .gesture(drag(cell: cell, inset: inset, size: puzzle.size))
+            .onGestureCancelled(dragActive) { dragStart = nil; dragEnd = nil }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: state.found)
         }
@@ -243,6 +245,7 @@ private struct WordSearchGrid: View {
 
     private func drag(cell: CGFloat, inset: CGFloat, size: Int) -> some Gesture {
         DragGesture(minimumDistance: 0)
+            .tracking($dragActive)
             .onChanged { value in
                 let s = gridPoint(value.startLocation, cell: cell, inset: inset)
                 let start = GridPoint(row: Int(s.row.rounded()), col: Int(s.col.rounded()))

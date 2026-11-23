@@ -21,6 +21,7 @@ struct ChessBoardView: View {
     @State private var dragFrom: Chess.Square?
     @State private var dragLocation: CGPoint?
     @State private var touchStarted = false
+    @GestureState private var touchActive = false
 
     private var cell: CGFloat { side / 8 }
     private var whiteAtBottom: Bool { model.bottomSide == .white }
@@ -34,6 +35,15 @@ struct ChessBoardView: View {
         .clipShape(RoundedRectangle(cornerRadius: max(4, side * 0.012), style: .continuous))
         .contentShape(Rectangle())
         .gesture(boardGesture)
+        .onGestureCancelled(touchActive) {
+            // A cancelled drag puts the piece back without moving it.
+            guard touchStarted || dragFrom != nil || dragLocation != nil else { return }
+            withAnimation(moveAnimation) {
+                dragFrom = nil
+                dragLocation = nil
+            }
+            touchStarted = false
+        }
         .overlay(alignment: .topLeading) { accessibilityGrid }
         .overlay { promotionPicker }
         .padding(max(5, side * 0.022))
@@ -170,6 +180,7 @@ struct ChessBoardView: View {
 
     private var boardGesture: some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .local)
+            .tracking($touchActive)
             .onChanged { value in
                 if !touchStarted {
                     touchStarted = true

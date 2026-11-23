@@ -20,6 +20,7 @@ struct MinesweeperBoard: View {
     @State private var pinchAnchor: CGPoint = .zero
     @State private var touch: Touch?
     @State private var touchCounter = 0
+    @GestureState private var touchActive = false
 
     /// A comfortable tap target when zoomed in.
     static let comfortableCell: CGFloat = 40
@@ -66,6 +67,11 @@ struct MinesweeperBoard: View {
                     .contentShape(Rectangle())
                     .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius - pad, style: .continuous))
                     .gesture(touchGesture(cell: cell, viewport: viewport, boardSize: boardSize), including: voiceOver ? .subviews : .all)
+                    .onGestureCancelled(touchActive) {
+                        // A cancelled touch neither taps nor flags; an unfinished pan springs back.
+                        touch = nil
+                        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { dragTranslation = .zero }
+                    }
                     .padding(pad)
             }
             .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
@@ -147,6 +153,7 @@ struct MinesweeperBoard: View {
 
     private func touchGesture(cell: CGFloat, viewport: CGSize, boardSize: CGSize) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .local)
+            .tracking($touchActive)
             .onChanged { value in
                 if touch == nil {
                     touchCounter += 1

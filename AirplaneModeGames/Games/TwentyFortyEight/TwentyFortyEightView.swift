@@ -6,6 +6,7 @@ struct TwentyFortyEightView: View {
     @Environment(\.reduceMotion) private var reduceMotion
     /// Whether the current swipe has already moved the tiles (one move per swipe).
     @State private var swipeHandled = false
+    @GestureState private var swipeActive = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -19,6 +20,7 @@ struct TwentyFortyEightView: View {
         // Swipe anywhere on the screen; the Undo and New buttons keep their own taps.
         .contentShape(Rectangle())
         .gesture(swipe)
+        .onGestureCancelled(swipeActive) { swipeHandled = false }
         .overlay { overlay }
         .gameChrome(.twentyFortyEight, rules: Self.rules,
                     stats: [StatsVariant(showsScore: true)],
@@ -77,6 +79,7 @@ struct TwentyFortyEightView: View {
     /// Moves as soon as the finger has travelled far enough, rather than waiting for it to lift.
     private var swipe: some Gesture {
         DragGesture(minimumDistance: 10)
+            .tracking($swipeActive)
             .onChanged { value in
                 guard !swipeHandled else { return }
                 let dx = value.translation.width, dy = value.translation.height

@@ -8,6 +8,7 @@ struct NonogramBoard: View {
     @Environment(\.reduceMotion) private var reduceMotion
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @State private var dragging = false
+    @GestureState private var strokeActive = false
 
     var body: some View {
         GeometryReader { geo in
@@ -25,6 +26,12 @@ struct NonogramBoard: View {
                         .frame(width: layout.cell * CGFloat(puzzle.width), height: layout.cell * CGFloat(puzzle.height))
                         .contentShape(Rectangle())
                         .gesture(dragGesture(layout), including: voiceOver ? .subviews : .all)
+                        .onGestureCancelled(strokeActive) {
+                            // Keep what was painted, as if the finger had lifted.
+                            guard dragging else { return }
+                            dragging = false
+                            model.endStroke()
+                        }
                 }
             }
             .frame(width: layout.totalWidth, height: layout.totalHeight)
@@ -166,6 +173,7 @@ struct NonogramBoard: View {
 
     private func dragGesture(_ layout: Layout) -> some Gesture {
         DragGesture(minimumDistance: 0)
+            .tracking($strokeActive)
             .onChanged { value in
                 let p = layout.point(at: value.location, puzzle: model.puzzle)
                 if !dragging {

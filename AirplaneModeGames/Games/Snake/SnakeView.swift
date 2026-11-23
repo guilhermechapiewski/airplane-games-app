@@ -7,6 +7,7 @@ struct SnakeView: View {
     @State private var model = SnakeModel()
     @AppStorage("snake.showDPad") private var showDPad = false
     @State private var swipeAnchor: CGPoint?
+    @GestureState private var swipeActive = false
     @Environment(\.reduceMotion) private var reduceMotion
 
     private let accent = GameID.snake.accent
@@ -36,6 +37,7 @@ struct SnakeView: View {
             // Swipe anywhere on the screen to steer; buttons and the D-pad keep their own touches.
             .contentShape(Rectangle())
             .gesture(swipe)
+            .onGestureCancelled(swipeActive) { swipeAnchor = nil }
         }
         .overlay { overlay }
         .gameChrome(.snake, rules: Self.rules,
@@ -166,6 +168,7 @@ struct SnakeView: View {
     private var swipe: some Gesture {
         // Below the threshold so it never delays a turn, but nonzero so overlay buttons still get taps.
         DragGesture(minimumDistance: 6)
+            .tracking($swipeActive)
             .onChanged { value in
                 let anchor = swipeAnchor ?? value.startLocation
                 let dx = value.location.x - anchor.x, dy = value.location.y - anchor.y
@@ -340,6 +343,7 @@ private struct PadButton: View {
     let tint: Color
     let action: (Direction) -> Void
     @State private var pressed = false
+    @GestureState private var touchActive = false
 
     private var symbol: String {
         switch direction {
@@ -363,6 +367,7 @@ private struct PadButton: View {
             .contentShape(Circle())
             .gesture(
                 DragGesture(minimumDistance: 0)
+                    .tracking($touchActive)
                     .onChanged { _ in
                         guard !pressed else { return }
                         pressed = true
@@ -371,6 +376,7 @@ private struct PadButton: View {
                     }
                     .onEnded { _ in pressed = false }
             )
+            .onGestureCancelled(touchActive) { pressed = false }
             .accessibilityElement()
             .accessibilityLabel(direction.rawValue.capitalized)
             .accessibilityAddTraits(.isButton)
