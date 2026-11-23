@@ -89,13 +89,23 @@ final class WordGuessModel {
     static let revealStep = 0.28
     static let flipDuration = 0.36
 
-    init(store: GameStore = .shared, stats: StatsStore = .shared) {
+    /// Today, when this is the daily word (vs. the computer, fixed by the date, saved separately).
+    let daily: Daily.Day?
+    private var saveKey: String { daily.map { game.dailySaveKey($0) } ?? game.saveKey }
+
+    init(daily: Daily.Day? = nil, store: GameStore = .shared, stats: StatsStore = .shared) {
+        self.daily = daily
         self.store = store
         self.stats = stats
         let hard = UserDefaults.standard.bool(forKey: Self.hardModeKey)
         distribution = store.load([Int].self, key: Self.distributionKey) ?? Array(repeating: 0, count: Logic.maxGuesses)
         hardModePreference = hard
-        if let saved = store.load(Saved.self, key: GameID.wordGuess.saveKey) {
+        if let daily {
+            let saved = store.load(Saved.self, key: GameID.wordGuess.dailySaveKey(daily))
+            state = saved?.state ?? Logic.State(answer: Self.dailyAnswer(daily), hardMode: hard)
+            revealedRows = state.guesses.count
+            keyboard = state.keyboard
+        } else if let saved = store.load(Saved.self, key: GameID.wordGuess.saveKey) {
             mode = saved.mode
             phase = saved.phase
             state = saved.state
@@ -138,6 +148,12 @@ final class WordGuessModel {
         }
     }
     #endif
+
+    /// Everyone's word for `day`.
+    static func dailyAnswer(_ day: Daily.Day) -> String {
+        let answers = WordLists.answers
+        return answers[Int(GameID.wordGuess.dailySeed(day) % UInt64(answers.count))]
+    }
 
     private static func computerGame(hard: Bool) -> Logic.State {
         var rng = SystemRandomNumberGenerator()
@@ -234,7 +250,12 @@ final class WordGuessModel {
 
     private func finishGame(won: Bool) {
         let guesses = state.guesses.count
-        stats.record(game, variant: statsVariant, won: won, score: nil)
+        if let daily {
+            // One try per day: a miss ends the day too (it just doesn't count for the streak).
+            DailyStore.shared.record(game, on: daily, won: won, time: nil)
+        } else {
+            stats.record(game, variant: statsVariant, won: won, score: nil)
+        }
         if mode == .computer {
             if won, guesses >= 1, guesses <= distribution.count { distribution[guesses - 1] += 1 }
             store.save(distribution, key: Self.distributionKey)
@@ -258,7 +279,7 @@ final class WordGuessModel {
         mode = .computer
         phase = .playing
         reset(to: Self.computerGame(hard: hardModePreference))
-        store.remove(key: game.saveKey)
+        store.remove(key: saveKey)
     }
 
     /// Starts a fresh Pass & Play match (asks for names first).
@@ -331,7 +352,7 @@ final class WordGuessModel {
 
     /// Counts a computer game abandoned mid-way as a loss (it had guesses).
     private func abandonIfNeeded() {
-        if mode == .computer, phase == .playing, !state.isOver, !state.guesses.isEmpty {
+        if daily == nil, mode == .computer, phase == .playing, !state.isOver, !state.guesses.isEmpty {
             stats.record(game, variant: statsVariant, won: false)
         }
     }
@@ -350,9 +371,9 @@ final class WordGuessModel {
 
     private func persist() {
         if mode == .computer && (state.isOver || !state.hasProgress) {
-            store.remove(key: game.saveKey)
+            store.remove(key: saveKey)
         } else {
-            store.save(Saved(mode: mode, phase: phase, state: state, match: match), key: game.saveKey)
+            store.save(Saved(mode: mode, phase: phase, state: state, match: match), key: saveKey)
         }
     }
 }

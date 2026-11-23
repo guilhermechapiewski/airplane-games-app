@@ -1,3 +1,4 @@
+import GameLogic
 import SwiftUI
 
 struct RootView: View {
@@ -7,10 +8,11 @@ struct RootView: View {
         NavigationStack(path: $path) {
             HomeView(path: $path)
                 .navigationDestination(for: GameRoute.self) { route in
-                    GameDestination(game: route.game)
+                    GameDestination(game: route.game, daily: route.launch == .daily ? Daily.Day() : nil)
                         .environment(\.gameLaunch, route.launch)
                 }
         }
+        .environment(\.openDaily, OpenDailyAction { game in path.append(GameRoute(game: game, launch: .daily)) })
         .onAppear(perform: openGameFromLaunchArguments)
     }
 
@@ -26,19 +28,21 @@ struct RootView: View {
 /// Maps a game to its screen.
 struct GameDestination: View {
     let game: GameID
+    /// Today, when this is the daily puzzle.
+    var daily: Daily.Day?
 
     var body: some View {
         switch game {
         case .twentyFortyEight: TwentyFortyEightView()
-        case .sudoku: SudokuView()
-        case .solitaire: SolitaireView()
+        case .sudoku: SudokuView(daily: daily)
+        case .solitaire: SolitaireView(daily: daily)
         case .blocks: BlockPuzzleView()
-        case .tileMatch: TileMatchView()
-        case .minesweeper: MinesweeperView()
+        case .tileMatch: TileMatchView(daily: daily)
+        case .minesweeper: MinesweeperView(daily: daily)
         case .chess: ChessView()
-        case .wordGuess: WordGuessView()
+        case .wordGuess: WordGuessView(daily: daily)
         case .nonograms: NonogramsView()
-        case .wordSearch: WordSearchView()
+        case .wordSearch: WordSearchView(daily: daily)
         case .snake: SnakeView()
         case .hangman: HangmanView()
         }

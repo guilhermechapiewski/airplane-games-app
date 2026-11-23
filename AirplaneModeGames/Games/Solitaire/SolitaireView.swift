@@ -2,7 +2,12 @@ import SwiftUI
 import GameLogic
 
 struct SolitaireView: View {
-    @State private var model = SolitaireModel()
+    @State private var model: SolitaireModel
+    @Environment(\.dismiss) private var dismiss
+
+    init(daily: Daily.Day? = nil) {
+        _model = State(initialValue: SolitaireModel(daily: daily))
+    }
     @Environment(\.reduceMotion) private var reduceMotion
     @Environment(\.horizontalSizeClass) private var sizeClass
 
@@ -78,9 +83,13 @@ struct SolitaireView: View {
             }
             .disabled(!model.isInteractive)
             Menu {
-                ForEach(Solitaire.DrawMode.allCases) { mode in
-                    Button { model.newGame(mode) } label: {
-                        Label(mode.title, systemImage: mode == .draw1 ? "1.square" : "3.square")
+                if model.daily != nil {
+                    Button { model.newGame() } label: { Label("Restart Today's Deal", systemImage: "arrow.counterclockwise") }
+                } else {
+                    ForEach(Solitaire.DrawMode.allCases) { mode in
+                        Button { model.newGame(mode) } label: {
+                            Label(mode.title, systemImage: mode == .draw1 ? "1.square" : "3.square")
+                        }
                     }
                 }
             } label: {
@@ -90,7 +99,7 @@ struct SolitaireView: View {
                         .frame(width: 48, height: 40)
                         .background(Theme.well, in: RoundedRectangle(cornerRadius: 12))
                         .foregroundStyle(.primary)
-                    Text("New")
+                    Text(model.daily != nil ? "Restart" : "New")
                         .font(.caption2.weight(.medium))
                         .foregroundStyle(.secondary)
                 }
@@ -137,15 +146,23 @@ struct SolitaireView: View {
     @ViewBuilder private var overlay: some View {
         if model.phase == .won {
             ResultOverlay(mood: .win, title: "You Won!", subtitle: winSubtitle,
-                          details: [("Score", "\(model.finalScore)"),
-                                    ("Time", model.finalTime.clockString),
-                                    ("Moves", "\(model.state.moveCount)")],
+                          details: model.daily != nil
+                            ? [("Time", model.finalTime.clockString), ("Moves", "\(model.state.moveCount)"),
+                               ("Streak", "🔥 \(DailyStore.shared.streak(.solitaire))")]
+                            : [("Score", "\(model.finalScore)"),
+                               ("Time", model.finalTime.clockString),
+                               ("Moves", "\(model.state.moveCount)")],
                           tint: accent) {
-                Button("Play Again") { model.newGame() }
-                    .buttonStyle(PrimaryButtonStyle(color: accent))
-                let other: Solitaire.DrawMode = model.drawMode == .draw1 ? .draw3 : .draw1
-                Button("Try \(other.title)") { model.newGame(other) }
-                    .buttonStyle(SecondaryButtonStyle())
+                if model.daily != nil {
+                    Button("Done") { dismiss() }
+                        .buttonStyle(PrimaryButtonStyle(color: accent))
+                } else {
+                    Button("Play Again") { model.newGame() }
+                        .buttonStyle(PrimaryButtonStyle(color: accent))
+                    let other: Solitaire.DrawMode = model.drawMode == .draw1 ? .draw3 : .draw1
+                    Button("Try \(other.title)") { model.newGame(other) }
+                        .buttonStyle(SecondaryButtonStyle())
+                }
             }
             .transition(.opacity)
         } else if model.showStuck {
@@ -153,7 +170,7 @@ struct SolitaireView: View {
                           subtitle: "There are no useful moves remaining. Undo a few moves or start over.",
                           details: [("Score", "\(model.state.score)"), ("Moves", "\(model.state.moveCount)")],
                           tint: accent) {
-                Button("New Game") { model.newGame() }
+                Button(model.daily != nil ? "Restart Deal" : "New Game") { model.newGame() }
                     .buttonStyle(PrimaryButtonStyle(color: accent))
                 HStack(spacing: 10) {
                     if model.canUndo {

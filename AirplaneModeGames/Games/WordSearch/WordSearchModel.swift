@@ -35,13 +35,19 @@ final class WordSearchModel {
     private static let difficultyKey = "wordSearch.difficulty"
     private static let categoryKey = "wordSearch.category"
 
-    init(store: GameStore = .shared, stats: StatsStore = .shared) {
+    /// Today, when this is the daily puzzle (medium, theme and grid fixed by the date).
+    let daily: Daily.Day?
+    private var saveKey: String { daily.map { game.dailySaveKey($0) } ?? game.saveKey }
+
+    init(daily: Daily.Day? = nil, store: GameStore = .shared, stats: StatsStore = .shared) {
+        self.daily = daily
         self.store = store
         self.stats = stats
         let defaults = UserDefaults.standard
-        difficulty = Difficulty(rawValue: defaults.string(forKey: Self.difficultyKey) ?? "") ?? .easy
-        categoryID = defaults.string(forKey: Self.categoryKey).flatMap { WordCategory.named($0)?.id }
-        if let saved = store.load(Saved.self, key: GameID.wordSearch.saveKey), !saved.state.isComplete {
+        difficulty = daily != nil ? .medium : Difficulty(rawValue: defaults.string(forKey: Self.difficultyKey) ?? "") ?? .easy
+        categoryID = daily != nil ? nil : defaults.string(forKey: Self.categoryKey).flatMap { WordCategory.named($0)?.id }
+        if let saved = store.load(Saved.self, key: daily.map { GameID.wordSearch.dailySaveKey($0) } ?? GameID.wordSearch.saveKey),
+           !saved.state.isComplete {
             state = saved.state
             clock = saved.clock
             difficulty = saved.state.difficulty
@@ -128,9 +134,13 @@ final class WordSearchModel {
         clock.pause()
         let time = clock.elapsed()
         let previousBest = bestTime
-        stats.record(game, variant: difficulty.rawValue, won: true, time: time)
+        if let daily {
+            DailyStore.shared.record(game, on: daily, won: true, time: time)
+        } else {
+            stats.record(game, variant: difficulty.rawValue, won: true, time: time)
+        }
         isNewBest = previousBest.map { time < $0 } ?? true
-        store.remove(key: game.saveKey)
+        store.remove(key: saveKey)
         Feedback.play(.win)
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(0.6))
@@ -141,13 +151,14 @@ final class WordSearchModel {
 
     // MARK: New games
 
+    /// Starts a new puzzle. On the daily, this restarts today's puzzle.
     func newGame(difficulty: Difficulty? = nil) {
-        if let difficulty {
+        if let difficulty, daily == nil {
             self.difficulty = difficulty
             UserDefaults.standard.set(difficulty.rawValue, forKey: Self.difficultyKey)
         }
-        abandonIfNeeded()
-        store.remove(key: game.saveKey)
+        if daily == nil { abandonIfNeeded() }
+        store.remove(key: saveKey)
         startGeneration()
     }
 
@@ -168,6 +179,7 @@ final class WordSearchModel {
         let token = generation
         let difficulty = self.difficulty
         let categoryID = self.categoryID
+        let seed = daily.map { game.dailySeed($0) }
         isGenerating = true
         showWin = false
         hint = nil
@@ -175,7 +187,7 @@ final class WordSearchModel {
         lastFoundIndex = nil
         clock = GameClock()
         Task { @MainActor [weak self] in
-            let state = await Self.generate(difficulty: difficulty, categoryID: categoryID)
+            let state = await Self.generate(difficulty: difficulty, categoryID: categoryID, seed: seed)
             guard let self, self.generation == token else { return }
             withAnimation(.easeOut(duration: 0.25)) {
                 self.state = state
@@ -190,9 +202,9 @@ final class WordSearchModel {
         }
     }
 
-    nonisolated private static func generate(difficulty: Difficulty, categoryID: String?) async -> Logic.State {
+    nonisolated private static func generate(difficulty: Difficulty, categoryID: String?, seed: UInt64?) async -> Logic.State {
         await Task.detached(priority: .userInitiated) {
-            var rng = SeededRandom()
+            var rng = seed.map { SeededRandom(seed: $0) } ?? SeededRandom()
             let category = categoryID.flatMap(WordCategory.named) ?? WordCategory.all.randomElement(using: &rng)!
             let puzzle = WordSearch.generate(category: category, difficulty: difficulty, using: &rng)
             return Logic.State(puzzle: puzzle, difficulty: difficulty)
@@ -208,9 +220,9 @@ final class WordSearchModel {
     private func persist() {
         guard let s = state else { return }
         if s.isComplete {
-            store.remove(key: game.saveKey)
+            store.remove(key: saveKey)
         } else if !s.found.isEmpty || s.hintsUsed > 0 || clock.elapsed() >= 5 {
-            store.save(Saved(state: s, clock: clock, categoryID: categoryID), key: game.saveKey)
+            store.save(Saved(state: s, clock: clock, categoryID: categoryID), key: saveKey)
         }
     }
 }

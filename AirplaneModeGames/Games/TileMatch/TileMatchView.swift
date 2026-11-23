@@ -2,7 +2,12 @@ import SwiftUI
 import GameLogic
 
 struct TileMatchView: View {
-    @State private var model = TileMatchModel()
+    @State private var model: TileMatchModel
+    @Environment(\.dismiss) private var dismiss
+
+    init(daily: Daily.Day? = nil) {
+        _model = State(initialValue: TileMatchModel(daily: daily))
+    }
     @Environment(\.reduceMotion) private var reduceMotion
 
     private var accent: Color { GameID.tileMatch.accent }
@@ -73,7 +78,7 @@ struct TileMatchView: View {
             .disabled(model.showWin || model.tilesLeft == 0)
             ToolButton(title: "Shuffle", systemImage: "shuffle") { shuffle() }
                 .disabled(model.showWin || model.tilesLeft < 2)
-            ToolButton(title: "New", systemImage: "arrow.clockwise") {
+            ToolButton(title: model.daily != nil ? "Restart" : "New", systemImage: "arrow.clockwise") {
                 withAnimation(.easeOut(duration: 0.2)) { model.newGame() }
             }
         }
@@ -90,22 +95,30 @@ struct TileMatchView: View {
     @ViewBuilder private var overlay: some View {
         if model.showWin {
             ResultOverlay(mood: .win, title: "Board Cleared!",
-                          subtitle: model.lastWinWasBest ? "New best time on \(model.layout.title)!" : "\(model.layout.title) · \(model.layout.layout.tileCount) tiles",
-                          details: [("Time", model.clock.elapsed().clockString),
-                                    ("Best", model.bestTime?.clockString ?? "–")],
+                          subtitle: model.daily == nil && model.lastWinWasBest ? "New best time on \(model.layout.title)!" : "\(model.layout.title) · \(model.layout.layout.tileCount) tiles",
+                          details: model.daily != nil
+                            ? [("Time", model.clock.elapsed().clockString),
+                               ("Streak", "🔥 \(DailyStore.shared.streak(.tileMatch))")]
+                            : [("Time", model.clock.elapsed().clockString),
+                               ("Best", model.bestTime?.clockString ?? "–")],
                           tint: accent) {
-                Button("Play Again") { withAnimation { model.newGame() } }
-                    .buttonStyle(PrimaryButtonStyle(color: accent))
-                Menu {
-                    ForEach(TileMatch.LayoutID.allCases) { id in
-                        Button { withAnimation { model.newGame(layout: id) } } label: {
-                            Label("\(id.title) · \(id.layout.tileCount)", systemImage: id.symbol)
+                if model.daily != nil {
+                    Button("Done") { dismiss() }
+                        .buttonStyle(PrimaryButtonStyle(color: accent))
+                } else {
+                    Button("Play Again") { withAnimation { model.newGame() } }
+                        .buttonStyle(PrimaryButtonStyle(color: accent))
+                    Menu {
+                        ForEach(TileMatch.LayoutID.allCases) { id in
+                            Button { withAnimation { model.newGame(layout: id) } } label: {
+                                Label("\(id.title) · \(id.layout.tileCount)", systemImage: id.symbol)
+                            }
                         }
+                    } label: {
+                        Text("Other Layout")
                     }
-                } label: {
-                    Text("Other Layout")
+                    .buttonStyle(SecondaryButtonStyle())
                 }
-                .buttonStyle(SecondaryButtonStyle())
             }
             .transition(.opacity)
         } else if model.showStuck {
@@ -125,7 +138,7 @@ struct TileMatchView: View {
                     }
                     .buttonStyle(SecondaryButtonStyle())
                     .disabled(!model.canUndo)
-                    Button("New Game") { withAnimation { model.newGame() } }
+                    Button(model.daily != nil ? "Restart" : "New Game") { withAnimation { model.newGame() } }
                         .buttonStyle(SecondaryButtonStyle())
                 }
             }

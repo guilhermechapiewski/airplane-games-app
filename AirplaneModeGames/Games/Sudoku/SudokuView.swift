@@ -2,7 +2,12 @@ import SwiftUI
 import GameLogic
 
 struct SudokuView: View {
-    @State private var model = SudokuModel()
+    @State private var model: SudokuModel
+    @Environment(\.dismiss) private var dismiss
+
+    init(daily: Daily.Day? = nil) {
+        _model = State(initialValue: SudokuModel(daily: daily))
+    }
     @FocusState private var focused: Bool
     @Environment(\.reduceMotion) private var reduceMotion
 
@@ -182,15 +187,24 @@ struct SudokuView: View {
             ResultOverlay(
                 mood: .win,
                 title: "Solved!",
-                subtitle: model.isNewBest ? "New best \(model.difficulty.title.lowercased()) time!"
+                subtitle: model.daily != nil ? "Today's \(model.difficulty.title.lowercased()) puzzle is done."
+                    : model.isNewBest ? "New best \(model.difficulty.title.lowercased()) time!"
                     : "\(model.difficulty.title) puzzle complete.",
-                details: [
+                details: model.daily != nil ? [
+                    ("Time", time.clockString),
+                    ("Streak", "🔥 \(DailyStore.shared.streak(.sudoku))"),
+                    ("Hints", "\(game.hintsUsed)"),
+                ] : [
                     ("Time", time.clockString),
                     ("Best", (model.bestTime ?? time).clockString),
                     ("Hints", "\(game.hintsUsed)"),
                 ],
                 tint: SudokuPalette.player
             ) {
+                if model.daily != nil {
+                    Button("Done") { dismiss() }
+                        .buttonStyle(PrimaryButtonStyle(color: SudokuPalette.player))
+                } else {
                 Button("Play Again") { model.newGame(model.difficulty) }
                     .buttonStyle(PrimaryButtonStyle(color: SudokuPalette.player))
                 Menu {
@@ -206,6 +220,7 @@ struct SudokuView: View {
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
                         .background(Theme.well, in: Capsule())
+                }
                 }
             }
             .transition(.opacity)

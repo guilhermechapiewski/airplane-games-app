@@ -191,6 +191,9 @@ App Store Connect → your app → **iOS App 1.0** (left column).
    • Snake: three speeds, walls or wrap-around, swipe or D-pad
    • Hangman: a friendly hot-air balloon version, with categories and pass & play
 
+   A NEW PUZZLE EVERY DAY
+   Daily Sudoku, Word Guess, Solitaire, Minesweeper, Word Search and Tile Match: the same puzzle for everyone that day, made right on your device. Keep your streak going, even at 35,000 feet.
+
    MADE FOR TRAVEL
    • Works in airplane mode: every game, every time
    • Pick up where you left off: every game saves automatically

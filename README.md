@@ -20,6 +20,8 @@ No ads. No accounts. No tracking. No internet connection — ever.
 | **Snake** | Fluid motion, 3 speeds, walls or wrap-around, swipe or D-pad |
 | **Hangman** | Friendly hot-air balloon illustration, categories, pass & play |
 
+Sudoku, Word Guess, Solitaire, Minesweeper, Word Search and Tile Match have a **daily puzzle**,
+generated from the date (the same for everyone that day, no network) with day streaks.
 Every game auto-saves and resumes, keeps local statistics, supports light & dark mode,
 iPhone & iPad, VoiceOver, and has sound effects and haptics that can be turned off.
 Games with an opponent can be played against the computer **or** a friend on the same device.

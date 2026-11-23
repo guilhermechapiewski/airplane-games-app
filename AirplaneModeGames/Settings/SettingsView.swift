@@ -39,7 +39,10 @@ struct SettingsView: View {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
             }
             .confirmationDialog("Reset all statistics?", isPresented: $confirmReset, titleVisibility: .visible) {
-                Button("Reset Statistics", role: .destructive) { StatsStore.shared.reset() }
+                Button("Reset Statistics", role: .destructive) {
+                    StatsStore.shared.reset()
+                    DailyStore.shared.reset()
+                }
             } message: {
                 Text("This permanently clears scores, times and streaks for every game.")
             }

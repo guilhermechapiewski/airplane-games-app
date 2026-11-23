@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var confirmNewGame: GameID?
     /// A game the player long-pressed and chose to discard, awaiting confirmation.
     @State private var confirmDiscard: GameID?
+    private var daily = DailyStore.shared
 
     private let columns = [GridItem(.adaptive(minimum: 158, maximum: 260), spacing: 14)]
 
@@ -31,10 +32,18 @@ struct HomeView: View {
                 }
                 LazyVGrid(columns: columns, spacing: 14) {
                     ForEach(GameID.allCases) { game in
-                        GameCard(game: game, inProgress: inProgress.contains(game)) {
+                        GameCard(game: game, inProgress: inProgress.contains(game),
+                                 dailyPending: game.hasDaily && !daily.isDone(game, on: daily.today)) {
                             openFromCard(game)
                         }
-                        .contextMenu { if inProgress.contains(game) { discardButton(game) } }
+                        .contextMenu {
+                            if game.hasDaily {
+                                Button { path.append(GameRoute(game: game, launch: .daily)) } label: {
+                                    Label("Today's Puzzle", systemImage: "calendar")
+                                }
+                            }
+                            if inProgress.contains(game) { discardButton(game) }
+                        }
                     }
                 }
             }
@@ -137,6 +146,8 @@ struct HomeView: View {
 struct GameCard: View {
     let game: GameID
     let inProgress: Bool
+    /// Today's daily puzzle hasn't been played yet.
+    var dailyPending = false
     let action: () -> Void
 
     var body: some View {
@@ -149,11 +160,19 @@ struct GameCard: View {
                         .frame(width: 48, height: 48)
                         .background(.white.opacity(0.22), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     Spacer()
-                    if inProgress {
-                        Image(systemName: "play.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(.white.opacity(0.95))
-                            .accessibilityLabel("In progress")
+                    HStack(spacing: 6) {
+                        if dailyPending {
+                            Image(systemName: "calendar.badge.clock")
+                                .font(.title3)
+                                .foregroundStyle(.white.opacity(0.95))
+                                .accessibilityLabel("Today's puzzle is waiting")
+                        }
+                        if inProgress {
+                            Image(systemName: "play.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(.white.opacity(0.95))
+                                .accessibilityLabel("In progress")
+                        }
                     }
                 }
                 Spacer(minLength: 8)
@@ -192,7 +211,7 @@ struct GameCard: View {
         }
         .buttonStyle(PressableStyle(scale: 0.96))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(game.title). \(game.tagline)\(inProgress ? ". In progress" : "")")
+        .accessibilityLabel("\(game.title). \(game.tagline)\(inProgress ? ". In progress" : "")\(dailyPending ? ". Today's puzzle is waiting" : "")")
         .accessibilityAddTraits(.isButton)
         .accessibilityIdentifier("game.\(game.rawValue)")
     }

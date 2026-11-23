@@ -2,7 +2,12 @@ import SwiftUI
 import GameLogic
 
 struct WordSearchView: View {
-    @State private var model = WordSearchModel()
+    @State private var model: WordSearchModel
+    @Environment(\.dismiss) private var dismiss
+
+    init(daily: Daily.Day? = nil) {
+        _model = State(initialValue: WordSearchModel(daily: daily))
+    }
     @State private var showThemes = false
     @Environment(\.reduceMotion) private var reduceMotion
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -103,16 +108,24 @@ struct WordSearchView: View {
         if model.showWin, let state = model.state {
             let time = model.clock.elapsed()
             ResultOverlay(mood: .win, title: "All found!",
-                          subtitle: model.isNewBest ? "New best time for \(model.difficulty.title)!"
+                          subtitle: model.daily == nil && model.isNewBest ? "New best time for \(model.difficulty.title)!"
                                                     : "You found all \(state.puzzle.placements.count) \(state.puzzle.title.lowercased()) words.",
-                          details: [("Time", time.clockString), ("Best", (model.bestTime ?? time).clockString),
-                                    ("Hints", "\(state.hintsUsed)")],
+                          details: model.daily != nil
+                            ? [("Time", time.clockString), ("Streak", "🔥 \(DailyStore.shared.streak(.wordSearch))"),
+                               ("Hints", "\(state.hintsUsed)")]
+                            : [("Time", time.clockString), ("Best", (model.bestTime ?? time).clockString),
+                               ("Hints", "\(state.hintsUsed)")],
                           tint: Self.ink) {
-                Button("Play Again") { model.newGame() }
-                    .buttonStyle(PrimaryButtonStyle(color: Self.buttonColor))
-                    .accessibilityIdentifier("playAgain")
-                Button("Choose Theme") { showThemes = true }
-                    .buttonStyle(SecondaryButtonStyle())
+                if model.daily != nil {
+                    Button("Done") { dismiss() }
+                        .buttonStyle(PrimaryButtonStyle(color: Self.buttonColor))
+                } else {
+                    Button("Play Again") { model.newGame() }
+                        .buttonStyle(PrimaryButtonStyle(color: Self.buttonColor))
+                        .accessibilityIdentifier("playAgain")
+                    Button("Choose Theme") { showThemes = true }
+                        .buttonStyle(SecondaryButtonStyle())
+                }
             }
             .transition(.opacity)
         }
