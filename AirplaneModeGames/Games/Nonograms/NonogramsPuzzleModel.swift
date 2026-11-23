@@ -27,6 +27,8 @@ final class NonogramsPuzzleModel {
     private(set) var checkMessage: String?
     /// Cell revealed by the latest hint.
     private(set) var hinted: GridPoint?
+    /// The hint being explained; the board changes only when the player taps Show Answer.
+    private(set) var hintPreview: Logic.Hint?
 
     private var stroke: Logic.Stroke?
     private var strokeBase: Logic.Board?
@@ -140,6 +142,7 @@ final class NonogramsPuzzleModel {
 
     func setTool(_ newTool: Logic.Tool) {
         guard newTool != tool else { return }
+        dismissHint()
         tool = newTool
         persist()
     }
@@ -152,18 +155,48 @@ final class NonogramsPuzzleModel {
         persist()
     }
 
+    /// Explains the next step: highlights the deciding row or column and its square. The mark
+    /// is written only when the player asks for it (`showHintAnswer`).
     func hint() {
-        guard !isSolved, let hint = board.hint(for: puzzle) else { return }
+        guard !isSolved, hintPreview == nil, let hint = board.explainedHint(for: puzzle) else { return }
         clearTransientMarks()
-        let base = board
-        board[hint.point] = hint.mark
-        history.append(base)
         hintsUsed += 1
         hinted = hint.point
         focus = hint.point
+        hintPreview = hint
         clock.start()
+        Feedback.play(.select)
+        persist()
+    }
+
+    /// Writes the explained hint's mark.
+    func showHintAnswer() {
+        guard !isSolved, let hint = hintPreview else { return }
+        hintPreview = nil
+        let base = board
+        board[hint.point] = hint.mark
+        history.append(base)
+        hinted = hint.point
+        focus = hint.point
         Feedback.play(.pop)
         afterChange(from: base)
+    }
+
+    /// Whether a row is highlighted: the focused square's row, or only the hint's deciding line.
+    func highlightsRow(_ r: Int) -> Bool {
+        if let hint = hintPreview { return hint.line.map { $0 == .row(r) } ?? (hint.point.row == r) }
+        return focus?.row == r
+    }
+
+    func highlightsColumn(_ c: Int) -> Bool {
+        if let hint = hintPreview { return hint.line.map { $0 == .column(c) } ?? (hint.point.col == c) }
+        return focus?.col == c
+    }
+
+    func dismissHint() {
+        guard hintPreview != nil else { return }
+        hintPreview = nil
+        hinted = nil
     }
 
     /// Briefly highlights mistakes, or confirms there are none.
@@ -219,6 +252,7 @@ final class NonogramsPuzzleModel {
             checkMessage = nil
         }
         hinted = nil
+        hintPreview = nil
     }
 
     private func afterChange(from base: Logic.Board) {

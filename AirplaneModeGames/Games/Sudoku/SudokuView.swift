@@ -235,7 +235,7 @@ struct SudokuView: View {
             ]),
             .init(title: "Help", symbol: "lightbulb", points: [
                 "Repeated numbers in a row, column or box turn red.",
-                "Hint fills in the next cell you could logically solve and names the technique.",
+                "Hint explains the next square you can work out, and why. Tap Show Answer to fill it in.",
                 "Undo steps back through every move. The timer pauses when you leave.",
                 "With a keyboard: 1–9 to enter, arrows to move, Delete to erase, N for notes.",
             ]),

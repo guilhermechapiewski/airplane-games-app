@@ -59,8 +59,23 @@ final class NonogramsUITests: XCTestCase {
         cell(app, 0, 0).tap() // (0,0) is blank in the heart.
         app.buttons["Check"].tap()
         XCTAssertEqual(value(cell(app, 0, 0)), "Filled, mistake")
+        // The hint explains first, without changing the board...
         app.buttons["Hint"].tap()
+        let explanation = app.staticTexts["hintExplanation"]
+        XCTAssertTrue(explanation.waitForExistence(timeout: 3))
+        XCTAssertEqual(app.staticTexts["Check This Square"].exists, true)
+        XCTAssertEqual(value(cell(app, 0, 0)), "Filled")
+        // ...and Show Answer corrects the square.
+        app.buttons["hintShowAnswer"].tap()
         XCTAssertEqual(value(cell(app, 0, 0)), "Crossed out")
+        XCTAssertTrue(explanation.waitForNonExistence(timeout: 3))
+
+        // A logical hint names its row or column.
+        app.buttons["Hint"].tap()
+        XCTAssertTrue(explanation.waitForExistence(timeout: 3))
+        XCTAssertTrue(explanation.label.contains("clue is"), explanation.label)
+        app.buttons["hintClose"].tap()
+        XCTAssertTrue(explanation.waitForNonExistence(timeout: 3))
     }
 
     func testSolvingRevealsPicture() {

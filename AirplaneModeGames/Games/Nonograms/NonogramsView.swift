@@ -152,7 +152,7 @@ struct NonogramsView: View {
             ]),
             .init(title: "Help when stuck", symbol: "lightbulb", points: [
                 "Check briefly highlights any cells that don't match the picture.",
-                "Hint reveals one cell you can work out from what you already have.",
+                "Hint explains one square you can work out from what you already have, then Show Answer marks it.",
                 "Every puzzle can be solved by logic alone — no guessing needed.",
             ]),
         ]

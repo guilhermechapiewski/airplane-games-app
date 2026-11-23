@@ -15,7 +15,7 @@ No ads. No accounts. No tracking. No internet connection — ever.
 | **Minesweeper** | No-guess boards (always solvable by logic), safe first tap, chording, flag mode, pinch to zoom |
 | **Chess** | vs. computer (5 levels) or pass & play, full rules, move list |
 | **Word Guess** | 5-letter word in 6 tries, hard mode, high-contrast colors, pass & play |
-| **Nonograms** | 44 original picture puzzles, all solvable by logic alone |
+| **Nonograms** | 44 original picture puzzles, all solvable by logic alone, explained hints |
 | **Word Search** | 15 themes, 3 sizes, drag selection that snaps to 8 directions |
 | **Snake** | Fluid motion, 3 speeds, walls or wrap-around, swipe or D-pad |
 | **Hangman** | Friendly hot-air balloon illustration, categories, pass & play |

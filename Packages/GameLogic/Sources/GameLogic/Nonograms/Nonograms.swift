@@ -189,8 +189,16 @@ public enum Nonograms {
         /// A hint: a cell whose correct mark can be deduced from the player's correct marks
         /// with a single line-solving step, preferring to fix mistakes first.
         public func hint(for puzzle: Puzzle) -> (point: GridPoint, mark: Mark)? {
+            explainedHint(for: puzzle).map { ($0.point, $0.mark) }
+        }
+
+        /// The next hint with its reasoning: a mistake to fix, or a cell that one row or column
+        /// decides (given the player's correct marks), preferring picture cells.
+        public func explainedHint(for puzzle: Puzzle) -> Hint? {
             if let wrong = mistakes(in: puzzle).first {
-                return (wrong, puzzle[wrong] ? .filled : .crossed)
+                return Hint(kind: .mistake, point: wrong, mark: puzzle[wrong] ? .filled : .crossed, line: nil,
+                            title: "Check This Square",
+                            explanation: "This square is marked wrong: it doesn't match the picture.")
             }
             // What the player has established (only correct marks count; there are none wrong here).
             let known: [[Solver.Cell]] = (0..<height).map { r in
@@ -203,31 +211,112 @@ public enum Nonograms {
                 }
             }
             func correctMark(_ p: GridPoint) -> Mark { puzzle[p] ? .filled : .crossed }
-            var candidates: [GridPoint] = []
+            var candidates: [(point: GridPoint, line: Line)] = []
             for r in 0..<height {
-                if let line = Solver.solveLine(clue: puzzle.rowClues[r], line: known[r]) {
-                    for c in 0..<width where known[r][c] == .unknown && line[c] != .unknown {
-                        candidates.append(GridPoint(row: r, col: c))
+                if let solved = Solver.solveLine(clue: puzzle.rowClues[r], line: known[r]) {
+                    for c in 0..<width where known[r][c] == .unknown && solved[c] != .unknown {
+                        candidates.append((GridPoint(row: r, col: c), .row(r)))
                     }
                 }
             }
             for c in 0..<width {
                 let column = (0..<height).map { known[$0][c] }
-                if let line = Solver.solveLine(clue: puzzle.columnClues[c], line: column) {
-                    for r in 0..<height where column[r] == .unknown && line[r] != .unknown {
-                        candidates.append(GridPoint(row: r, col: c))
+                if let solved = Solver.solveLine(clue: puzzle.columnClues[c], line: column) {
+                    for r in 0..<height where column[r] == .unknown && solved[r] != .unknown {
+                        candidates.append((GridPoint(row: r, col: c), .column(c)))
                     }
                 }
             }
             // Prefer revealing a picture cell; it's the more helpful kind of hint.
-            if let p = candidates.first(where: { puzzle[$0] }) ?? candidates.first {
-                return (p, correctMark(p))
+            if let pick = candidates.first(where: { puzzle[$0.point] }) ?? candidates.first {
+                let line = pick.line
+                let clue = line.clue(in: puzzle)
+                let cells = line.cells(width: width, height: height)
+                // Would the clue decide this cell on an empty line? If not, earlier marks matter.
+                let blank = [Solver.Cell](repeating: .unknown, count: cells.count)
+                let position = cells.firstIndex(of: pick.point)!
+                let onItsOwn = Solver.solveLine(clue: clue, line: blank)?[position] != .unknown
+                let mark = correctMark(pick.point)
+                return Hint(kind: .deduction, point: pick.point, mark: mark, line: line, title: line.title,
+                            explanation: Hint.explain(line: line, clue: clue, filled: mark == .filled,
+                                                      needsMarks: !onItsOwn))
             }
             // Fallback (e.g. the player has crossed cells that aren't needed): any unmarked picture cell.
-            if let p = allPoints.first(where: { self[$0] == .empty && puzzle[$0] }) {
-                return (p, .filled)
+            let fallback = allPoints.first(where: { self[$0] == .empty && puzzle[$0] }).map { ($0, Mark.filled) }
+                ?? allPoints.first(where: { self[$0] == .empty && !puzzle[$0] }).map { ($0, Mark.crossed) }
+            return fallback.map { point, mark in
+                Hint(kind: .reveal, point: point, mark: mark, line: nil, title: "Answer",
+                     explanation: "No single row or column decides a square right now, so this hint just shows "
+                        + "one from the picture.")
             }
-            return allPoints.first(where: { self[$0] == .empty && !puzzle[$0] }).map { ($0, .crossed) }
+        }
+    }
+
+    /// A row or column of the board.
+    public enum Line: Hashable, Sendable {
+        case row(Int)
+        case column(Int)
+
+        public func cells(width: Int, height: Int) -> [GridPoint] {
+            switch self {
+            case .row(let r): (0..<width).map { GridPoint(row: r, col: $0) }
+            case .column(let c): (0..<height).map { GridPoint(row: $0, col: c) }
+            }
+        }
+
+        public func clue(in puzzle: Puzzle) -> [Int] {
+            switch self {
+            case .row(let r): puzzle.rowClues[r]
+            case .column(let c): puzzle.columnClues[c]
+            }
+        }
+
+        /// "Row 3" or "Column 5" (1-based, as players count).
+        public var title: String {
+            switch self {
+            case .row(let r): "Row \(r + 1)"
+            case .column(let c): "Column \(c + 1)"
+            }
+        }
+
+        var noun: String {
+            switch self {
+            case .row: "row"
+            case .column: "column"
+            }
+        }
+    }
+
+    /// A hint, explained: which square, its correct mark, and why.
+    public struct Hint: Equatable, Sendable {
+        public enum Kind: Equatable, Sendable {
+            /// One row or column decides the square.
+            case deduction
+            /// The square is marked wrong; the answer corrects it.
+            case mistake
+            /// Nothing single-line decides a square; the answer is simply shown.
+            case reveal
+        }
+
+        public let kind: Kind
+        public let point: GridPoint
+        public let mark: Mark
+        /// The row or column that decides it (deductions only).
+        public let line: Line?
+        public let title: String
+        public let explanation: String
+
+        static func explain(line: Line, clue: [Int], filled: Bool, needsMarks: Bool) -> String {
+            let noun = line.noun
+            let given = needsMarks ? ", given the squares already marked," : ""
+            if clue.isEmpty || clue == [0] {
+                return "\(line.title)'s clue is 0: nothing in this \(noun) is filled, so this square stays empty."
+            }
+            let clueText = clue.map(String.init).joined(separator: " ")
+            let blocks = clue.count == 1 ? "that block" : "those blocks"
+            return filled
+                ? "\(line.title)'s clue is \(clueText). Every way \(blocks) can fit in this \(noun)\(given) covers this square, so it's filled."
+                : "\(line.title)'s clue is \(clueText). No way \(blocks) can fit in this \(noun)\(given) reaches this square, so it stays empty."
         }
     }
 

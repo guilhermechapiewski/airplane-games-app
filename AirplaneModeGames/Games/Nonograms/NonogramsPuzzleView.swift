@@ -78,7 +78,12 @@ struct NonogramsPuzzleView: View {
     // MARK: Controls
 
     @ViewBuilder private var controls: some View {
-        if model.isSolved && !model.justSolved {
+        if let hint = model.hintPreview {
+            HintCard(title: hint.title, explanation: hint.explanation,
+                     onAnswer: { withAnimation(.easeOut(duration: 0.2)) { model.showHintAnswer() } },
+                     onClose: { withAnimation(.easeOut(duration: 0.2)) { model.dismissHint() } })
+                .frame(maxWidth: 560)
+        } else if model.isSolved && !model.justSolved {
             HStack(spacing: 12) {
                 Button("Play Again") { withAnimation { model.restart() } }
                     .buttonStyle(SecondaryButtonStyle())

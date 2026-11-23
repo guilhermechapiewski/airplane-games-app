@@ -49,7 +49,7 @@ struct NonogramBoard: View {
                 .frame(maxHeight: layout.top, alignment: .bottom)
                 .background(alignment: .bottom) {
                     RoundedRectangle(cornerRadius: layout.cell * 0.25, style: .continuous)
-                        .fill(model.focus?.col == c ? GameID.nonograms.accent.opacity(0.16) : .clear)
+                        .fill(model.highlightsColumn(c) ? GameID.nonograms.accent.opacity(0.16) : .clear)
                         .padding(.horizontal, layout.cell * 0.06)
                 }
                 .opacity(model.isSolved ? 0.35 : done ? 0.32 : 1)
@@ -77,7 +77,7 @@ struct NonogramBoard: View {
                 .frame(maxWidth: layout.left, alignment: .trailing)
                 .background(alignment: .trailing) {
                     RoundedRectangle(cornerRadius: layout.cell * 0.25, style: .continuous)
-                        .fill(model.focus?.row == r ? GameID.nonograms.accent.opacity(0.16) : .clear)
+                        .fill(model.highlightsRow(r) ? GameID.nonograms.accent.opacity(0.16) : .clear)
                         .padding(.vertical, layout.cell * 0.06)
                 }
                 .opacity(model.isSolved ? 0.35 : done ? 0.32 : 1)
@@ -120,7 +120,7 @@ struct NonogramBoard: View {
                         ForEach(0..<puzzle.width, id: \.self) { c in
                             let p = GridPoint(row: r, col: c)
                             NonoCellView(mark: model.board[p], size: layout.cell,
-                                         focused: model.focus.map { $0.row == r || $0.col == c } ?? false,
+                                         focused: model.highlightsRow(r) || model.highlightsColumn(c),
                                          mistake: model.flagged.contains(p), hinted: model.hinted == p,
                                          solved: model.isSolved, color: color,
                                          revealDelay: model.justSolved && !reduceMotion ? Double(r + c) * 0.035 : 0,

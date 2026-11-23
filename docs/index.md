@@ -15,7 +15,7 @@ no accounts, no in-app purchases and no tracking.
 | Game | |
 |------|---|
 | **2048** | Slide and merge tiles, with undo |
-| **Sudoku** | Four difficulty levels, notes and hints |
+| **Sudoku** | Four difficulty levels, notes, and hints that explain the next step |
 | **Solitaire** | Classic Klondike, draw 1 or draw 3, with auto-complete |
 | **Block Puzzle** | Fit blocks on the board and clear rows and columns |
 | **Tile Match** | Match pairs of free tiles across six original layouts |

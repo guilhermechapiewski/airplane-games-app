@@ -179,14 +179,14 @@ App Store Connect → your app → **iOS App 1.0** (left column).
 
    12 GAMES IN ONE APP
    • 2048: slide and merge tiles, with undo
-   • Sudoku: four difficulty levels, notes, and hints that name the solving technique
+   • Sudoku: four difficulty levels, notes, and hints that explain the next step
    • Solitaire: classic Klondike, draw 1 or draw 3, with auto-complete
    • Block Puzzle: fit blocks on the board and clear rows and columns
    • Tile Match: match pairs of free tiles across six original layouts
    • Minesweeper: every board solvable by logic, never a 50/50 guess, with flag mode and pinch to zoom
    • Chess: play the computer at five levels, or a friend on the same device
    • Word Guess: find the five-letter word in six tries, alone or with a friend
-   • Nonograms: 44 original picture puzzles, all solvable by logic alone
+   • Nonograms: 44 original picture puzzles, all solvable by logic, with hints that explain why
    • Word Search: 15 themes in three sizes
    • Snake: three speeds, walls or wrap-around, swipe or D-pad
    • Hangman: a friendly hot-air balloon version, with categories and pass & play
