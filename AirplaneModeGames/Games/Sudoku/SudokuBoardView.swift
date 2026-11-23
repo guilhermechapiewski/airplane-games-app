@@ -152,6 +152,8 @@ struct SudokuCellView: View {
     let wave: Int
     let waveDelay: Double
     let reduceMotion: Bool
+    /// "Differentiate Without Color": conflicts also get an underline, not just red.
+    @Environment(\.differentiateWithoutColor) private var differentiateWithoutColor
 
     var body: some View {
         ZStack {
@@ -166,6 +168,14 @@ struct SudokuCellView: View {
                         SpringKeyframe(CGFloat(1), duration: 0.22)
                     }
                 }
+            if differentiateWithoutColor && isConflict && !isGiven && value != 0 {
+                Capsule()
+                    .fill(SudokuPalette.conflict)
+                    .frame(width: size * 0.42, height: max(2, size * 0.07))
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .padding(.bottom, size * 0.1)
+                    .accessibilityHidden(true)
+            }
         }
         .frame(width: size, height: size)
     }

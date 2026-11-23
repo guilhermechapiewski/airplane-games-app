@@ -161,8 +161,8 @@ struct GameCard: View {
                     .font(.headline.weight(.bold))
                     .foregroundStyle(.white)
                 Text(game.tagline)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.85))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
             }
@@ -177,6 +177,14 @@ struct GameCard: View {
                             .foregroundStyle(.white.opacity(0.1))
                             .offset(x: 18, y: 18)
                             .accessibilityHidden(true)
+                    }
+                    // Darkens the lower part behind the title so white text stays readable on the
+                    // brightest cards (yellow, orange): at least 3:1 for the bold title and 4.5:1 (WCAG
+                    // AA) for the caption on every card.
+                    .overlay {
+                        LinearGradient(stops: [.init(color: .clear, location: 0.35),
+                                               .init(color: .black.opacity(0.55), location: 1)],
+                                       startPoint: .top, endPoint: .bottom)
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                     .shadow(color: game.accent.opacity(0.35), radius: 10, y: 6)

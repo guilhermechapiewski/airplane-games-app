@@ -27,6 +27,7 @@ struct AboutView: View {
                         .foregroundStyle(.secondary)
                     Link("github.com/guilhermechapiewski/airplane-games-app", destination: Self.repositoryURL)
                         .font(.footnote)
+                        .accessibilityLabel("Source code on GitHub")
                 }
             }
             Section {

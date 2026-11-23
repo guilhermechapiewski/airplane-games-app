@@ -52,6 +52,11 @@ put a game-local helper in your own folder instead and mention the need in your 
 - [ ] Polished, original visuals with tasteful animations (spring/easeOut, 0.1–0.35s). Respect
       Reduce Motion via `@Environment(\.reduceMotion)` (not `\.accessibilityReduceMotion`; UI tests
       force it on so looping animations never stall XCUITest).
+- [ ] Color is never the only signal: when `@Environment(\.differentiateWithoutColor)` is on, add a
+      shape or mark (Word Guess ✓/↔, Sudoku conflict underline). Preview with `-differentiateWithoutColor`.
+- [ ] Every drag tracks a `@GestureState` (`.tracking(_:)` + `.onGestureCancelled`) so a cancelled
+      gesture never leaves state stuck.
+- [ ] `AccessibilityAuditTests` passes for the game (it opens every game automatically).
 - [ ] Looks great in **light and dark mode**, on small iPhones (iPhone 17e / SE size), large
       iPhones, and **iPad** (center the board, cap its width, use space well).
 - [ ] VoiceOver: meaningful labels/values for cells and controls; custom actions where gestures

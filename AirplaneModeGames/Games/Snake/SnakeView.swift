@@ -110,12 +110,15 @@ struct SnakeView: View {
             StatPill(title: "Best", value: "\(model.best)")
             Spacer(minLength: 0)
             VStack(alignment: .trailing, spacing: 2) {
-                Label(model.speed.title, systemImage: Self.symbol(for: model.speed))
+                Label {
+                    Text(model.speed.title).foregroundStyle(.primary)
+                } icon: {
+                    Image(systemName: Self.symbol(for: model.speed)).foregroundStyle(accent)
+                }
                 Text(model.wallMode == .wrap ? "Wrap-around" : "Walls")
                     .foregroundStyle(.secondary)
             }
             .font(.caption.weight(.semibold))
-            .foregroundStyle(accent)
             .accessibilityElement(children: .combine)
         }
         .animation(.snappy, value: model.state.score)

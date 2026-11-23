@@ -365,6 +365,8 @@ private struct LetterTile: View {
 
     @State private var angle: Double = 0
     @State private var showsResult: Bool
+    /// "Differentiate Without Color": add a shape to each result so color isn't the only signal.
+    @Environment(\.differentiateWithoutColor) private var differentiateWithoutColor
     @State private var pop = 0
 
     init(letter: Character?, state: WordGuess.LetterState?, revealDelay: Double, bounceTrigger: Int,
@@ -380,6 +382,15 @@ private struct LetterTile: View {
         _showsResult = State(initialValue: state != nil)
     }
 
+    /// Right letter, right spot: a check. Right letter, wrong spot: arrows. Not in the word: none.
+    static func symbol(_ state: WordGuess.LetterState) -> String? {
+        switch state {
+        case .correct: "checkmark"
+        case .present: "arrow.left.arrow.right"
+        default: nil
+        }
+    }
+
     var body: some View {
         let revealed = showsResult ? state : nil
         ZStack {
@@ -393,6 +404,15 @@ private struct LetterTile: View {
                     .font(.system(size: size * 0.52, weight: .bold, design: .rounded))
                     .foregroundStyle(revealed.map { palette.text($0) } ?? .primary)
                     .minimumScaleFactor(0.5)
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            if differentiateWithoutColor, let symbol = revealed.flatMap(Self.symbol) {
+                Image(systemName: symbol)
+                    .font(.system(size: size * 0.2, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .padding(size * 0.07)
+                    .accessibilityHidden(true)
             }
         }
         .frame(width: size, height: size)
