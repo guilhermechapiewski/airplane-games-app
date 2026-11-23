@@ -8,7 +8,13 @@ title: Airplane Games
 Made for long flights, train rides and anywhere without Wi‑Fi. Free, with no ads,
 no accounts, no in-app purchases and no tracking.
 
-*Coming soon to the App Store for iPhone and iPad.*
+<p>
+  <a href="https://apps.apple.com/app/id6838496554">
+    <img src="images/app-store-badge.svg" alt="Download on the App Store" height="54">
+  </a>
+</p>
+
+For iPhone and iPad.
 
 ## The games
 

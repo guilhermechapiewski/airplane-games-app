@@ -215,8 +215,8 @@ App Store Connect → your app → **iOS App 1.0** (left column).
 ## Step 11. After approval
 
 1. **Release** it (if you chose Manual).
-2. Replace "Coming soon" on the website (`docs/index.md`) with the App Store link,
-   `https://apps.apple.com/app/id<the Apple ID on App Information>`. The Apple ID is public
-   once the app is live.
+2. *Done 2026-11-23:* the website shows Apple's "Download on the App Store" badge, linking to
+   https://apps.apple.com/app/id6838496554 (the Apple ID on App Information). The link works
+   once Apple releases the app.
 3. **Accessibility Nutrition Labels** (optional): **App Accessibility** → **Get Started**.
    Declare only what you checked on a device (VoiceOver, Dark Interface, Reduced Motion...).
