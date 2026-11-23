@@ -22,6 +22,7 @@ final class AppSmokeTests: XCTestCase {
         app.buttons["aboutLink"].tap()
         XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.descendants(matching: .any)["reportBugLink"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.descendants(matching: .any)["privacyPolicyLink"].exists, "App Store 5.1.1(i): privacy policy reachable in the app")
         app.navigationBars["About"].buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
         app.buttons["Done"].tap()

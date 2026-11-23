@@ -3,6 +3,8 @@ import SwiftUI
 struct AboutView: View {
     private static let repositoryURL = URL(string: "https://github.com/guilhermechapiewski/airplane-games-app")!
     private static let issuesURL = URL(string: "https://github.com/guilhermechapiewski/airplane-games-app/issues/new")!
+    /// App Store Review Guideline 5.1.1(i): the privacy policy must be reachable inside the app too.
+    private static let privacyPolicyURL = URL(string: "https://guilhermechapiewski.github.io/airplane-games-app/privacy/")!
 
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -20,6 +22,9 @@ struct AboutView: View {
                     Text("Airplane Games works entirely offline. No Wi‑Fi needed, no ads, no accounts, no analytics and no network access. Your games and statistics never leave this device.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+                    Link("Privacy Policy", destination: Self.privacyPolicyURL)
+                        .font(.footnote.weight(.semibold))
+                        .accessibilityIdentifier("privacyPolicyLink")
                 }
                 notice("Open source", systemImage: "chevron.left.forwardslash.chevron.right") {
                     Text("Released under the MIT License.")

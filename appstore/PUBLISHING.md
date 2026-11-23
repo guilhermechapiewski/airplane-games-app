@@ -24,7 +24,10 @@ A checklist for the owner. Do the steps in order and tick them off.
 Already done in the code, nothing to do:
 - The app declares no special encryption (`ITSAppUsesNonExemptEncryption = NO`), so there are
   no export-compliance questions.
-- The privacy manifest (`PrivacyInfo.xcprivacy`) declares no tracking and no collected data.
+- The privacy manifest (`PrivacyInfo.xcprivacy`) declares no tracking and no collected data. The
+  only "required reason" API the app uses is UserDefaults (declared, reason CA92.1).
+- The privacy policy is linked inside the app too (Settings → About → Privacy Policy), as
+  Guideline 5.1.1(i) requires, not only in App Store Connect.
 - The app is free with no in-app purchases, so no Paid Apps agreement, bank or tax forms are
   needed. (The Free Apps agreement is accepted when you join the program.)
 
