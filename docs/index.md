@@ -4,7 +4,7 @@ title: Airplane Games
 
 # Airplane Games ✈️
 
-**Twelve beautifully made games that work completely offline.**
+**Beautifully made games that work completely offline.**
 Made for long flights, train rides and anywhere without Wi‑Fi. Free, with no ads,
 no accounts, no in-app purchases and no tracking.
 

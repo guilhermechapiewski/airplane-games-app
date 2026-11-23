@@ -58,7 +58,7 @@ App Store Connect → your app → **General** → **App Information**.
 
 1. **Subtitle** (30):
    ```
-   12 offline games. No ads.
+   Puzzles, cards & more. No ads.
    ```
 2. **Category**: Primary **Games**, with subcategories **Puzzle** and **Board**. Secondary:
    **Entertainment** (optional).
@@ -139,13 +139,13 @@ App Store Connect → your app → **iOS App 1.0** (left column).
    App Store Connect scales these down for the other devices.
 2. **Promotional Text** (170):
    ```
-   Twelve beautifully made games that never need Wi-Fi: Sudoku, Solitaire, Chess, 2048, Word Guess and more. Free, with no ads, no accounts and no tracking.
+   Beautifully made games that never need Wi-Fi: Sudoku, Solitaire, Chess, 2048, Word Guess and more. Free, with no ads, no accounts and no tracking.
    ```
 3. **Description** (4000):
    ```
-   Airplane Games is a collection of twelve polished games that work completely offline. Made for long flights, train rides and anywhere without Wi-Fi: no ads, no accounts, no tracking and nothing to download once it's installed.
+   Airplane Games is a collection of polished games that work completely offline. Made for long flights, train rides and anywhere without Wi-Fi: no ads, no accounts, no tracking and nothing to download once it's installed.
 
-   12 GAMES IN ONE APP
+   THE GAMES
    • 2048: slide and merge tiles, with undo
    • Sudoku: four difficulty levels, notes, and hints that explain the next step
    • Solitaire: classic Klondike, draw 1 or draw 3, with auto-complete

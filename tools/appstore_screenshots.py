@@ -37,7 +37,7 @@ DEVICES = {
 
 # (file key, caption, gradient colors from GameID.colors, launch arguments, seconds to settle)
 SHOTS = [
-    ("01-home", "12 games. No Wi‑Fi needed.", ("#6EC6FF", "#2F8FD8"), [], 3),
+    ("01-home", "Great games. No Wi‑Fi needed.", ("#6EC6FF", "#2F8FD8"), [], 3),
     ("02-sudoku", "Sudoku from easy to expert", ("#5B8CFF", "#3A5BDB"), ["-openGame", "sudoku"], 6),
     ("03-solitaire", "Classic Klondike Solitaire", ("#2FBF71", "#14845A"), ["-openGame", "solitaire"], 6),
     ("04-chess", "Chess vs. the computer or a friend", ("#C69B6D", "#8B5E3C"),
