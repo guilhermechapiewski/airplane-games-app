@@ -1,4 +1,4 @@
-# Airplane Mode Games — Design
+# Airplane Games — Design
 
 A collection of polished, fully offline games for long flights.
 No ads, no accounts, no analytics, no network code. Everything is local.

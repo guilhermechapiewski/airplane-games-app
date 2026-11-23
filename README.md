@@ -1,4 +1,6 @@
-# Airplane Mode Games ✈️
+# Airplane Games ✈️
+
+*On the App Store as **Airplane Games: Offline Fun**.*
 
 A collection of beautifully crafted, **fully offline** games for long flights.
 No ads. No accounts. No tracking. No internet connection — ever.

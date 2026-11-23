@@ -45,12 +45,11 @@ Xcode writes that choice into `project.pbxproj`, which is public.
 
    Name (30 characters at most):
    ```
-   Airplane Games: Offline Play
+   Airplane Games: Offline Fun
    ```
-   App Store names must be unique, and "Airplane Mode Games - Offline" already exists. If
-   Apple says the name is taken, these also fit: `Airplane Games: No Wi-Fi` (24),
-   `Airplane Games – Offline` (24), `Offline Games for Flights` (25). The name on the home
-   screen stays **Airplane Games** either way.
+   Done (2026-11-23): "Airplane Mode Games" was taken; this name was accepted. The App Store
+   name is the only change: the bundle ID stays the same and the home screen keeps showing
+   **Airplane Games**.
 3. **Create**.
 
 ## Step 4. App Information and the age rating
@@ -177,9 +176,10 @@ App Store Connect → your app → **iOS App 1.0** (left column).
    FREE AND OPEN SOURCE
    Airplane Games is completely free, with nothing to unlock. Its source code is published on GitHub under the MIT license.
    ```
-4. **Keywords** (100, commas without spaces):
+4. **Keywords** (100, commas without spaces; words already in the name, like "offline", "games"
+   and "fun", are searched anyway, so they're left out):
    ```
-   offline,no wifi,airplane mode,travel,flight,sudoku,solitaire,2048,chess,minesweeper,nonogram,puzzle
+   brain,no wifi,airplane mode,travel,flight,sudoku,solitaire,2048,chess,minesweeper,nonogram,puzzle
    ```
 5. **Support URL**:
    ```
