@@ -8,13 +8,6 @@ extension Sudoku {
         public var solved = false
     }
 
-    /// A hint: the cell to fill, its digit and the technique that finds it.
-    public struct Hint: Equatable, Sendable {
-        public let cell: Int
-        public let digit: Int
-        /// `nil` when no supported technique applies and the answer is simply revealed.
-        public let technique: Technique?
-    }
 
     /// An in-progress game: the player's digits, notes and full undo history.
     public struct Game: Codable, Equatable, Sendable {
@@ -118,32 +111,50 @@ extension Sudoku {
         /// The most natural next cell to solve, based on the correct digits on the board.
         public func nextHint() -> Hint? {
             guard !isSolved else { return nil }
-            // Only trust the player's correct digits; wrong ones are treated as empty.
-            let known = (0..<cellCount).map { values[$0] == puzzle.solution[$0] ? values[$0] : 0 }
-            guard var solver = LogicSolver(known) else { return nil }
+            // A wrong digit comes first: every deduction after it would rest on it.
+            if let wrong = (0..<cellCount).first(where: { values[$0] != 0 && values[$0] != puzzle.solution[$0] }) {
+                return Hint.mistake(at: wrong, digit: puzzle.solution[wrong], values: values)
+            }
+            guard var solver = LogicSolver(values) else { return nil }
+            var advanced: Technique?
             while let step = solver.nextStep(maxLevel: 4) {
                 if let (cell, digit) = step.placement {
-                    return Hint(cell: cell, digit: digit, technique: step.technique)
+                    return Hint.deduction(step.technique, at: cell, digit: digit, values: values,
+                                          candidates: solver.candidates, advanced: advanced)
                 }
+                advanced = max(advanced ?? step.technique, step.technique)
                 guard solver.apply(step) else { break }
             }
             // No technique applies: reveal the open cell with the fewest candidates.
-            let open = (0..<cellCount).filter { known[$0] == 0 }
+            let open = (0..<cellCount).filter { values[$0] == 0 }
             guard let cell = open.min(by: {
                 solver.candidates[$0].nonzeroBitCount < solver.candidates[$1].nonzeroBitCount
             }) else { return nil }
-            return Hint(cell: cell, digit: puzzle.solution[cell], technique: nil)
+            return Hint.reveal(at: cell, digit: puzzle.solution[cell])
         }
 
-        /// Fills the next hint cell with its correct digit and counts the hint.
-        @discardableResult
-        public mutating func applyHint() -> (hint: Hint, outcome: Outcome)? {
+        /// The next hint, counted as used. The board doesn't change until `fill(_:)`.
+        public mutating func revealHint() -> Hint? {
             guard let hint = nextHint() else { return nil }
+            hintsUsed += 1
+            return hint
+        }
+
+        /// Writes a hint's answer (undoable). `nil` if the square already holds it.
+        @discardableResult
+        public mutating func fill(_ hint: Hint) -> Outcome? {
+            guard !isGiven(hint.cell), values[hint.cell] != hint.digit else { return nil }
             var changes: [CellChange] = []
             write(hint.digit, at: hint.cell, hinted: true, into: &changes)
             history.append(changes)
-            hintsUsed += 1
-            return (hint, outcome(after: hint.cell))
+            return outcome(after: hint.cell)
+        }
+
+        /// Counts and fills the next hint in one go.
+        @discardableResult
+        public mutating func applyHint() -> (hint: Hint, outcome: Outcome)? {
+            guard let hint = revealHint(), let outcome = fill(hint) else { return nil }
+            return (hint, outcome)
         }
 
         // MARK: Internals

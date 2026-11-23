@@ -13,6 +13,9 @@ enum SudokuPalette {
     static let sameDigit = Color(light: Color(hex: 0x5B8CFF, opacity: 0.2), dark: Color(hex: 0x5B8CFF, opacity: 0.28))
     static let peer = Color(light: Color(hex: 0x5B8CFF, opacity: 0.075), dark: Color(hex: 0x5B8CFF, opacity: 0.11))
     static let conflictFill = Color(light: Color(hex: 0xFF4D4F, opacity: 0.16), dark: Color(hex: 0xFF4D4F, opacity: 0.24))
+    static let hintArea = Color(light: Color(hex: 0xF0A500, opacity: 0.13), dark: Color(hex: 0xF0A500, opacity: 0.18))
+    static let hintBlocker = Color(light: Color(hex: 0xF0A500, opacity: 0.38), dark: Color(hex: 0xF0A500, opacity: 0.45))
+    static let hintTarget = Color(light: Color(hex: 0xF0A500, opacity: 0.55), dark: Color(hex: 0xF0A500, opacity: 0.6))
     static let wave = Color(light: Color(hex: 0x5B8CFF, opacity: 0.55), dark: Color(hex: 0x7EA2FF, opacity: 0.55))
 
     static let boxLine = Color(light: Color(hex: 0x30374D), dark: Color(hex: 0x7D869F))
@@ -87,6 +90,12 @@ struct SudokuBoardView: View {
     static func boxLineWidth(_ side: CGFloat) -> CGFloat { side > 500 ? 2.5 : 2 }
 
     private func highlight(_ i: Int, selected: Int?, digit: Int?, game: Sudoku.Game?) -> SudokuCellView.Highlight {
+        if let hint = model.hintPreview {
+            // While a hint is explained, show only its reasoning.
+            if i == hint.cell { return .hintTarget }
+            if hint.blockers.contains(i) { return .hintBlocker }
+            return hint.area.contains(i) ? .hintArea : .none
+        }
         guard !model.isSolved, let selected else { return .none }
         if i == selected { return .selected }
         if let digit, game?.values[i] == digit { return .sameDigit }
@@ -130,7 +139,7 @@ private struct GridLines: View {
 }
 
 struct SudokuCellView: View {
-    enum Highlight { case none, peer, sameDigit, selected }
+    enum Highlight { case none, peer, sameDigit, selected, hintArea, hintBlocker, hintTarget }
 
     let value: Int
     let isGiven: Bool
@@ -195,7 +204,10 @@ struct SudokuCellView: View {
     private var background: Color {
         switch highlight {
         case .selected: return SudokuPalette.selected
+        case .hintTarget: return SudokuPalette.hintTarget
+        case .hintBlocker: return SudokuPalette.hintBlocker
         case _ where isConflict: return SudokuPalette.conflictFill
+        case .hintArea: return SudokuPalette.hintArea
         case .sameDigit: return SudokuPalette.sameDigit
         case .peer: return SudokuPalette.peer
         case .none: return .clear

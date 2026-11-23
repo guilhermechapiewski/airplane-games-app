@@ -61,8 +61,10 @@ struct SudokuView: View {
         return VStack(spacing: compact ? 10 : 16) {
             header
             boardArea
-            SudokuToolbar(model: model)
-            SudokuNumberPad(model: model, columns: 9, keyHeight: keyHeight)
+            controls(spacing: compact ? 10 : 16) {
+                SudokuToolbar(model: model)
+                SudokuNumberPad(model: model, columns: 9, keyHeight: keyHeight)
+            }
         }
         .frame(maxWidth: column)
         .padding(.horizontal, 16)
@@ -82,8 +84,10 @@ struct SudokuView: View {
             VStack(spacing: 18) {
                 header
                 Spacer(minLength: 0)
-                SudokuToolbar(model: model)
-                SudokuNumberPad(model: model, columns: 3, keyHeight: keyHeight)
+                controls(spacing: 18) {
+                    SudokuToolbar(model: model)
+                    SudokuNumberPad(model: model, columns: 3, keyHeight: keyHeight)
+                }
             }
             .frame(width: panel, height: side)
         }
@@ -123,29 +127,19 @@ struct SudokuView: View {
             .accessibilityLabel(model.isPaused ? "Resume" : "Pause")
             .accessibilityIdentifier("sudoku.pause")
         }
-        .opacity(model.hintBanner == nil ? 1 : 0)
-        .overlay { hintBanner }
     }
 
-    @ViewBuilder private var hintBanner: some View {
-        if let hint = model.hintBanner {
-            HStack(spacing: 8) {
-                Image(systemName: "lightbulb.fill").foregroundStyle(Color(hex: 0xF0A500))
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(hint.technique?.title ?? "Answer revealed").font(.subheadline.weight(.bold))
-                    Text("Row \(Sudoku.row(of: hint.cell) + 1), column \(Sudoku.column(of: hint.cell) + 1) is \(hint.digit)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+    /// The tools and number pad, replaced by the hint's explanation while one is shown.
+    private func controls<Content: View>(spacing: CGFloat, @ViewBuilder _ content: () -> Content) -> some View {
+        VStack(spacing: spacing) { content() }
+            .opacity(model.hintPreview == nil ? 1 : 0)
+            .allowsHitTesting(model.hintPreview == nil)
+            .overlay(alignment: .bottom) {
+                if let hint = model.hintPreview {
+                    HintCard(title: hint.title, explanation: hint.explanation,
+                             onAnswer: { model.showHintAnswer() }, onClose: { model.dismissHint() })
                 }
             }
-            .padding(.horizontal, 16)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
-            .transition(.scale(scale: 0.9).combined(with: .opacity))
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.updatesFrequently)
-        }
     }
 
     // MARK: Overlays

@@ -25,7 +25,7 @@ struct SudokuToolbar: View {
                        badge: (model.game?.hintsUsed ?? 0) > 0 ? "\(model.game?.hintsUsed ?? 0)" : nil,
                        tint: Color(hex: 0xF0A500)) { model.hint() }
                 .disabled(!model.canInteract)
-                .accessibilityHint("Fills in one correct number.")
+                .accessibilityHint("Explains the next step, then can fill it in.")
                 .frame(maxWidth: .infinity)
         }
     }

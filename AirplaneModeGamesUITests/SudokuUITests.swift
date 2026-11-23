@@ -71,9 +71,24 @@ final class SudokuUITests: XCTestCase {
         app.buttons["sudoku.notes"].tap()
         XCTAssertEqual(app.buttons["sudoku.notes"].value as? String, "Off")
 
-        // A hint fills in a cell.
+        // A hint explains first; closing it changes nothing.
         app.buttons["Hint"].tap()
+        let explanation = app.staticTexts["hintExplanation"]
+        XCTAssertTrue(explanation.waitForExistence(timeout: 3))
+        XCTAssertFalse(explanation.label.isEmpty)
         attach(app, "hint")
+        app.buttons["hintClose"].tap()
+        XCTAssertTrue(explanation.waitForNonExistence(timeout: 3))
+
+        // Show Answer fills the explained square.
+        app.buttons["Hint"].tap()
+        XCTAssertTrue(app.buttons["hintShowAnswer"].waitForExistence(timeout: 3))
+        // The hint selects its square (it may be fixing the digit typed above, so check that square).
+        let hinted = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'sudoku.cell.' AND selected == true")).firstMatch
+        XCTAssertTrue(hinted.exists)
+        app.buttons["hintShowAnswer"].tap()
+        XCTAssertTrue(app.buttons["hintShowAnswer"].waitForNonExistence(timeout: 3))
+        XCTAssertTrue((hinted.value as? String)?.contains("from hint") == true, "the explained square was filled")
 
         app.buttons["gameMenu"].tap()
         app.buttons["How to Play"].tap()
@@ -89,8 +104,15 @@ final class SudokuUITests: XCTestCase {
         XCTAssertTrue(hint.waitForExistence(timeout: 10))
         let solved = app.staticTexts["Solved!"]
         var taps = 0
+        let answer = app.buttons["hintShowAnswer"]
         while !solved.exists && taps < 81 {
-            if hint.isEnabled { hint.tap(); taps += 1 } else { _ = solved.waitForExistence(timeout: 0.5) }
+            if hint.isEnabled && hint.isHittable {
+                hint.tap()
+                if answer.waitForExistence(timeout: 2) { answer.tap() }
+                taps += 1
+            } else {
+                _ = solved.waitForExistence(timeout: 0.5)
+            }
         }
         XCTAssertTrue(solved.waitForExistence(timeout: 5))
         attach(app, "win")

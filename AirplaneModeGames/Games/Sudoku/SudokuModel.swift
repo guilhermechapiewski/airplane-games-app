@@ -24,8 +24,8 @@ final class SudokuModel {
     private(set) var isSolved = false
     private(set) var showWin = false
     private(set) var isNewBest = false
-    /// The latest hint, shown briefly as a banner.
-    private(set) var hintBanner: Sudoku.Hint?
+    /// The hint being explained. The board doesn't change until the player taps Show Answer.
+    private(set) var hintPreview: Sudoku.Hint?
 
     /// Per-cell animation counters: bump to replay a "pop" or a completion "wave".
     private(set) var popCount = [Int](repeating: 0, count: Sudoku.cellCount)
@@ -34,7 +34,6 @@ final class SudokuModel {
 
     private var isActive = false
     private var generation = 0
-    private var bannerToken = 0
     private let store: GameStore
     private let stats: StatsStore
     let gameID = GameID.sudoku
@@ -80,6 +79,7 @@ final class SudokuModel {
 
     func select(_ cell: Int) {
         guard canInteract, (0..<Sudoku.cellCount).contains(cell), selected != cell else { return }
+        dismissHint()
         selected = cell
         Haptics.select()
         persist()
@@ -96,6 +96,7 @@ final class SudokuModel {
 
     func toggleNotesMode() {
         guard canInteract else { return }
+        dismissHint()
         notesMode.toggle()
         Feedback.play(.flip)
         persist()
@@ -104,6 +105,7 @@ final class SudokuModel {
     /// A number-pad press: writes the digit or toggles the note in the selected cell.
     func input(_ digit: Int) {
         guard canInteract, var game, let cell = selected else { return }
+        dismissHint()
         if game.isGiven(cell) {
             Haptics.tap()
             return
@@ -137,6 +139,7 @@ final class SudokuModel {
 
     func erase() {
         guard canInteract, var game, let cell = selected, game.erase(at: cell) else { return }
+        dismissHint()
         self.game = game
         Feedback.play(.pop)
         persist()
@@ -144,6 +147,7 @@ final class SudokuModel {
 
     func undo() {
         guard canUndo, var game else { return }
+        dismissHint()
         let cells = game.undo()
         self.game = game
         if let first = cells.first { selected = first }
@@ -151,17 +155,36 @@ final class SudokuModel {
         persist()
     }
 
+    /// Explains the next step: selects its square and highlights the reasoning. The answer is
+    /// written only when the player asks for it (`showHintAnswer`).
     func hint() {
-        guard canInteract, var game, let (hint, outcome) = game.applyHint() else { return }
+        guard canInteract, hintPreview == nil, var game, let hint = game.revealHint() else { return }
+        self.game = game
+        selected = hint.cell
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { hintPreview = hint }
+        Feedback.play(.select)
+        persist()
+    }
+
+    /// Writes the explained hint's answer.
+    func showHintAnswer() {
+        guard canInteract, let hint = hintPreview, var game else { return }
+        withAnimation(.easeOut(duration: 0.2)) { hintPreview = nil }
+        guard let outcome = game.fill(hint) else { return }
         self.game = game
         selected = hint.cell
         popCount[hint.cell] += 1
-        showBanner(hint)
         react(to: outcome, at: hint.cell)
+    }
+
+    func dismissHint() {
+        guard hintPreview != nil else { return }
+        withAnimation(.easeOut(duration: 0.2)) { hintPreview = nil }
     }
 
     func togglePause() {
         guard game != nil, !isSolved, !isGenerating else { return }
+        dismissHint()
         isPaused.toggle()
         Feedback.play(.tap)
         updateClock()
@@ -195,7 +218,7 @@ final class SudokuModel {
         showWin = false
         isPaused = false
         isNewBest = false
-        hintBanner = nil
+        hintPreview = nil
         selected = nil
         clock = GameClock()
         let seed = UInt64.random(in: .min ... .max)
@@ -239,7 +262,7 @@ final class SudokuModel {
     private func finish(at cell: Int) {
         isSolved = true
         selected = nil
-        hintBanner = nil
+        hintPreview = nil
         notesMode = false
         clock.pause()
         let time = clock.elapsed()
@@ -266,17 +289,6 @@ final class SudokuModel {
             // Single units ripple from the placed cell; the whole board sweeps diagonally.
             waveDelay[cell] = Double(cells.count == Sudoku.cellCount ? diagonal : distance) * step
             waveCount[cell] += 1
-        }
-    }
-
-    private func showBanner(_ hint: Sudoku.Hint) {
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { hintBanner = hint }
-        bannerToken += 1
-        let token = bannerToken
-        Task { [weak self] in
-            try? await Task.sleep(for: .seconds(2.4))
-            guard let self, self.bannerToken == token else { return }
-            withAnimation(.easeOut(duration: 0.25)) { self.hintBanner = nil }
         }
     }
 
