@@ -28,14 +28,11 @@ Already done in the code, nothing to do:
 - The app is free with no in-app purchases, so no Paid Apps agreement, bank or tax forms are
   needed. (The Free Apps agreement is accepted when you join the program.)
 
-## Step 1. Publish the website and privacy policy (once)
+## Step 1. Publish the website and privacy policy (done 2026-11-23)
 
 Apple needs a privacy policy URL. The pages are in [`docs/`](../docs/) and are served by GitHub
-Pages, like Samsung Remote's.
-
-1. GitHub → the repository → **Settings** → **Pages**.
-2. **Source**: **Deploy from a branch** → Branch **main**, folder **/docs** → **Save**.
-3. After a minute or two, check that both pages open:
+Pages (branch **main**, folder **/docs**), like Samsung Remote's. Every push to `main` updates them.
+Both open:
    - https://guilhermechapiewski.github.io/airplane-games-app/
    - https://guilhermechapiewski.github.io/airplane-games-app/privacy/
 
