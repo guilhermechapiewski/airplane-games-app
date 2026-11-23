@@ -1,35 +1,4 @@
-# Publishing Airplane Games to the App Store, step by step
-
-A checklist for the owner. Do the steps in order and tick them off.
-
-- **This repository is public.** Nothing private goes in it: no team ID, App Store Connect
-  Apple ID, phone number, email or address. Those are typed straight into Xcode or App Store
-  Connect, or kept in the git-ignored `Config/Local.xcconfig`.
-- Every box to copy and paste is a code block. Character limits were checked when this guide
-  was written (`python3 tools/check_listing.py` checks them again).
-- The screenshots are in [`screenshots/`](./screenshots/). To open the folder for dragging:
-  `open appstore/screenshots`. To make them again: `python3 tools/appstore_screenshots.py`.
-- Apple moves buttons now and then. If one isn't where this says, look for the same words
-  nearby.
-
-## What you need before you start
-
-- [ ] An **Apple Developer Program** membership, active and paid ($99/year).
-- [ ] **Xcode 26 or later**, signed in with that team's Apple Account (Xcode → Settings →
-      Accounts). Apple only accepts builds made with the iOS 26 SDK or later.
-- [ ] **A phone number in international format** (`+1 555 123 4567`) and an email for App
-      Review. Apple never shows them publicly; don't put them in this repo.
-- [ ] **Your iPhone** (and iPad, if you have one) for a last check through TestFlight.
-
-Already done in the code, nothing to do:
-- The app declares no special encryption (`ITSAppUsesNonExemptEncryption = NO`), so there are
-  no export-compliance questions.
-- The privacy manifest (`PrivacyInfo.xcprivacy`) declares no tracking and no collected data. The
-  only "required reason" API the app uses is UserDefaults (declared, reason CA92.1).
-- The privacy policy is linked inside the app too (Settings → About → Privacy Policy), as
-  Guideline 5.1.1(i) requires, not only in App Store Connect.
-- The app is free with no in-app purchases, so no Paid Apps agreement, bank or tax forms are
-  needed. (The Free Apps agreement is accepted when you join the program.)
+# Publishing Airplane Games to the App Store
 
 ## Step 1. Publish the website and privacy policy (done 2026-11-23)
 
