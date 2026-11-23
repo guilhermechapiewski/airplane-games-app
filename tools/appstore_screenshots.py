@@ -4,6 +4,7 @@
     python3 tools/appstore_screenshots.py --frames     # only re-caption the existing raw shots
     python3 tools/appstore_screenshots.py --only 01-home,04-chess
     python3 tools/appstore_screenshots.py --devices iphone,ipad
+    python3 tools/appstore_screenshots.py --web       # only refresh the website's JPEG copies
 
 Shoots on the newest-iOS simulators named in DEVICES, using the app's DEBUG launch arguments
 (-openGame, -demoState, -chessMoves, ...). `-uiTesting` starts every shot from a clean slate
@@ -24,6 +25,8 @@ import time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "appstore", "screenshots")
 RAW = os.path.join(ROOT, "build", "screenshots-raw")      # git-ignored
+WEB = os.path.join(ROOT, "docs", "images", "screens")     # website copies (smaller JPEGs)
+WEB_WIDTH = 600
 DERIVED = os.path.join(ROOT, "build", "screenshots-dd")
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 BUNDLE_ID = "com.gchapiewski.airplanemodegames"
@@ -147,14 +150,29 @@ def frame(device_key, shots):
             print(f"  {device_key}/{key}.png")
 
 
+def web_copies(shots):
+    """Smaller JPEG copies of the captioned iPhone shots for the website (docs/index.md)."""
+    os.makedirs(WEB, exist_ok=True)
+    for key, *_ in shots:
+        src = os.path.join(OUT, "iphone", key + ".png")
+        dst = os.path.join(WEB, key + ".jpg")
+        run(["sips", "--resampleWidth", str(WEB_WIDTH), "-s", "format", "jpeg", "-s", "formatOptions", "82",
+             src, "--out", dst], capture_output=True)
+        print(f"  docs/images/screens/{key}.jpg")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--frames", action="store_true", help="only re-caption existing raw shots")
     parser.add_argument("--only", help="comma-separated shot keys")
     parser.add_argument("--devices", help="comma-separated device keys: " + ",".join(DEVICES))
+    parser.add_argument("--web", action="store_true", help="only refresh the website's JPEG copies")
     a = parser.parse_args()
     shots = [s for s in SHOTS if not a.only or s[0] in a.only.split(",")]
     devices = a.devices.split(",") if a.devices else list(DEVICES)
+    if a.web:
+        web_copies(shots)
+        return
     if not a.frames:
         app = build()
         for d in devices:
@@ -162,6 +180,9 @@ def main():
     print("▸ Captioning")
     for d in devices:
         frame(d, shots)
+    if "iphone" in devices:
+        print("▸ Website copies")
+        web_copies(shots)
 
 
 if __name__ == "__main__":

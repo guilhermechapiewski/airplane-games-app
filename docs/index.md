@@ -16,6 +16,17 @@ no accounts, no in-app purchases and no tracking.
 
 For iPhone and iPad.
 
+<p style="display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;">
+  <img src="images/screens/01-home.jpg" alt="The home screen: every game on one page" loading="lazy" style="width: 180px; max-width: 46%; height: auto;">
+  <img src="images/screens/02-sudoku.jpg" alt="Sudoku" loading="lazy" style="width: 180px; max-width: 46%; height: auto;">
+  <img src="images/screens/03-solitaire.jpg" alt="Klondike Solitaire" loading="lazy" style="width: 180px; max-width: 46%; height: auto;">
+  <img src="images/screens/04-chess.jpg" alt="Chess against the computer" loading="lazy" style="width: 180px; max-width: 46%; height: auto;">
+  <img src="images/screens/05-word-guess.jpg" alt="Word Guess" loading="lazy" style="width: 180px; max-width: 46%; height: auto;">
+  <img src="images/screens/06-nonograms.jpg" alt="A Nonograms picture puzzle" loading="lazy" style="width: 180px; max-width: 46%; height: auto;">
+  <img src="images/screens/07-minesweeper.jpg" alt="Minesweeper" loading="lazy" style="width: 180px; max-width: 46%; height: auto;">
+  <img src="images/screens/08-snake.jpg" alt="Snake" loading="lazy" style="width: 180px; max-width: 46%; height: auto;">
+</p>
+
 ## The games
 
 | Game | |
