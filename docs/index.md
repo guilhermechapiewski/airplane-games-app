@@ -50,8 +50,7 @@ For iPhone and iPad.
 | **Snake** | Four speeds, three board sizes, walls or wrap-around, swipe or D-pad |
 | **Hangman** | A friendly hot-air balloon version, with categories |
 
-Many games have a **daily puzzle**, the same for everyone that day and made on your device, with
-streaks to keep. Every game saves automatically, works in light and dark mode, and supports VoiceOver.
+Every game saves automatically, works in light and dark mode, and supports VoiceOver.
 Games with an opponent can be played against the computer or a friend on the same device.
 
 ## Private by design

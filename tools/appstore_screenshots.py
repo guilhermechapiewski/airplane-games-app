@@ -55,7 +55,7 @@ SHOTS = [
      ["-openGame", "snake", "-snakeDemo"], 4),
     ("09-water-sort", "Relaxing Water Sort, endless levels", ("#4FD8E8", "#1A9FB8"),
      ["-openGame", "waterSort", "-waterSortLevel", "40"], 4),
-    ("10-word-wheel", "A new Word Wheel every day", ("#7C86F0", "#4A4CC4"),
+    ("10-word-wheel", "Spell words around the wheel", ("#7C86F0", "#4A4CC4"),
      ["-openGame", "wordWheel", "-wordWheelScenario", "demo"], 5),
 ]
 
