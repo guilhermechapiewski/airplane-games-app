@@ -19,11 +19,11 @@ final class StatsStore {
 
     private(set) var all: [String: GameStats]
     private let store: GameStore
-    private static let key = "stats"
+    static let storageKey = "stats"
 
     init(store: GameStore = .shared) {
         self.store = store
-        self.all = store.load([String: GameStats].self, key: Self.key) ?? [:]
+        self.all = store.load([String: GameStats].self, key: Self.storageKey) ?? [:]
     }
 
     static func key(_ game: GameID, variant: String?) -> String {
@@ -53,7 +53,7 @@ final class StatsStore {
         if let score { s.bestScore = max(s.bestScore ?? score, score) }
         if let time { s.totalTime += time }
         all[key] = s
-        store.save(all, key: Self.key)
+        store.save(all, key: Self.storageKey)
     }
 
     /// Updates the best score without counting a game (e.g. live high score in 2048).
@@ -63,7 +63,7 @@ final class StatsStore {
         guard score > (s.bestScore ?? Int.min) else { return }
         s.bestScore = score
         all[key] = s
-        store.save(all, key: Self.key)
+        store.save(all, key: Self.storageKey)
     }
 
     /// Game-specific statistics stored outside `StatsStore` that "Reset All Statistics" also clears.
@@ -72,7 +72,7 @@ final class StatsStore {
 
     func reset() {
         all = [:]
-        store.remove(key: Self.key)
+        store.remove(key: Self.storageKey)
         Self.auxiliaryKeys.forEach { store.remove(key: $0) }
     }
 }

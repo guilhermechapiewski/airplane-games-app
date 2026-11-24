@@ -11,6 +11,7 @@ struct AirplaneModeGamesApp: App {
             AppSettings.shared.soundEnabled = false
             UIView.setAnimationsEnabled(false)
         }
+        RetiredDataCleanup.run()
     }
 
     var body: some Scene {

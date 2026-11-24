@@ -59,6 +59,17 @@ struct GameStore: Sendable {
         Self.queue.async { try? FileManager.default.removeItem(at: url) }
     }
 
+    /// Removes every saved key that `matches` (keys are file names without the extension).
+    func removeKeys(where matches: @escaping @Sendable (String) -> Bool) {
+        let directory = directory
+        Self.queue.sync {
+            let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
+            for file in files where file.pathExtension == "json" && matches(file.deletingPathExtension().lastPathComponent) {
+                try? FileManager.default.removeItem(at: file)
+            }
+        }
+    }
+
     func removeAll() {
         let directory = directory
         Self.queue.sync {
