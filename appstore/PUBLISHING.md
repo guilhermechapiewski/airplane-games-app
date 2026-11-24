@@ -132,7 +132,7 @@ App Store Connect → your app → **iOS App 1.0** (left column).
 
 1. **Screenshots** (drag them in, in this order):
    - **iPhone 6.9" display** (1320 × 2868): [`screenshots/iphone/`](./screenshots/iphone/)
-     `01-home` … `08-snake`
+     `01-home` … `10-word-wheel`
    - **iPhone 6.3" display** (1206 × 2622), if App Store Connect asks for it:
      [`screenshots/iphone-medium/`](./screenshots/iphone-medium/)
    - **iPad 13" display** (2064 × 2752): [`screenshots/ipad/`](./screenshots/ipad/)
@@ -151,16 +151,19 @@ App Store Connect → your app → **iOS App 1.0** (left column).
    • Solitaire: classic Klondike, draw 1 or draw 3, with auto-complete
    • Block Puzzle: fit blocks on the board and clear rows and columns
    • Tile Match: match pairs of free tiles across six original layouts
+   • Water Sort: pour until every tube is one color, with endless levels
    • Minesweeper: every board solvable by logic, never a 50/50 guess, with flag mode and pinch to zoom
    • Chess: play the computer at five levels, or a friend on the same device
+   • Dots and Boxes: close the most boxes, against the computer or a friend
    • Word Guess: find the five-letter word in six tries, alone or with a friend
+   • Word Wheel: make words from seven letters around a center letter
    • Nonograms: 44 original picture puzzles, all solvable by logic, with hints that explain why
    • Word Search: 15 themes in three sizes
    • Snake: four speeds from slow to fast, three board sizes, walls or wrap-around
    • Hangman: a friendly hot-air balloon version, with categories and pass & play
 
    A NEW PUZZLE EVERY DAY
-   Daily Sudoku, Word Guess, Solitaire, Minesweeper, Word Search and Tile Match: the same puzzle for everyone that day, made right on your device. Keep your streak going, even at 35,000 feet.
+   Daily Sudoku, Word Guess, Word Wheel, Solitaire, Minesweeper, Word Search, Tile Match and Water Sort: the same puzzle for everyone that day, made right on your device. Keep your streak going, even at 35,000 feet.
 
    MADE FOR TRAVEL
    • Works in airplane mode: every game, every time

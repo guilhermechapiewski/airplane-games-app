@@ -17,14 +17,16 @@ no accounts, no in-app purchases and no tracking.
 For iPhone and iPad.
 
 <p style="display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;">
-  <img src="images/screens/01-home.jpg" alt="The home screen: every game on one page" loading="lazy" style="width: 200px; max-width: 46%; height: auto;">
-  <img src="images/screens/02-sudoku.jpg" alt="Sudoku" loading="lazy" style="width: 200px; max-width: 46%; height: auto;">
-  <img src="images/screens/03-solitaire.jpg" alt="Klondike Solitaire" loading="lazy" style="width: 200px; max-width: 46%; height: auto;">
-  <img src="images/screens/04-chess.jpg" alt="Chess against the computer" loading="lazy" style="width: 200px; max-width: 46%; height: auto;">
-  <img src="images/screens/05-word-guess.jpg" alt="Word Guess" loading="lazy" style="width: 200px; max-width: 46%; height: auto;">
-  <img src="images/screens/06-nonograms.jpg" alt="A Nonograms picture puzzle" loading="lazy" style="width: 200px; max-width: 46%; height: auto;">
-  <img src="images/screens/07-minesweeper.jpg" alt="Minesweeper" loading="lazy" style="width: 200px; max-width: 46%; height: auto;">
-  <img src="images/screens/08-snake.jpg" alt="Snake" loading="lazy" style="width: 200px; max-width: 46%; height: auto;">
+  <img src="images/screens/01-home.jpg" alt="The home screen: every game on one page" loading="lazy" style="width: 160px; max-width: 46%; height: auto;">
+  <img src="images/screens/02-sudoku.jpg" alt="Sudoku" loading="lazy" style="width: 160px; max-width: 46%; height: auto;">
+  <img src="images/screens/03-solitaire.jpg" alt="Klondike Solitaire" loading="lazy" style="width: 160px; max-width: 46%; height: auto;">
+  <img src="images/screens/04-chess.jpg" alt="Chess against the computer" loading="lazy" style="width: 160px; max-width: 46%; height: auto;">
+  <img src="images/screens/05-word-guess.jpg" alt="Word Guess" loading="lazy" style="width: 160px; max-width: 46%; height: auto;">
+  <img src="images/screens/06-nonograms.jpg" alt="A Nonograms picture puzzle" loading="lazy" style="width: 160px; max-width: 46%; height: auto;">
+  <img src="images/screens/07-minesweeper.jpg" alt="Minesweeper" loading="lazy" style="width: 160px; max-width: 46%; height: auto;">
+  <img src="images/screens/08-snake.jpg" alt="Snake" loading="lazy" style="width: 160px; max-width: 46%; height: auto;">
+  <img src="images/screens/09-water-sort.jpg" alt="Water Sort" loading="lazy" style="width: 160px; max-width: 46%; height: auto;">
+  <img src="images/screens/10-word-wheel.jpg" alt="Word Wheel" loading="lazy" style="width: 160px; max-width: 46%; height: auto;">
 </p>
 
 ## The games
@@ -36,15 +38,18 @@ For iPhone and iPad.
 | **Solitaire** | Classic Klondike, draw 1 or draw 3, with auto-complete |
 | **Block Puzzle** | Fit blocks on the board and clear rows and columns |
 | **Tile Match** | Match pairs of free tiles across six original layouts |
+| **Water Sort** | Pour until every tube holds one color, with endless levels |
 | **Minesweeper** | Every board solvable by logic, never a 50/50 guess |
 | **Chess** | Play the computer at five levels, or a friend on the same device |
+| **Dots and Boxes** | Close the most boxes, against the computer or a friend |
 | **Word Guess** | Find the five-letter word in six tries |
+| **Word Wheel** | Make words from seven letters around a center letter |
 | **Nonograms** | 44 original picture puzzles, all solvable by logic |
 | **Word Search** | 15 themes in three sizes |
 | **Snake** | Four speeds, three board sizes, walls or wrap-around, swipe or D-pad |
 | **Hangman** | A friendly hot-air balloon version, with categories |
 
-Six games have a **daily puzzle**, the same for everyone that day and made on your device, with
+Many games have a **daily puzzle**, the same for everyone that day and made on your device, with
 streaks to keep. Every game saves automatically, works in light and dark mode, and supports VoiceOver.
 Games with an opponent can be played against the computer or a friend on the same device.
 

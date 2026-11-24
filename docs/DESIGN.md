@@ -41,7 +41,7 @@ Packages/GameLogic/           Swift package: pure game logic + tests
 docs/                         Design notes
 ```
 
-## Game catalog (v1)
+## Game catalog
 
 | Game | Id | Pass & play |
 |------|----|-------------|
@@ -50,9 +50,12 @@ docs/                         Design notes
 | Solitaire (Klondike) | `solitaire` | — |
 | Block Puzzle | `blocks` | — |
 | Tile Match (Mahjong solitaire) | `tileMatch` | — |
+| Water Sort | `waterSort` | — |
 | Minesweeper | `minesweeper` | — |
 | Chess | `chess` | ✅ vs. computer (levels) or vs. human on same device |
+| Dots and Boxes | `dotsAndBoxes` | ✅ vs. computer (levels) or vs. human on same device |
 | Word Guess | `wordGuess` | ✅ computer or a friend picks the secret word |
+| Word Wheel | `wordWheel` | — |
 | Nonograms | `nonograms` | — |
 | Word Search | `wordSearch` | — |
 | Snake | `snake` | — |

@@ -14,15 +14,19 @@ No ads. No accounts. No tracking. No internet connection — ever.
 | **Solitaire** | Klondike draw 1 / draw 3, solver-checked winnable deals, auto-complete |
 | **Block Puzzle** | Drag pieces onto an 8×8 board, row & column clears, combos and streaks |
 | **Tile Match** | Mahjong-style tile matching, 6 original layouts, always-solvable deals |
+| **Water Sort** | Endless solver-checked levels, pouring animation, undo, an extra tube per level |
 | **Minesweeper** | No-guess boards (always solvable by logic), safe first tap, chording, flag mode, pinch to zoom |
 | **Chess** | vs. computer (5 levels) or pass & play, full rules, move list |
+| **Dots and Boxes** | 3×3, 4×4 or 6×6 boxes, vs. computer (3 levels, Hard plays the chain endgame) or pass & play |
 | **Word Guess** | 5-letter word in 6 tries, hard mode, high-contrast colors, pass & play |
+| **Word Wheel** | Make words from 7 letters around a center letter, pangrams, ranks, familiar answers |
 | **Nonograms** | 44 original picture puzzles, all solvable by logic alone, explained hints |
 | **Word Search** | 15 themes, 3 sizes, drag selection that snaps to 8 directions |
 | **Snake** | Fluid motion, 4 speeds, 3 board sizes, walls or wrap-around, swipe or D-pad |
 | **Hangman** | Friendly hot-air balloon illustration, categories, pass & play |
 
-Sudoku, Word Guess, Solitaire, Minesweeper, Word Search and Tile Match have a **daily puzzle**,
+Sudoku, Word Guess, Word Wheel, Solitaire, Minesweeper, Word Search, Tile Match and Water Sort
+have a **daily puzzle**,
 generated from the date (the same for everyone that day, no network) with day streaks.
 Every game auto-saves and resumes, keeps local statistics, supports light & dark mode,
 iPhone & iPad, VoiceOver, and has sound effects and haptics that can be turned off.
