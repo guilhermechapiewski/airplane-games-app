@@ -155,6 +155,12 @@ struct NonogramsView: View {
                 "Hint explains one square you can work out from what you already have, then Show Answer marks it.",
                 "Every puzzle can be solved by logic alone — no guessing needed.",
             ]),
+            .init(title: "Tips", symbol: "graduationcap", points: [
+                "Start with the big clues: in a row of 10, a run of 8 must cover the middle 6 cells wherever it sits.",
+                "Rows with a 0 or clues that add up to the full width can be filled in right away.",
+                "Cross off cells you know are empty. Crosses make the remaining runs easier to place.",
+                "Switch between rows and columns: every cell you fill gives the crossing line a new clue.",
+            ]),
         ]
     )
 }

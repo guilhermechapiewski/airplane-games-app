@@ -148,6 +148,12 @@ struct WordSearchView: View {
                 "Tap Hint to flash the first letter of a word you haven't found.",
                 "Your best time for each difficulty is saved.",
             ]),
+            .init(title: "Tips", symbol: "graduationcap", points: [
+                "Look for rare letters like Q, Z, X, J or K. Fewer places to check means a faster find.",
+                "Check double letters like LL or EE; they stand out as you scan.",
+                "Sweep the grid one row at a time for each word's first letter, then look around it.",
+                "On Hard, remember that words can run backwards. Try looking for the last letter too.",
+            ]),
         ]
     )
 }

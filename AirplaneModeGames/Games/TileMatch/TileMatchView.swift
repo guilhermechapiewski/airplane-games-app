@@ -167,6 +167,12 @@ struct TileMatchView: View {
                 "Choose a layout from New Game. Pebble is quick; Fortress uses all 144 tiles.",
                 "Your best time is kept for each layout.",
             ]),
+            .init(title: "Tips", symbol: "graduationcap", points: [
+                "Free the tiles that block the most others first, like the top of tall stacks and the ends of long rows.",
+                "When three matching tiles are free, think before you pick: keep the one that blocks other tiles.",
+                "If all four tiles of a kind are free, match them right away; they can't trap anything.",
+                "Clear long rows from their ends evenly so neither side gets stuck behind the other.",
+            ]),
         ]
     )
 }

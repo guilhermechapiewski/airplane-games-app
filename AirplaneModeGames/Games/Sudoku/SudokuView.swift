@@ -260,6 +260,12 @@ struct SudokuView: View {
                 "Hard: needs pointing numbers and pairs.",
                 "Expert: needs X-Wings, XY-Wings and similar patterns.",
             ]),
+            .init(title: "Tips", symbol: "graduationcap", points: [
+                "Scan one number at a time: look across the whole grid for every spot where, say, 7 can still go.",
+                "Start with the rows, columns and boxes that are nearly full; they have the fewest options.",
+                "Use Notes once the easy cells run out. A cell with a single note is your next number.",
+                "Two cells in a box that can only hold the same two numbers rule those numbers out everywhere else in that box.",
+            ]),
         ]
     )
 }

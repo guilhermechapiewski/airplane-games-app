@@ -292,6 +292,12 @@ struct SnakeView: View {
                 "Walls: touching the edge ends the game. Wrap-around: you come out the other side.",
                 "The game pauses when you leave and resumes after a 3-2-1 countdown.",
             ]),
+            .init(title: "Tips", symbol: "graduationcap", points: [
+                "Stay away from the walls and your own tail when you can; the open middle gives you room to turn.",
+                "As the snake grows, move in long back-and-forth lanes so the body folds neatly behind you.",
+                "Plan the turn after the berry, not just the way to it, so you don't trap yourself.",
+                "Wrap-around is more forgiving. Practice on Slow or Relaxed before trying Fast.",
+            ]),
         ]
     )
 }

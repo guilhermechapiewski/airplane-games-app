@@ -218,6 +218,12 @@ struct SolitaireView: View {
                 "Hint highlights a useful move. Undo takes back as many moves as you need.",
                 "Once every card is face up, Auto-Complete finishes the game for you.",
             ]),
+            .init(title: "Tips", symbol: "graduationcap", points: [
+                "Turning over hidden cards matters most: play from the columns with the most face-down cards first.",
+                "Don't empty a column unless a King is ready to move into it.",
+                "Look at the columns before drawing from the stock: a move there may open up more.",
+                "Don't rush cards onto the foundations. Low cards are often needed to hold cards of the other color.",
+            ]),
         ]
     )
 }
