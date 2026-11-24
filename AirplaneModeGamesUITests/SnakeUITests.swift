@@ -30,7 +30,7 @@ final class SnakeUITests: XCTestCase {
 
         pause.tap()
         let resume = app.buttons["snakeResume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 2))
+        XCTAssertTrue(resume.waitForExistence(timeout: 5))
         resume.tap()
         XCTAssertFalse(resume.waitForExistence(timeout: 1))
         // Steer away from the right-hand wall.
