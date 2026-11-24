@@ -94,6 +94,7 @@ final class DotsAndBoxesModel {
             game.play(line)
         }
         showSetup = false
+        showResult = game.isOver
     }
     #endif
 
