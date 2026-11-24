@@ -105,7 +105,12 @@ struct WordWheelView: View {
                     newGame: [NewGameOption(title: "New Wheel", systemImage: "plus.circle") { model.newGame() }],
                     onActiveChange: model.setActive,
                     freshStart: { model.newGame() })
-        .task { await model.prepare() }
+        .task {
+            await model.prepare()
+            #if DEBUG   // `-showHint`: open a clue (screenshots)
+            if ProcessInfo.processInfo.arguments.contains("-showHint") { model.hint() }
+            #endif
+        }
         .focusable(model.canPlay)
         .focused($focused)
         .focusEffectDisabled()
@@ -122,6 +127,10 @@ struct WordWheelView: View {
     private func playArea(state: WordWheel.State, puzzle: WordWheel.Puzzle) -> some View {
         VStack(spacing: 14) {
             Spacer(minLength: 0)
+            if model.showClue, let clue = model.clue {
+                WordWheelCluePanel(model: model, clue: clue)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
             WordWheelEntry(model: model, puzzle: puzzle, input: state.input)
             WordWheelDial(model: model, puzzle: puzzle, ring: state.ring)
                 .frame(maxWidth: isRegular ? 640 : 400, maxHeight: isRegular ? 640 : 400)
@@ -158,6 +167,18 @@ struct WordWheelView: View {
                 .accessibilityAction(named: "Clear word") { model.clearInput() }
                 .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in model.clearInput() })
                 .accessibilityIdentifier("deleteLetter")
+
+                Button { model.hint() } label: {
+                    Image(systemName: model.showClue ? "lightbulb.fill" : "lightbulb")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(Color(light: Color(hex: 0xA86A00), dark: HintCard.amber))
+                        .frame(width: 30)
+                }
+                .buttonStyle(WheelControlStyle(round: true))
+                .accessibilityLabel("Hint")
+                .accessibilityValue(model.hintsUsed > 0 ? "\(model.hintsUsed) used" : "")
+                .accessibilityHint("Gives a clue for a word you haven't found")
+                .accessibilityIdentifier("wordWheelHint")
 
                 Button { model.shuffle() } label: {
                     Image(systemName: "arrow.triangle.2.circlepath")
@@ -261,12 +282,13 @@ struct WordWheelView: View {
     }
 
     private func details(_ state: WordWheel.State) -> [(String, String)] {
+        let hints: [(String, String)] = model.hintsUsed > 0 ? [("Hints", "\(model.hintsUsed)")] : []
         if model.daily != nil {
             return [("Points", "\(state.score)"), ("Words", "\(state.foundAnswers.count)"),
-                    ("Streak", "\(DailyStore.shared.streak(.wordWheel))")]
+                    ("Streak", "\(DailyStore.shared.streak(.wordWheel))")] + hints
         }
         return [("Points", "\(state.score)"), ("Words", "\(state.foundAnswers.count)"),
-                ("Best", "\(max(model.bestScore ?? 0, state.score))")]
+                ("Best", "\(max(model.bestScore ?? 0, state.score))")] + hints
     }
 
     static let rules = HowToPlay(
@@ -286,6 +308,18 @@ struct WordWheelView: View {
                 "Climb from Starter to Good, Great, Amazing and Genius.",
                 "Reaching Great solves the daily wheel and wins a regular wheel.",
                 "Tap Finish (the flag) to end a wheel and see the words you missed.",
+            ]),
+            .init(title: "Hint", symbol: "lightbulb", points: [
+                "Tap the light bulb for a clue to a word you haven't found: its length and first letter.",
+                "Tap again for the first two letters, then the last letter too. After that, the next tap picks another word.",
+                "The clue also shows how many words are left of each length. Hinted words score as usual; the number of hints is shown with your result.",
+            ]),
+            .init(title: "Tips", symbol: "lightbulb.max", points: [
+                "Hunt for the pangram first: it's worth the most, and its long letter patterns suggest lots of shorter words.",
+                "Try common endings and beginnings with the wheel's letters: -ING, -ED, -ER, -TION, RE-, UN-.",
+                "Letters can repeat, so try doubles like -EE-, -LL- or -TT- and words like TATTOO.",
+                "Stuck? Shuffle: seeing the letters in a new order often shakes a word loose.",
+                "Build families from a word you found: PAINT can lead to PAINTER, and TRAIN to RETRAIN.",
             ]),
         ]
     )

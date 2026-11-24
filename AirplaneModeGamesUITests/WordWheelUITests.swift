@@ -64,6 +64,43 @@ final class WordWheelUITests: XCTestCase {
         XCTAssertEqual(app.descendants(matching: .any)["found.repaint"].value as? String, "pangram, bonus word")
     }
 
+    func testHintGivesProgressiveClues() {
+        let app = launch()
+        let hint = app.buttons["wordWheelHint"]
+        hint.tap()
+        let panel = app.descendants(matching: .any)["cluePanel"]
+        XCTAssertTrue(panel.waitForExistence(timeout: 3))
+        let title = app.staticTexts["clueTitle"]
+        XCTAssertTrue(title.label.range(of: #"^An? \d+-letter word starting with [A-Z]$"#, options: .regularExpression) != nil,
+                      title.label)
+        let pattern = app.descendants(matching: .any)["cluePattern"]
+        let blanks = { (pattern.value as? String ?? "").components(separatedBy: "blank").count - 1 }
+        let firstBlanks = blanks()
+        XCTAssertGreaterThanOrEqual(firstBlanks, 3)
+        XCTAssertTrue(app.descendants(matching: .any)["wordsLeftByLength"].label.hasPrefix("Words left by length: "))
+        XCTAssertEqual(hint.value as? String, "1 used")
+
+        // Again: the first two letters.
+        app.buttons["clueMore"].tap()
+        XCTAssertTrue(title.label.range(of: #"starting with [A-Z]{2}$"#, options: .regularExpression) != nil, title.label)
+        XCTAssertEqual(blanks(), firstBlanks - 1)
+        XCTAssertEqual(hint.value as? String, "2 used")
+
+        // Closing and reopening shows the same clue without counting another hint.
+        let shown = title.label
+        app.buttons["clueClose"].tap()
+        XCTAssertFalse(panel.waitForExistence(timeout: 1))
+        hint.tap()
+        XCTAssertTrue(panel.waitForExistence(timeout: 3))
+        XCTAssertEqual(title.label, shown)
+        XCTAssertEqual(hint.value as? String, "2 used")
+
+        // Then the last letter too.
+        hint.tap()
+        XCTAssertTrue(title.label.contains("and ending in"), title.label)
+        XCTAssertEqual(app.buttons["clueMore"].label, "Another Word")
+    }
+
     func testFinishRevealsMissedAnswers() {
         let app = launch()
         spell("paint", in: app)

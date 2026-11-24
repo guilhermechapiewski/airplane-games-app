@@ -50,6 +50,8 @@ final class WordGuessModel {
         var phase: Phase
         var state: Logic.State
         var match: WordGuessMatch
+        /// Optional so saves from before hints existed still load.
+        var hintsUsed: Int?
     }
 
     private(set) var mode: WordGuessMode = .computer
@@ -69,6 +71,16 @@ final class WordGuessModel {
     private(set) var toast: String?
     private(set) var showResult = false
     private var toastToken = 0
+    /// The suggested next guess, while its card is showing.
+    private(set) var hint: Logic.Suggestion?
+    /// Hints asked for this game (shown on the result card).
+    private(set) var hintsUsed = 0
+    /// A hint is being worked out.
+    private(set) var isThinking = false
+    /// The last suggestion and how many guesses it was for: asking again before the next guess
+    /// shows it again without counting another hint.
+    private var lastHint: (guesses: Int, suggestion: Logic.Suggestion)?
+    private var hintToken = 0
 
     var hardModePreference: Bool {
         didSet {
@@ -103,6 +115,7 @@ final class WordGuessModel {
         if let daily {
             let saved = store.load(Saved.self, key: GameID.wordGuess.dailySaveKey(daily))
             state = saved?.state ?? Logic.State(answer: Self.dailyAnswer(daily), hardMode: hard)
+            hintsUsed = saved?.hintsUsed ?? 0
             revealedRows = state.guesses.count
             keyboard = state.keyboard
         } else if let saved = store.load(Saved.self, key: GameID.wordGuess.saveKey) {
@@ -110,6 +123,7 @@ final class WordGuessModel {
             phase = saved.phase
             state = saved.state
             match = saved.match
+            hintsUsed = saved.hintsUsed ?? 0
             revealedRows = saved.state.guesses.count
             keyboard = saved.state.keyboard
             if state.isOver {
@@ -120,6 +134,7 @@ final class WordGuessModel {
                     state = Self.computerGame(hard: hard)
                     revealedRows = 0
                     keyboard = [:]
+                    hintsUsed = 0
                 }
             }
         } else {
@@ -180,6 +195,7 @@ final class WordGuessModel {
 
     func type(_ letter: Character) {
         guard canType, state.type(letter) else { return }
+        dismissHint()
         popToken += 1
         Feedback.play(.tap)
         persist()
@@ -193,6 +209,7 @@ final class WordGuessModel {
 
     func submit() {
         guard canType else { return }
+        dismissHint()
         do {
             _ = try state.submit()
         } catch {
@@ -244,6 +261,62 @@ final class WordGuessModel {
             guard let self, self.toastToken == token else { return }
             withAnimation(.easeOut(duration: 0.25)) { self.toast = nil }
         }
+    }
+
+    // MARK: Hints
+
+    var canHint: Bool { canType && !isThinking }
+
+    /// Works out a good next guess (off the main actor) and shows it with its reasoning.
+    func showHint() {
+        guard canHint else { return }
+        let count = state.guesses.count
+        if let last = lastHint, last.guesses == count {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { hint = last.suggestion }
+            Feedback.play(.select)
+            return
+        }
+        hintToken += 1
+        let token = hintToken
+        let guesses = state.guesses, hard = state.hardMode, friend = mode == .friend
+        isThinking = true
+        Task { @MainActor [weak self] in
+            let suggestion = await Self.suggestion(after: guesses, hardMode: hard, friendsWord: friend)
+            guard let self, self.hintToken == token else { return }
+            self.isThinking = false
+            guard let suggestion, self.canType, self.state.guesses.count == count else { return }
+            self.hintsUsed += 1
+            self.lastHint = (count, suggestion)
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { self.hint = suggestion }
+            Feedback.play(.select)
+            AccessibilityNotification.Announcement("\(suggestion.title). \(suggestion.explanation)").post()
+            self.persist()
+        }
+    }
+
+    /// Types the suggested word into the current row (the player still presses Enter).
+    func typeHint() {
+        guard let word = hint?.word, canType else { return }
+        dismissHint()
+        while state.deleteLetter() {}
+        for ch in word { state.type(ch) }
+        popToken += 1
+        Feedback.play(.tap)
+        persist()
+    }
+
+    func dismissHint() {
+        guard hint != nil else { return }
+        withAnimation(.easeOut(duration: 0.2)) { hint = nil }
+    }
+
+    /// A friend's word may not be a common answer, so their games can fall back to every valid word.
+    nonisolated private static func suggestion(after guesses: [Logic.Guess], hardMode: Bool,
+                                               friendsWord: Bool) async -> Logic.Suggestion? {
+        await Task.detached(priority: .userInitiated) {
+            Logic.suggestion(after: guesses, hardMode: hardMode, answers: WordLists.answers,
+                             allWords: friendsWord ? WordLists.validGuesses.sorted() : [])
+        }.value
     }
 
     // MARK: Game end
@@ -348,6 +421,11 @@ final class WordGuessModel {
         isRevealing = false
         showResult = false
         toast = nil
+        hint = nil
+        hintsUsed = 0
+        lastHint = nil
+        hintToken += 1
+        isThinking = false
     }
 
     /// Counts a computer game abandoned mid-way as a loss (it had guesses).
@@ -373,7 +451,7 @@ final class WordGuessModel {
         if mode == .computer && (state.isOver || !state.hasProgress) {
             store.remove(key: saveKey)
         } else {
-            store.save(Saved(mode: mode, phase: phase, state: state, match: match), key: saveKey)
+            store.save(Saved(mode: mode, phase: phase, state: state, match: match, hintsUsed: hintsUsed), key: saveKey)
         }
     }
 }
