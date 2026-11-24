@@ -58,6 +58,13 @@ struct TwentyFortyEightAdvisorTests {
         #expect(G.Advisor.bestDirection(for: s) == .right)
     }
 
+    @Test func takesAMergeOverJustShuffling() {
+        // Two 2s on the bottom row: merging them beats sliding both up.
+        let s = state([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [2, 0, 0, 2]])
+        let hint = G.Advisor.bestDirection(for: s)
+        #expect(hint == .left || hint == .right, "suggested \(String(describing: hint))")
+    }
+
     @Test func emptyCellsScoreBetter() {
         let open = state([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [8, 4, 2, 0]])
         let cluttered = state([[2, 8, 2, 4], [8, 2, 4, 8], [2, 4, 8, 2], [8, 4, 2, 0]])

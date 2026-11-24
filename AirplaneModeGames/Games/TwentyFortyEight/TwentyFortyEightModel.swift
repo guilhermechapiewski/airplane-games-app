@@ -23,6 +23,11 @@ final class TwentyFortyEightModel {
     private(set) var clock = GameClock()
     var showWin = false
     private(set) var isOver = false
+    /// The swipe a hint suggests, shown briefly over the board.
+    private(set) var hint: Direction?
+    /// A hint is being worked out.
+    private(set) var isThinking = false
+    private var hintToken = 0
 
     private let store: GameStore
     private let stats: StatsStore
@@ -53,6 +58,7 @@ final class TwentyFortyEightModel {
             Haptics.tap()
             return
         }
+        clearHint()
         history.append(previous)
         if history.count > Self.maxUndo { history.removeFirst() }
         ghosts = outcome.consumed
@@ -87,12 +93,54 @@ final class TwentyFortyEightModel {
 
     func undo() {
         guard canUndo, let previous = history.popLast() else { return }
+        clearHint()
         state = previous
         ghosts = []
         mergedIDs = []
         moveCount += 1
         Feedback.play(.flip)
         persist()
+    }
+
+    /// Works out the best swipe off the main actor, then shows it for a few seconds.
+    /// Hints are free and leave the score alone.
+    func showHint() {
+        guard !isOver, !showWin, !isThinking else { return }
+        hintToken += 1
+        let token = hintToken
+        let position = state
+        isThinking = true
+        Task { @MainActor [weak self] in
+            let direction = await Task.detached(priority: .userInitiated) {
+                Logic.Advisor.bestDirection(for: position)
+            }.value
+            guard let self, self.hintToken == token else { return }
+            self.isThinking = false
+            guard let direction else {
+                Feedback.play(.invalid)
+                return
+            }
+            withAnimation(.easeOut(duration: 0.2)) { self.hint = direction }
+            Feedback.play(.select)
+            AccessibilityNotification.Announcement("Try swiping \(direction.rawValue)").post()
+            try? await Task.sleep(for: Self.hintDuration)
+            guard self.hintToken == token else { return }
+            withAnimation(.easeOut(duration: 0.3)) { self.hint = nil }
+        }
+    }
+
+    /// How long a hint stays up (DEBUG `-hintDemo` keeps it for screenshots).
+    private static var hintDuration: Duration {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-hintDemo") { return .seconds(600) }
+        #endif
+        return .seconds(3)
+    }
+
+    private func clearHint() {
+        hintToken += 1
+        hint = nil
+        isThinking = false
     }
 
     func continueAfterWin() {
@@ -107,6 +155,7 @@ final class TwentyFortyEightModel {
             // Count an abandoned game that had progress.
             stats.record(game, won: state.hasWon, score: state.score, time: clock.elapsed())
         }
+        clearHint()
         state = .newGame()
         history = []
         ghosts = []

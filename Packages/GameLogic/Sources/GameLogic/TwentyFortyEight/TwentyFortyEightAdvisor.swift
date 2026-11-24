@@ -19,9 +19,10 @@ extension TwentyFortyEight {
             var memo: [Key: Double] = [:]
             for direction in Direction.searchOrder {
                 guard let next = board.slid(direction) else { continue }
-                // A merge banked now can't be lost to an unlucky spawn: break near-ties in its favor.
+                // A merge banked now can't be lost to an unlucky spawn. The heuristic values a
+                // ready merge more than a made one (it keeps the pair), so pay for making it here.
                 let merges = Double(next.tileCount < board.tileCount ? board.tileCount - next.tileCount : 0)
-                let value = chance(next, depth: plies - 1, memo: &memo) + merges * 400
+                let value = chance(next, depth: plies - 1, memo: &memo) + merges * 2000
                 if best == nil || value > best!.1 { best = (direction, value) }
             }
             return best?.0

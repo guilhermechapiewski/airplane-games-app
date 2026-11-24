@@ -34,6 +34,9 @@ struct TwentyFortyEightView: View {
         .onKeyPress(.downArrow) { model.move(.down); return .handled }
         .onKeyPress(.leftArrow) { model.move(.left); return .handled }
         .onKeyPress(.rightArrow) { model.move(.right); return .handled }
+        #if DEBUG
+        .task { if ProcessInfo.processInfo.arguments.contains("-hintDemo") { model.showHint() } }
+        #endif
     }
 
     private var header: some View {
@@ -52,6 +55,12 @@ struct TwentyFortyEightView: View {
                 withAnimation(.easeOut(duration: 0.12)) { model.undo() }
             }
             .disabled(!model.canUndo)
+            ToolButton(title: "Hint", systemImage: "lightbulb", isActive: model.hint != nil || model.isThinking,
+                       tint: HintCard.amber) {
+                model.showHint()
+            }
+            .disabled(model.isOver || model.showWin)
+            .accessibilityHint("Suggests the best swipe.")
             ToolButton(title: "New", systemImage: "arrow.clockwise") {
                 withAnimation { model.newGame() }
             }
@@ -74,6 +83,13 @@ struct TwentyFortyEightView: View {
         .accessibilityAction(named: "Swipe left") { model.move(.left) }
         .accessibilityAction(named: "Swipe right") { model.move(.right) }
         .accessibilityIdentifier("board2048")
+        .overlay {
+            if let direction = model.hint {
+                SwipeHint(direction: direction, reduceMotion: reduceMotion)
+                    .id(direction)
+                    .transition(.opacity)
+            }
+        }
     }
 
     /// Moves as soon as the finger has travelled far enough, rather than waiting for it to lift.
@@ -139,9 +155,80 @@ struct TwentyFortyEightView: View {
                 "Create a 2048 tile to win — then keep going for a higher score.",
                 "The game ends when the board is full and no merges are possible.",
                 "Made a mistake? Undo up to 20 moves.",
+                "Not sure where to swipe? Tap Hint to see the best move. Hints are free and don't change your score.",
+            ]),
+            .init(title: "Tips", symbol: "lightbulb", points: [
+                "Pick a corner for your biggest tile and keep it there. Mostly swipe toward it, using just two directions.",
+                "Keep the row along that corner full, so a swipe the other way can't pull the big tile out.",
+                "Line tiles up by size next to the big one, like a snake, so merges roll into the corner.",
+                "Merge small tiles early: a board clogged with 2s and 4s leaves no room to move.",
+                "Use the swipe away from your corner only when nothing else moves.",
             ]),
         ]
     )
+}
+
+/// A glowing arrow over the board pointing the way a hint suggests, with a soft glow on that edge.
+private struct SwipeHint: View {
+    let direction: Direction
+    let reduceMotion: Bool
+    @State private var nudge = false
+
+    private var symbol: String {
+        switch direction {
+        case .up: "arrow.up"
+        case .down: "arrow.down"
+        case .left: "arrow.left"
+        case .right: "arrow.right"
+        }
+    }
+
+    private var edge: Alignment {
+        switch direction {
+        case .up: .top
+        case .down: .bottom
+        case .left: .leading
+        case .right: .trailing
+        }
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            let side = min(geo.size.width, geo.size.height)
+            let vertical = direction == .up || direction == .down
+            let travel = side * 0.06
+            let offset = nudge ? CGSize(width: CGFloat(direction.offset.col) * travel,
+                                        height: CGFloat(direction.offset.row) * travel) : .zero
+            ZStack(alignment: edge) {
+                LinearGradient(colors: [HintCard.amber.opacity(0.55), HintCard.amber.opacity(0)],
+                               startPoint: UnitPoint(x: 0.5 + CGFloat(direction.offset.col) * 0.5,
+                                                     y: 0.5 + CGFloat(direction.offset.row) * 0.5),
+                               endPoint: UnitPoint(x: 0.5 - CGFloat(direction.offset.col) * 0.5,
+                                                   y: 0.5 - CGFloat(direction.offset.row) * 0.5))
+                    .frame(width: vertical ? side : side * 0.3, height: vertical ? side * 0.3 : side)
+                    .mask(RoundedRectangle(cornerRadius: side * 0.04, style: .continuous))
+                Color.clear
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .overlay {
+                Image(systemName: symbol)
+                    .font(.system(size: side * 0.12, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .frame(width: side * 0.22, height: side * 0.22)
+                    .background(HintCard.amber.gradient, in: Circle())
+                    .shadow(color: HintCard.amber.opacity(0.6), radius: side * 0.04)
+                    .offset(offset)
+            }
+        }
+        .allowsHitTesting(false)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 0.45).repeatForever(autoreverses: true)) { nudge = true }
+        }
+        .accessibilityElement()
+        .accessibilityLabel("Hint: swipe \(direction.rawValue)")
+        .accessibilityIdentifier("hintArrow")
+    }
 }
 
 private struct BoardView: View {
