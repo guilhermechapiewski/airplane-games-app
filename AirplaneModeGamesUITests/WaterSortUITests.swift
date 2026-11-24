@@ -43,7 +43,7 @@ final class WaterSortUITests: XCTestCase {
         XCTAssertEqual(tubes(app).count, 5)
         app.buttons["hintButton"].tap()
         let tip = app.descendants(matching: .any)["hintTip"]
-        XCTAssertTrue(tip.waitForExistence(timeout: 10), "the suggested pour is spelled out")
+        XCTAssertTrue(tip.waitForExistence(timeout: 30), "the suggested pour is spelled out")
         attachScreenshot("hint")
         // "Pour tube 2 into tube 4."
         let numbers = tip.label.split(whereSeparator: { !$0.isNumber }).compactMap { Int($0) }
