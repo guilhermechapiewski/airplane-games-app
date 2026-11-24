@@ -18,6 +18,9 @@ final class WordWheelModel {
         var clock: GameClock
         /// Daily: the solve (reaching Great) was already recorded.
         var solvedRecorded: Bool
+        /// Optional so saves from before hints existed still load.
+        var clue: Logic.Clue?
+        var hintsUsed: Int?
     }
 
     private(set) var state: Logic.State?
@@ -38,6 +41,11 @@ final class WordWheelModel {
     private(set) var solvedRecorded = false
     /// Daily: shows the "solved" banner right after reaching Great.
     private(set) var justSolvedDaily = false
+    /// The current clue for an unfound answer, and whether its panel is showing.
+    private(set) var clue: Logic.Clue?
+    private(set) var showClue = false
+    /// Clues revealed on this wheel (shown with the result).
+    private(set) var hintsUsed = 0
 
     private let store: GameStore
     private let stats: StatsStore
@@ -60,6 +68,8 @@ final class WordWheelModel {
             adopt(saved.state)
             clock = saved.clock
             solvedRecorded = saved.solvedRecorded
+            clue = saved.clue
+            hintsUsed = saved.hintsUsed ?? 0
         }
     }
 
@@ -160,6 +170,12 @@ final class WordWheelModel {
     }
 
     private func accept(_ a: Logic.Accepted) {
+        if a.word == clue?.word {
+            withAnimation(.snappy(duration: 0.25)) {
+                clue = nil
+                showClue = false
+            }
+        }
         withAnimation(.snappy(duration: 0.25)) { lastFound = a.word }
         if a.isPangram {
             pangramToken += 1
@@ -230,6 +246,45 @@ final class WordWheelModel {
         }
     }
 
+    // MARK: Hints
+
+    /// Answers not found yet, by length (for the clue panel).
+    var answersLeftByLength: [Logic.LengthCount] { state?.answersLeftByLength ?? [] }
+
+    /// Shows the clue panel again if it was closed; otherwise reveals more of the current clue,
+    /// or starts a clue for another unfound answer once this one is fully shown.
+    /// Hinted words score like any other: the clue only narrows the search.
+    func hint() {
+        guard let s = state, canPlay else { return }
+        if let clue, !showClue, s.missedAnswers.contains(clue.word) {
+            withAnimation(.snappy(duration: 0.25)) { showClue = true }
+            Feedback.play(.select)
+            announce(clue)
+            return
+        }
+        var rng = SystemRandomNumberGenerator()
+        guard let next = s.nextClue(after: clue, using: &rng) else {
+            show("Every answer found!", kind: .rank)
+            return
+        }
+        hintsUsed += 1
+        withAnimation(.snappy(duration: 0.25)) {
+            clue = next
+            showClue = true
+        }
+        Feedback.play(.select)
+        announce(next)
+        persist()
+    }
+
+    func closeClue() {
+        withAnimation(.snappy(duration: 0.25)) { showClue = false }
+    }
+
+    private func announce(_ clue: Logic.Clue) {
+        AccessibilityNotification.Announcement("\(clue.title). \(clue.spokenPattern)").post()
+    }
+
     // MARK: Finish
 
     /// Ends the wheel, reveals the missed answers and records the result.
@@ -238,6 +293,7 @@ final class WordWheelModel {
         s.finish()
         state = s
         clock.pause()
+        showClue = false
         let won = s.rank >= Logic.Rank.solved
         if let daily {
             if !solvedRecorded {
@@ -292,6 +348,9 @@ final class WordWheelModel {
         celebrating = false
         justSolvedDaily = false
         tapTokens = [:]
+        clue = nil
+        showClue = false
+        hintsUsed = 0
         if daily == nil { solvedRecorded = false }
     }
 
@@ -334,10 +393,11 @@ final class WordWheelModel {
 
     private func persist() {
         guard let s = state else { return }
-        if s.isFinished || !s.hasProgress {
+        if s.isFinished || (!s.hasProgress && hintsUsed == 0) {
             store.remove(key: saveKey)
         } else {
-            store.save(Saved(state: s, clock: clock, solvedRecorded: solvedRecorded), key: saveKey)
+            store.save(Saved(state: s, clock: clock, solvedRecorded: solvedRecorded, clue: clue, hintsUsed: hintsUsed),
+                       key: saveKey)
         }
     }
 }
