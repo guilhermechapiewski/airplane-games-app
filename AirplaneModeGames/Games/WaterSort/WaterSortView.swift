@@ -67,6 +67,8 @@ struct WaterSortView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(HintCard.amber)
                 .transition(.opacity)
+                // One element: otherwise the identifier lands on both the icon and the text.
+                .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("hintTip")
         } else if model.isThinking {
             Label("Thinking…", systemImage: "lightbulb")
