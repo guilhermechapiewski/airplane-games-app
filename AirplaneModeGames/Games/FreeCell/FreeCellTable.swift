@@ -34,8 +34,9 @@ struct FreeCellLayout {
 
     /// Vertical spacing between cards of a column, compressed if the column is too tall.
     func fan(count: Int) -> CGFloat {
-        let up = cardHeight * 0.29
         let available = size.height - tableauTop - cardHeight - 4
+        // Use the table's height: fan wide enough that a 13-card column just fits, within limits.
+        let up = min(cardHeight * 0.42, max(cardHeight * 0.29, available / 12))
         let natural = CGFloat(max(0, count - 1)) * up
         guard natural > available, natural > 0 else { return up }
         return up * max(0.2, available / natural)

@@ -39,8 +39,9 @@ struct HintCard: View {
                     .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity)
                     .frame(height: 40)
-                    .background(tint.opacity(0.18), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .foregroundStyle(tint)
+                    .background(tint.opacity(0.22), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    // Tinted text on the pale tint fails contrast (amber especially); the fill carries the color.
+                    .foregroundStyle(.primary)
             }
             .buttonStyle(PressableStyle(scale: 0.97))
             .accessibilityIdentifier("hintShowAnswer")
