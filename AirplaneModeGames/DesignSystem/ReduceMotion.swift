@@ -11,6 +11,8 @@ extension EnvironmentValues {
 
 enum LaunchOptions {
     static let isUITesting = ProcessInfo.processInfo.arguments.contains("-uiTesting")
+    /// UI tests force Reduce Motion unless `-fullMotion` asks for the real animations.
+    static let forcesReduceMotion = isUITesting && !ProcessInfo.processInfo.arguments.contains("-fullMotion")
     #if DEBUG
     /// `-differentiateWithoutColor` previews that accessibility setting in the simulator.
     static let forcesDifferentiateWithoutColor = ProcessInfo.processInfo.arguments.contains("-differentiateWithoutColor")
@@ -27,7 +29,7 @@ private struct ReduceMotionProvider: ViewModifier {
         // Under UI tests, looping SwiftUI animations keep the app from ever going idle,
         // which makes XCUITest stall before every interaction.
         content
-            .environment(\.reduceMotion, systemReduceMotion || LaunchOptions.isUITesting)
+            .environment(\.reduceMotion, systemReduceMotion || LaunchOptions.forcesReduceMotion)
             .environment(\.differentiateWithoutColor,
                          systemDifferentiateWithoutColor || LaunchOptions.forcesDifferentiateWithoutColor)
     }

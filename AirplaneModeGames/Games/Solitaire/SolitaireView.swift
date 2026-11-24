@@ -53,7 +53,7 @@ struct SolitaireView: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            StatPill(title: "Score", value: "\(model.state.score)", tint: accent)
+            StatPill(title: "Score", value: "\(model.displayScore)", tint: accent)
             StatPill(title: "Moves", value: "\(model.state.moveCount)")
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 StatPill(title: "Time", value: model.clock.elapsed(at: context.date).clockString)
@@ -68,7 +68,7 @@ struct SolitaireView: View {
                 .accessibilityLabel("Mode: \(model.drawMode.title)")
         }
         .frame(maxWidth: sizeClass == .regular ? 900 : .infinity)
-        .animation(.snappy, value: model.state.score)
+        .animation(.snappy, value: model.displayScore)
         .animation(.snappy, value: model.state.moveCount)
     }
 

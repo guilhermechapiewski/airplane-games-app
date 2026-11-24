@@ -211,6 +211,7 @@ private struct TileView: View {
                     LinearKeyframe(CGFloat(1), duration: 0.1)
                     SpringKeyframe(peak, duration: 0.08)
                     SpringKeyframe(CGFloat(1), duration: 0.14)
+                    LinearKeyframe(CGFloat(1), duration: 0.04) // land exactly at rest
                 }
             }
     }

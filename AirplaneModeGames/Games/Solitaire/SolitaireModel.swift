@@ -104,6 +104,8 @@ final class SolitaireModel {
     var canUndo: Bool { phase == .playing && !history.isEmpty }
     var canAutoComplete: Bool { phase == .playing && state.canAutoComplete }
     var variant: String { drawMode.rawValue }
+    /// The score in the header: once the game is won, the final score with its time bonus.
+    var displayScore: Int { phase == .won || phase == .celebrating ? finalScore : state.score }
     var bestScore: Int? { stats.stats(for: game, variant: variant).bestScore }
     var bestTime: TimeInterval? { stats.stats(for: game, variant: variant).bestTime }
 

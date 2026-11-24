@@ -218,6 +218,7 @@ private struct PlacedBlock: View {
                     if bounce != 0 && !reduceMotion {
                         CubicKeyframe(CGFloat(1.14), duration: 0.08)
                         SpringKeyframe(CGFloat(1), duration: 0.25, spring: .bouncy)
+                        LinearKeyframe(CGFloat(1), duration: 0.05) // land exactly at rest
                     } else {
                         LinearKeyframe(CGFloat(1), duration: 0.01)
                     }

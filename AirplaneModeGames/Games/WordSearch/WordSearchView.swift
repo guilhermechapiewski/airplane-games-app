@@ -335,6 +335,7 @@ private struct HintPulse: View {
                     SpringKeyframe(CGFloat(1), duration: 0.3)
                     SpringKeyframe(peak, duration: 0.25)
                     SpringKeyframe(CGFloat(1), duration: 0.3)
+                    LinearKeyframe(CGFloat(1), duration: 0.05) // land exactly at rest
                 }
             }
             .accessibilityHidden(true)
@@ -371,6 +372,7 @@ private struct WordListView: View {
                         KeyframeTrack {
                             SpringKeyframe(CGFloat(reduceMotion || found == nil ? 1 : 1.15), duration: 0.12)
                             SpringKeyframe(CGFloat(1), duration: 0.25)
+                            LinearKeyframe(CGFloat(1), duration: 0.05) // land exactly at rest
                         }
                     }
                     .accessibilityLabel(placements[index].word)

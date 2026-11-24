@@ -440,6 +440,7 @@ private struct LetterTile: View {
             KeyframeTrack {
                 SpringKeyframe(CGFloat(reduceMotion ? 1 : 1.12), duration: 0.07)
                 SpringKeyframe(CGFloat(1), duration: 0.12)
+                LinearKeyframe(CGFloat(1), duration: 0.04) // land exactly at rest
             }
         }
         .keyframeAnimator(initialValue: CGFloat(0), trigger: bounceTrigger) { view, y in
@@ -449,6 +450,7 @@ private struct LetterTile: View {
                 LinearKeyframe(CGFloat(0), duration: bounceDelay + 0.01)
                 SpringKeyframe(reduceMotion ? 0 : -size * 0.32, duration: 0.14)
                 SpringKeyframe(CGFloat(0), duration: 0.3, spring: .bouncy)
+                LinearKeyframe(CGFloat(0), duration: 0.04) // land exactly at rest
             }
         }
         .onChange(of: letter) { old, new in

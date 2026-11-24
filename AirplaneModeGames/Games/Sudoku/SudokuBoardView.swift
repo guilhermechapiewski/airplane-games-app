@@ -166,6 +166,7 @@ struct SudokuCellView: View {
                     KeyframeTrack {
                         SpringKeyframe(reduceMotion ? CGFloat(1) : CGFloat(1.22), duration: 0.1)
                         SpringKeyframe(CGFloat(1), duration: 0.22)
+                        LinearKeyframe(CGFloat(1), duration: 0.04) // land exactly at rest
                     }
                 }
             if differentiateWithoutColor && isConflict && !isGiven && value != 0 {

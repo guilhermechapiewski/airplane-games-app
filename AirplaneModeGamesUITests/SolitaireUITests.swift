@@ -84,5 +84,30 @@ final class SolitaireUITests: XCTestCase {
         auto.tap()
         XCTAssertTrue(app.staticTexts["You Won!"].waitForExistence(timeout: 20))
         XCTAssertTrue(app.buttons["Play Again"].exists)
+        // The header shows the same final score as the result card (time bonus included).
+        let scores = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'SCORE, '")).allElementsBoundByIndex.map(\.label)
+        XCTAssertEqual(Set(scores).count, 1, "header and result card disagree: \(scores)")
+    }
+
+    /// With real animations, a rejected drag plays the shake and the card must land exactly back
+    /// in its column (a short spring as the shake's last keyframe once left it 4 points off).
+    @MainActor func testRejectedDragLandsExactlyBack() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-fullMotion", "-openGame", "solitaire", "-solitaireScenario", "autocomplete"]
+        app.launch()
+        XCTAssertTrue(app.buttons["autoComplete"].waitForExistence(timeout: 10))
+        let columnCards = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier BEGINSWITH 'card.' AND value BEGINSWITH 'Column'"))
+        for i in 0..<2 {
+            let card = app.descendants(matching: .any)[columnCards.element(boundBy: i).identifier]
+            let before = card.frame
+            card.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1))
+                .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75)))
+            let returned = expectation(for: NSPredicate(format: "frame == %@", NSValue(cgRect: before)), evaluatedWith: card)
+            wait(for: [returned], timeout: 3)
+            // Still there once the shake has finished.
+            Thread.sleep(forTimeInterval: 0.8)
+            XCTAssertEqual(card.frame, before, "\(card.label) didn't land back in its column")
+        }
     }
 }

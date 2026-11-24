@@ -428,7 +428,10 @@ private struct ShakeEffect: ViewModifier {
                 LinearKeyframe(CGFloat(6), duration: 0.07)
                 LinearKeyframe(CGFloat(-4), duration: 0.07)
                 LinearKeyframe(CGFloat(2), duration: 0.06)
-                SpringKeyframe(CGFloat(0), duration: 0.1)
+                // Must land exactly on 0: a trigger-driven keyframe animator keeps whatever value its
+                // last keyframe ends on, and a short spring carrying the wobble's speed stops a few
+                // points short, leaving the card off its column for good.
+                CubicKeyframe(CGFloat(0), duration: 0.1)
             }
         }
     }
