@@ -37,6 +37,24 @@ final class WaterSortUITests: XCTestCase {
         add(shot)
     }
 
+    /// The hint names a pour; making it counts as a move and clears the hint.
+    func testHintSuggestsAPour() {
+        let app = launch()
+        XCTAssertEqual(tubes(app).count, 5)
+        app.buttons["hintButton"].tap()
+        let tip = app.descendants(matching: .any)["hintTip"]
+        XCTAssertTrue(tip.waitForExistence(timeout: 10), "the suggested pour is spelled out")
+        attachScreenshot("hint")
+        // "Pour tube 2 into tube 4."
+        let numbers = tip.label.split(whereSeparator: { !$0.isNumber }).compactMap { Int($0) }
+        XCTAssertEqual(numbers.count, 2, tip.label)
+        tube(app, numbers[0]).tap()
+        tube(app, numbers[1]).tap()
+        wait(app.buttons["Undo"], "enabled == true", "the suggested pour was legal")
+        XCTAssertTrue(app.descendants(matching: .any)["movesCount"].label.contains("1"))
+        XCTAssertTrue(tip.waitForNonExistence(timeout: 3), "a pour clears the hint")
+    }
+
     /// Finds a legal first pour on the level and makes it: pick a tube, then the first empty one.
     func testPourUndoAndExtraTube() {
         let app = launch()
