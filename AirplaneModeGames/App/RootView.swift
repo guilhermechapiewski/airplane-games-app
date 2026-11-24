@@ -37,6 +37,7 @@ struct GameDestination: View {
         case .twentyFortyEight: TwentyFortyEightView()
         case .sudoku: SudokuView(daily: daily)
         case .solitaire: SolitaireView(daily: daily)
+        case .freeCell: FreeCellView()
         case .blocks: BlockPuzzleView()
         case .tileMatch: TileMatchView(daily: daily)
         case .waterSort: WaterSortView(daily: daily)

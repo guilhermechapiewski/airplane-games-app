@@ -14,6 +14,7 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
     case twentyFortyEight
     case sudoku
     case solitaire
+    case freeCell
     case blocks
     case tileMatch
     case waterSort
@@ -34,6 +35,7 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .twentyFortyEight: "2048"
         case .sudoku: "Sudoku"
         case .solitaire: "Solitaire"
+        case .freeCell: "FreeCell"
         case .blocks: "Block Puzzle"
         case .tileMatch: "Tile Match"
         case .waterSort: "Water Sort"
@@ -54,6 +56,7 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .twentyFortyEight: "Slide and merge to 2048"
         case .sudoku: "Classic 9×9 number logic"
         case .solitaire: "Klondike patience"
+        case .freeCell: "Every card face up, four cells"
         case .blocks: "Fit blocks, clear lines"
         case .tileMatch: "Match pairs of free tiles"
         case .waterSort: "Pour until each tube is one color"
@@ -74,6 +77,7 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .twentyFortyEight: "square.grid.2x2.fill"
         case .sudoku: "number.square.fill"
         case .solitaire: "suit.spade.fill"
+        case .freeCell: "suit.heart.fill"
         case .blocks: "square.stack.3d.up.fill"
         case .tileMatch: "rectangle.stack.fill"
         case .waterSort: "testtube.2"
@@ -93,7 +97,7 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .twentyFortyEight: .numbers
         case .sudoku, .minesweeper, .nonograms, .waterSort: .logic
-        case .solitaire, .tileMatch: .cards
+        case .solitaire, .freeCell, .tileMatch: .cards
         case .chess, .dotsAndBoxes: .board
         case .wordGuess, .wordSearch, .hangman, .wordWheel: .words
         case .blocks, .snake: .arcade
@@ -106,6 +110,7 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .twentyFortyEight: [Color(hex: 0xFFB547), Color(hex: 0xFF7A45)]
         case .sudoku: [Color(hex: 0x5B8CFF), Color(hex: 0x3A5BDB)]
         case .solitaire: [Color(hex: 0x2FBF71), Color(hex: 0x14845A)]
+        case .freeCell: [Color(hex: 0xC9506F), Color(hex: 0x86203F)]
         case .blocks: [Color(hex: 0xA77BFF), Color(hex: 0x6A4BE0)]
         case .tileMatch: [Color(hex: 0xFF8FA3), Color(hex: 0xE0527A)]
         case .waterSort: [Color(hex: 0x4FD8E8), Color(hex: 0x1A9FB8)]
