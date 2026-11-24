@@ -42,8 +42,16 @@ struct DotsAndBoxesView: View {
                 .frame(maxWidth: boardSide)
             Spacer(minLength: 0)
             DotsBoardView(model: model, side: boardSide)
-            DotsStatusLine(model: model)
-                .padding(.top, 6)
+            Group {
+                if showsHintBanner {
+                    DotsHintBanner(model: model)
+                        .frame(maxWidth: min(boardSide, 460))
+                        .transition(.opacity)
+                } else {
+                    DotsStatusLine(model: model)
+                }
+            }
+            .padding(.top, 6)
             Spacer(minLength: 0)
             controls
         }
@@ -60,6 +68,10 @@ struct DotsAndBoxesView: View {
             VStack(spacing: 16) {
                 DotsScoreboard(model: model, vertical: true)
                 DotsStatusLine(model: model)
+                if showsHintBanner {
+                    DotsHintBanner(model: model)
+                        .transition(.opacity)
+                }
                 Spacer(minLength: 0)
                 controls
             }
@@ -69,6 +81,8 @@ struct DotsAndBoxesView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    private var showsHintBanner: Bool { model.hint != nil || model.isFindingHint }
+
     private var controls: some View {
         HStack(spacing: 24) {
             ToolButton(title: "Undo", systemImage: "arrow.uturn.backward", tint: DotsTheme.accent) {
@@ -76,6 +90,12 @@ struct DotsAndBoxesView: View {
             }
             .disabled(!model.canUndo)
             .accessibilityIdentifier("undo")
+            ToolButton(title: "Hint", systemImage: "lightbulb",
+                       isActive: model.hint != nil || model.isFindingHint, tint: HintCard.amber) {
+                withAnimation(.easeOut(duration: 0.2)) { model.showHint() }
+            }
+            .disabled(!model.canHint)
+            .accessibilityIdentifier("hint")
             ToolButton(title: "New", systemImage: "plus", tint: DotsTheme.accent) {
                 model.showSetup = true
             }
@@ -134,6 +154,7 @@ struct DotsAndBoxesView: View {
                 "Tap near a gap between two dots to draw a line there.",
                 "Drawing the fourth side of a box claims it — and you move again.",
                 "Undo takes back your last line (and the computer's reply).",
+                "Hint highlights the line the Hard computer would draw for whoever is to move, and says why.",
             ]),
             .init(title: "Don't hand out boxes", symbol: "exclamationmark.triangle", points: [
                 "Drawing a box's third side lets your opponent take it. Early on, play lines that don't.",
@@ -147,6 +168,12 @@ struct DotsAndBoxesView: View {
             .init(title: "The double-cross", symbol: "arrow.triangle.branch", points: [
                 "When you're given a long chain, take all but the last two boxes, then draw the line at the far end instead.",
                 "Your opponent gets those two boxes, but then has to open the next chain for you. In a loop, leave four.",
+            ]),
+            .init(title: "Tips", symbol: "lightbulb", points: [
+                "Never draw a box's third side unless you have to — that's a free box for your opponent.",
+                "Count long chains as safe lines run out. The player who moved first wants dots plus long chains to be even: an even number of long chains on 3×3 (16 dots), an odd number on 4×4 and 6×6. The other player wants the opposite.",
+                "Give away short chains (one or two boxes) before long ones, and open a two-box chain in the middle so it can't be turned back on you.",
+                "Taking every box isn't always best: in a long chain, leave the last two so your opponent must open the next one.",
             ]),
             .init(title: "Winning", symbol: "trophy", points: [
                 "The game ends when every line is drawn. Most boxes wins; on 4×4 and 6×6 boards a tie is possible.",
@@ -258,5 +285,61 @@ struct DotsStatusLine: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(model.statusText)
         .accessibilityIdentifier("turnStatus")
+    }
+}
+
+/// The suggested line's idea, shown while it's highlighted (or being searched for).
+struct DotsHintBanner: View {
+    let model: DotsAndBoxesModel
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "lightbulb.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(HintCard.amber)
+                .frame(width: 28, height: 28)
+                .background(HintCard.amber.opacity(0.16), in: Circle())
+            if let hint = model.hint {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(hint.title)
+                        .font(.subheadline.weight(.bold))
+                    Text(hint.explanation)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } else {
+                Text("Thinking it over…")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+                ProgressView().controlSize(.small)
+            }
+            Spacer(minLength: 0)
+            if model.hint != nil {
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) { model.cancelHint() }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(Theme.well, in: Circle())
+                }
+                .buttonStyle(PressableStyle())
+                .accessibilityLabel("Close hint")
+                .accessibilityIdentifier("hintClose")
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .frame(minHeight: 44)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(HintCard.amber.opacity(0.55), lineWidth: 1.5)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(model.hint.map { "Hint: \($0.title). \($0.explanation)" } ?? "Looking for a good line")
+        .accessibilityIdentifier("hintBanner")
     }
 }
