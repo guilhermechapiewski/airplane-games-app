@@ -10,6 +10,8 @@ enum ChessTheme {
     static let lastMove = Color(hex: 0xF5CF4F)
     static let selection = Color(hex: 0xF0B429)
     static let check = Color(hex: 0xE5383B)
+    /// Hint squares and arrow: green, so they never read as the amber selection.
+    static let hint = Color(hex: 0x2E9B57)
     static let accent = GameID.chess.accent
 }
 
@@ -30,6 +32,7 @@ struct ChessBoardView: View {
         ZStack(alignment: .topLeading) {
             squares
             pieces
+            hintArrow
         }
         .frame(width: side, height: side)
         .clipShape(RoundedRectangle(cornerRadius: max(4, side * 0.012), style: .continuous))
@@ -91,6 +94,7 @@ struct ChessBoardView: View {
         let selected = model.selected
         let targets = model.targets
         let checked = model.checkedKing
+        let hint = model.hint?.move
         let hover = dragLocation.flatMap { square(at: $0) }
         let position = model.position
         return Canvas { context, _ in
@@ -105,6 +109,12 @@ struct ChessBoardView: View {
                 }
                 if sq == selected {
                     context.fill(Path(rect), with: .color(ChessTheme.selection.opacity(0.62)))
+                }
+                if let hint, sq == hint.from || sq == hint.to {
+                    context.fill(Path(rect), with: .color(ChessTheme.hint.opacity(0.32)))
+                    let inset = cell * 0.04
+                    context.stroke(Path(rect.insetBy(dx: inset, dy: inset)),
+                                   with: .color(ChessTheme.hint.opacity(0.9)), lineWidth: cell * 0.07)
                 }
                 if sq == checked {
                     let center = CGPoint(x: rect.midX, y: rect.midY)
@@ -173,6 +183,21 @@ struct ChessBoardView: View {
                     removal: .scale(scale: 0.3).combined(with: .opacity)
                         .animation(.easeIn(duration: 0.18).delay(reduceMotion ? 0 : 0.1))))
                 .allowsHitTesting(false)
+        }
+    }
+
+    /// A translucent arrow from the hinted piece to its destination, drawn over the pieces.
+    @ViewBuilder private var hintArrow: some View {
+        if let move = model.hint?.move {
+            let a = origin(of: move.from), b = origin(of: move.to)
+            ChessArrow(from: CGPoint(x: a.x + cell / 2, y: a.y + cell / 2),
+                       to: CGPoint(x: b.x + cell / 2, y: b.y + cell / 2), width: cell * 0.17)
+                .fill(ChessTheme.hint.opacity(0.78))
+                .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
+                .frame(width: side, height: side)
+                .transition(.opacity)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
         }
     }
 
@@ -249,6 +274,10 @@ struct ChessBoardView: View {
             parts.append(model.position.piece(at: sq) != nil ? "can capture" : "can move here")
         }
         if sq == model.checkedKing { parts.append("in check") }
+        if let hint = model.hint?.move {
+            if sq == hint.from { parts.append("hint: move this piece") }
+            if sq == hint.to { parts.append("hint: move here") }
+        }
         if let last = model.game.lastMove, sq == last.from || sq == last.to { parts.append("last move") }
         return parts.joined(separator: ", ")
     }
@@ -291,5 +320,34 @@ struct ChessBoardView: View {
             }
             .transition(.opacity)
         }
+    }
+}
+
+/// A straight arrow with a triangular head, from the centre of one square to another.
+struct ChessArrow: Shape {
+    let from: CGPoint
+    let to: CGPoint
+    let width: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let dx = to.x - from.x, dy = to.y - from.y
+        let length = hypot(dx, dy)
+        guard length > 1 else { return Path() }
+        let ux = dx / length, uy = dy / length
+        let nx = -uy, ny = ux
+        let head = min(width * 2.6, length * 0.6)
+        let start = CGPoint(x: from.x + ux * width * 0.8, y: from.y + uy * width * 0.8)
+        let neck = CGPoint(x: to.x - ux * head, y: to.y - uy * head)
+        let half = width / 2, wing = width * 1.35
+        var p = Path()
+        p.move(to: CGPoint(x: start.x + nx * half, y: start.y + ny * half))
+        p.addLine(to: CGPoint(x: neck.x + nx * half, y: neck.y + ny * half))
+        p.addLine(to: CGPoint(x: neck.x + nx * wing, y: neck.y + ny * wing))
+        p.addLine(to: to)
+        p.addLine(to: CGPoint(x: neck.x - nx * wing, y: neck.y - ny * wing))
+        p.addLine(to: CGPoint(x: neck.x - nx * half, y: neck.y - ny * half))
+        p.addLine(to: CGPoint(x: start.x - nx * half, y: start.y - ny * half))
+        p.closeSubpath()
+        return p
     }
 }

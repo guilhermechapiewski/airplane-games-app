@@ -248,3 +248,62 @@ struct ChessSANText: View {
             .accessibilityLabel(san)
     }
 }
+
+/// The suggested move and why, shown while a hint is on the board (or being searched for).
+struct ChessHintBanner: View {
+    let model: ChessModel
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "lightbulb.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(HintCard.amber)
+                .frame(width: 28, height: 28)
+                .background(HintCard.amber.opacity(0.16), in: Circle())
+            if let hint = model.hint {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(ChessModel.hintTitle(hint))
+                        .font(.subheadline.weight(.bold))
+                    Text(ChessModel.hintDetail(hint))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+            } else {
+                Text("Looking for a good move…")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                ProgressView().controlSize(.small)
+            }
+            Spacer(minLength: 0)
+            if model.hint != nil {
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) { model.cancelHint() }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(Theme.well, in: Circle())
+                }
+                .buttonStyle(PressableStyle())
+                .accessibilityLabel("Close hint")
+                .accessibilityIdentifier("hintClose")
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .frame(minHeight: 44)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(HintCard.amber.opacity(0.55), lineWidth: 1.5)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(model.hint.map(ChessModel.hintAnnouncement) ?? "Looking for a good move")
+        .accessibilityIdentifier("hintBanner")
+    }
+}
