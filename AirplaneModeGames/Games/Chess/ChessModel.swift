@@ -62,6 +62,7 @@ final class ChessModel {
         var game: Chess.Game
         var setup: ChessSetup
         var clock: GameClock
+        var hintsUsed: Int?
     }
 
     private(set) var game: Chess.Game
@@ -73,6 +74,12 @@ final class ChessModel {
     private(set) var pendingPromotion: (from: Square, to: Square)?
     private(set) var isThinking = false
     private(set) var outcome: Chess.Outcome?
+    /// The suggested move currently shown on the board.
+    private(set) var hint: Chess.Hint?
+    /// A hint search has taken longer than a moment (drives the progress state).
+    private(set) var isFindingHint = false
+    /// Hints shown in this game (both sides in pass & play).
+    private(set) var hintsUsed = 0
     var showResult = false
     var showSetup = false
     /// Bumped on every board change; drives the check pulse and VoiceOver announcements.
@@ -90,6 +97,11 @@ final class ChessModel {
 
     private var clock = GameClock()
     private var aiTask: Task<Void, Never>?
+    private var hintTask: Task<Void, Never>?
+    private var hintToken = 0
+    #if DEBUG
+    private var debugShowHint = ProcessInfo.processInfo.arguments.contains("-showHint")
+    #endif
     private var generation = 0
     private var nextTokenID = 0
     private var isActive = false
@@ -110,6 +122,7 @@ final class ChessModel {
             game = saved.game
             setup = saved.setup
             clock = saved.clock
+            hintsUsed = saved.hintsUsed ?? 0
         } else {
             game = Chess.Game()
             setup = Self.lastSetup.resolved()
@@ -304,6 +317,7 @@ final class ChessModel {
     private func play(_ move: Chess.Move, byComputer: Bool = false) {
         let before = position
         guard game.play(move) else { return }
+        cancelHint()
         clearSelection()
         pendingPromotion = nil
         generation += 1
@@ -372,6 +386,7 @@ final class ChessModel {
     func undo() {
         guard canUndo else { return }
         cancelComputer()
+        cancelHint()
         if setup.isComputer {
             // Take back the computer's reply (if any) and the player's last move.
             while let last = game.positions.dropLast().last, last.sideToMove != setup.humanSide {
@@ -394,6 +409,7 @@ final class ChessModel {
     func resign() {
         guard canResign else { return }
         cancelComputer()
+        cancelHint()
         let side = setup.isComputer ? setup.humanSide : sideToMove
         game.resign(side)
         clearSelection()
@@ -405,6 +421,8 @@ final class ChessModel {
 
     func newGame(_ newSetup: ChessSetup) {
         cancelComputer()
+        cancelHint()
+        hintsUsed = 0
         let resolved = newSetup.resolved()
         if let data = try? JSONEncoder().encode(newSetup) {
             UserDefaults.standard.set(data, forKey: Self.lastSetupKey)
@@ -434,9 +452,17 @@ final class ChessModel {
         if active {
             if !isOver && !game.moves.isEmpty { clock.start() }
             if !isThinking { scheduleComputerIfNeeded() }
+            #if DEBUG
+            // `-showHint` shows a hint as soon as the game appears (for screenshots).
+            if debugShowHint {
+                debugShowHint = false
+                showHint()
+            }
+            #endif
         } else {
             clock.pause()
             cancelComputer()
+            cancelHint()
             persist()
         }
     }
@@ -470,8 +496,78 @@ final class ChessModel {
         if isOver || game.moves.isEmpty {
             store.remove(key: gameID.saveKey)
         } else {
-            store.save(Saved(game: game, setup: setup, clock: clock), key: gameID.saveKey)
+            store.save(Saved(game: game, setup: setup, clock: clock, hintsUsed: hintsUsed), key: gameID.saveKey)
         }
+    }
+
+    // MARK: Hints
+
+    /// Hints are for whoever is to move, when it's a person's turn and nothing else is pending.
+    var canHint: Bool { isHumanTurn && !isThinking && pendingPromotion == nil }
+
+    /// Searches (off the main actor, at full strength for under a second) for a move to suggest,
+    /// then highlights it for a few seconds.
+    func showHint() {
+        guard canHint, hintTask == nil else { return }
+        hint = nil
+        hintToken += 1
+        let token = hintToken
+        let snapshot = game
+        let board = generation
+        Feedback.play(.tap)
+        hintTask = Task { [weak self] in
+            let progress = Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .milliseconds(150))
+                guard let self, !Task.isCancelled, self.hintToken == token else { return }
+                withAnimation(.easeOut(duration: 0.2)) { self.isFindingHint = true }
+            }
+            let search = Task.detached(priority: .userInitiated) {
+                Chess.Engine.hint(for: snapshot)
+            }
+            let found = await withTaskCancellationHandler {
+                await search.value
+            } onCancel: {
+                search.cancel()
+            }
+            progress.cancel()
+            guard let self, self.hintToken == token else { return }
+            self.hintTask = nil
+            self.isFindingHint = false
+            guard !Task.isCancelled, self.generation == board, let found else { return }
+            self.hintsUsed += 1
+            withAnimation(.easeOut(duration: 0.25)) { self.hint = found }
+            Feedback.play(.select)
+            self.announce(Self.hintAnnouncement(found))
+            self.persist()
+            try? await Task.sleep(for: .seconds(6))
+            guard self.hintToken == token else { return }
+            withAnimation(.easeOut(duration: 0.4)) { self.hint = nil }
+        }
+    }
+
+    /// Clears the suggestion and stops any search for one.
+    func cancelHint() {
+        hintToken += 1
+        hintTask?.cancel()
+        hintTask = nil
+        isFindingHint = false
+        hint = nil
+    }
+
+    /// "Knight g1 → f3"
+    static func hintTitle(_ hint: Chess.Hint) -> String {
+        if hint.move.isCastle { return hint.move.to.file == 6 ? "Castle kingside" : "Castle queenside" }
+        var text = "\(hint.piece.kind.name.capitalized) \(hint.move.from.name) → \(hint.move.to.name)"
+        if let promo = hint.move.promotion { text += " = \(promo.name.capitalized)" }
+        return text
+    }
+
+    static func hintDetail(_ hint: Chess.Hint) -> String {
+        hint.explanation ?? "The strongest move the computer found."
+    }
+
+    static func hintAnnouncement(_ hint: Chess.Hint) -> String {
+        "Hint: \(hint.spokenMove). " + hintDetail(hint)
     }
 
     // MARK: Tokens

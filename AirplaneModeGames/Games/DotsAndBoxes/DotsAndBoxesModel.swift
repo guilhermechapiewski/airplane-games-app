@@ -40,6 +40,10 @@ final class DotsAndBoxesModel {
     private(set) var game: DotsAndBoxes.Game
     private(set) var setup: DotsSetup
     private(set) var isThinking = false
+    /// The suggested line currently highlighted.
+    private(set) var hint: DotsAndBoxes.Hint?
+    /// A hint search has taken longer than a moment (drives the progress state).
+    private(set) var isFindingHint = false
     var showResult = false
     var showSetup = false
     /// Bumped on every board change.
@@ -47,6 +51,11 @@ final class DotsAndBoxesModel {
 
     private var clock = GameClock()
     private var aiTask: Task<Void, Never>?
+    private var hintTask: Task<Void, Never>?
+    private var hintToken = 0
+    #if DEBUG
+    private var debugShowHint = ProcessInfo.processInfo.arguments.contains("-showHint")
+    #endif
     private var generation = 0
     private var isActive = false
     private let store: GameStore
@@ -185,6 +194,7 @@ final class DotsAndBoxesModel {
     private func play(_ line: Line, byComputer: Bool = false) {
         let mover = game.current
         guard let turn = game.play(line) else { return }
+        cancelHint()
         generation += 1
         changeCount += 1
         clock.start()
@@ -250,6 +260,7 @@ final class DotsAndBoxesModel {
     func undo() {
         guard canUndo else { return }
         cancelComputer()
+        cancelHint()
         if setup.isComputer {
             // Take back the computer's lines, then the player's last line.
             while let last = game.lastTurn, last.player != Self.human { game.undo() }
@@ -279,6 +290,7 @@ final class DotsAndBoxesModel {
 
     private func start(_ newSetup: DotsSetup, firstPlayer: Player) {
         cancelComputer()
+        cancelHint()
         setup = newSetup
         game = DotsAndBoxes.Game(rows: newSetup.size, cols: newSetup.size, firstPlayer: firstPlayer)
         showResult = false
@@ -295,9 +307,17 @@ final class DotsAndBoxesModel {
         if active {
             if !isOver && !game.history.isEmpty { clock.start() }
             if !isThinking { scheduleComputerIfNeeded() }
+            #if DEBUG
+            // `-showHint` shows a hint as soon as the game appears (for screenshots).
+            if debugShowHint {
+                debugShowHint = false
+                showHint()
+            }
+            #endif
         } else {
             clock.pause()
             cancelComputer()
+            cancelHint()
             persist()
         }
     }
@@ -335,6 +355,59 @@ final class DotsAndBoxesModel {
         } else {
             store.save(Saved(game: game, setup: setup, clock: clock), key: gameID.saveKey)
         }
+    }
+
+    // MARK: Hints
+
+    /// Hints are for whoever is to move, when it's a person's turn.
+    var canHint: Bool { isHumanTurn && !isThinking }
+
+    /// Asks the Hard computer (off the main actor) which line it would draw, then highlights it
+    /// for a few seconds with the reason.
+    func showHint() {
+        guard canHint, hintTask == nil else { return }
+        hint = nil
+        hintToken += 1
+        let token = hintToken
+        let snapshot = game
+        let board = generation
+        Feedback.play(.tap)
+        hintTask = Task { [weak self] in
+            let progress = Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .milliseconds(150))
+                guard let self, !Task.isCancelled, self.hintToken == token else { return }
+                withAnimation(.easeOut(duration: 0.2)) { self.isFindingHint = true }
+            }
+            let search = Task.detached(priority: .userInitiated) {
+                var rng = SeededRandom()
+                return DotsAndBoxes.AI.hint(for: snapshot, rng: &rng)
+            }
+            let found = await withTaskCancellationHandler {
+                await search.value
+            } onCancel: {
+                search.cancel()
+            }
+            progress.cancel()
+            guard let self, self.hintToken == token else { return }
+            self.hintTask = nil
+            self.isFindingHint = false
+            guard !Task.isCancelled, self.generation == board, let found else { return }
+            withAnimation(.easeOut(duration: 0.25)) { self.hint = found }
+            Feedback.play(.select)
+            self.announce("Hint: " + Self.spokenName(of: found.line) + ". " + found.title + ". " + found.explanation)
+            try? await Task.sleep(for: .seconds(5))
+            guard self.hintToken == token else { return }
+            withAnimation(.easeOut(duration: 0.4)) { self.hint = nil }
+        }
+    }
+
+    /// Clears the suggestion and stops any search for one.
+    func cancelHint() {
+        hintToken += 1
+        hintTask?.cancel()
+        hintTask = nil
+        isFindingHint = false
+        hint = nil
     }
 
     // MARK: Accessibility

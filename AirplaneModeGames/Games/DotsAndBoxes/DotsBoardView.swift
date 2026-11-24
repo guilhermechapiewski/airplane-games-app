@@ -11,6 +11,8 @@ enum DotsTheme {
     static let slot = Color(light: Color(hex: 0xDDD7EB), dark: Color(hex: 0x363149))
     static let paper = Color(light: Color(hex: 0xFFFEFB), dark: Color(hex: 0x1C1A26))
     static let paperEdge = Color(light: Color(hex: 0xE7E2F0), dark: Color(hex: 0x2E2A3C))
+    /// Hinted line: green, distinct from both players' colours.
+    static let hint = Color(light: Color(hex: 0x2E9B57), dark: Color(hex: 0x4CC27A))
 
     static func color(_ player: DotsAndBoxes.Player) -> Color { player == .one ? one : two }
 }
@@ -83,6 +85,7 @@ struct DotsBoardView: View {
             boxes
             drawnLines
             pressedPreview
+            hintMarker
             dots
             lastMoveMarker
         }
@@ -172,6 +175,39 @@ struct DotsBoardView: View {
                 .fill(DotsTheme.color(game.current).opacity(0.45))
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
+        }
+    }
+
+    /// The suggested line: a pulsing dashed bar with ringed end dots (a shape, not just a colour).
+    @ViewBuilder private var hintMarker: some View {
+        if let line = model.hint?.line, !game.isDrawn(line) {
+            let geo = geo
+            let (a, b) = geo.endpoints(line)
+            let w = geo.lineWidth
+            ZStack(alignment: .topLeading) {
+                DotsLineShape(geometry: geo, line: line, widthScale: 2.1)
+                    .fill(DotsTheme.hint.opacity(0.22))
+                Path { p in
+                    p.move(to: a)
+                    p.addLine(to: b)
+                }
+                .stroke(DotsTheme.hint, style: StrokeStyle(lineWidth: w, lineCap: .round, dash: [w * 1.2, w * 1.1]))
+                Circle()
+                    .strokeBorder(DotsTheme.hint, lineWidth: max(2, geo.dotSize * 0.22))
+                    .frame(width: geo.dotSize * 2.2, height: geo.dotSize * 2.2)
+                    .position(a)
+                Circle()
+                    .strokeBorder(DotsTheme.hint, lineWidth: max(2, geo.dotSize * 0.22))
+                    .frame(width: geo.dotSize * 2.2, height: geo.dotSize * 2.2)
+                    .position(b)
+            }
+            .frame(width: side, height: side, alignment: .topLeading)
+            .phaseAnimator(reduceMotion ? [1.0] : [1.0, 0.45]) { content, phase in
+                content.opacity(phase)
+            } animation: { _ in .easeInOut(duration: 0.7) }
+            .transition(.opacity)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
         }
     }
 
@@ -279,6 +315,12 @@ struct DotsBoardView: View {
     }
 
     private func lineValue(_ line: DotsAndBoxes.Line) -> String {
+        let base = baseLineValue(line)
+        guard model.hint?.line == line else { return base }
+        return base.isEmpty ? "Hint" : "Hint, " + base.lowercased()
+    }
+
+    private func baseLineValue(_ line: DotsAndBoxes.Line) -> String {
         let sides = game.boxes(adjacentTo: line).map { game.sides(of: $0) }
         if sides.contains(3) { return sides.filter { $0 == 3 }.count == 2 ? "Completes two boxes" : "Completes a box" }
         if sides.contains(2) { return "Gives away a box" }

@@ -55,8 +55,15 @@ struct ChessView: View {
             Spacer(minLength: 0)
             ChessPlayerBar(model: model, side: model.bottomSide)
                 .frame(width: contentWidth)
-            ChessMoveStrip(model: model)
-                .frame(width: contentWidth)
+            Group {
+                if showsHintBanner {
+                    ChessHintBanner(model: model)
+                        .transition(.opacity)
+                } else {
+                    ChessMoveStrip(model: model)
+                }
+            }
+            .frame(width: contentWidth)
             controls
                 .padding(.top, 2)
         }
@@ -75,6 +82,10 @@ struct ChessView: View {
                 ChessMoveTable(model: model)
                     .frame(maxHeight: .infinity)
                 ChessPlayerBar(model: model, side: model.bottomSide)
+                if showsHintBanner {
+                    ChessHintBanner(model: model)
+                        .transition(.opacity)
+                }
                 controls
             }
             .frame(width: panelWidth, height: boardSide)
@@ -82,6 +93,8 @@ struct ChessView: View {
         .padding(20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+
+    private var showsHintBanner: Bool { model.hint != nil || model.isFindingHint }
 
     private func board(side: CGFloat) -> some View {
         ChessBoardView(model: model, side: side, reduceMotion: reduceMotion)
@@ -101,6 +114,12 @@ struct ChessView: View {
                 }
                 .accessibilityValue(model.autoRotate ? "On, board turns for each player" : "Off")
             }
+            ToolButton(title: "Hint", systemImage: "lightbulb",
+                       isActive: model.hint != nil || model.isFindingHint, tint: HintCard.amber) {
+                withAnimation(.easeOut(duration: 0.2)) { model.showHint() }
+            }
+            .disabled(!model.canHint)
+            .accessibilityIdentifier("hint")
             ToolButton(title: "Resign", systemImage: "flag", tint: ChessTheme.accent) {
                 confirmResign = true
             }
@@ -153,6 +172,7 @@ struct ChessView: View {
         let moves = (model.game.moves.count + 1) / 2
         var d = [("Moves", "\(moves)")]
         if model.setup.isComputer { d.append(("Level", model.setup.level.title)) }
+        if model.hintsUsed > 0 { d.append(("Hints", "\(model.hintsUsed)")) }
         return d
     }
 
@@ -169,6 +189,7 @@ struct ChessView: View {
                 "Tap a piece to see its legal moves, then tap a highlighted square — or drag the piece there.",
                 "Dots mark empty squares you can move to; rings mark captures.",
                 "Undo takes back your last move (and the computer's reply).",
+                "Stuck? Hint shows the computer's best move for whoever is to move, with a short reason. Hints used are shown at the end of the game.",
             ]),
             .init(title: "Special moves", symbol: "sparkles", points: [
                 "Castling: move the king two squares toward a rook that hasn't moved. Not allowed out of, through, or into check.",
@@ -178,6 +199,13 @@ struct ChessView: View {
             .init(title: "Game end", symbol: "flag.checkered", points: [
                 "Checkmate wins. Stalemate, threefold repetition, the 50-move rule and insufficient material are draws.",
                 "You can resign at any time from the flag button.",
+            ]),
+            .init(title: "Tips", symbol: "lightbulb", points: [
+                "Before every move, ask what your opponent's last move threatens: a capture, a check, a fork?",
+                "Fight for the center: pawns on e4 and d4 (or e5 and d5) give your pieces room to move.",
+                "Develop knights and bishops early, before moving the same piece twice.",
+                "Castle early to tuck your king away and bring a rook toward the middle.",
+                "Don't bring the queen out too soon — it gets chased around while your other pieces sit at home.",
             ]),
         ]
     )
