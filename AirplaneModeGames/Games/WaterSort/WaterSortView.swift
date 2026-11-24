@@ -24,7 +24,7 @@ struct WaterSortView: View {
             tip
             controls
         }
-        .frame(maxWidth: 760)
+        .frame(maxWidth: 1000)
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

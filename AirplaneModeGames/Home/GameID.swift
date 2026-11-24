@@ -78,7 +78,7 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .tileMatch: "rectangle.stack.fill"
         case .waterSort: "testtube.2"
         case .dotsAndBoxes: "circle.grid.3x3.fill"
-        case .wordWheel: "circle.hexagongrid.fill"
+        case .wordWheel: "circle.hexagonpath.fill"
         case .minesweeper: "flag.fill"
         case .chess: "crown.fill"
         case .wordGuess: "character.textbox"

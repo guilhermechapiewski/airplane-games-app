@@ -42,7 +42,8 @@ final class AccessibilityAuditTests: XCTestCase {
 
     func testEveryGame() throws {
         let games = ["twentyFortyEight", "sudoku", "solitaire", "blocks", "tileMatch", "minesweeper",
-                     "chess", "wordGuess", "nonograms", "wordSearch", "snake", "hangman"]
+                     "chess", "wordGuess", "nonograms", "wordSearch", "snake", "hangman",
+                     "waterSort", "dotsAndBoxes", "wordWheel"]
         for game in games {
             let app = XCUIApplication()
             app.launchArguments = ["-uiTesting", "-openGame", game]

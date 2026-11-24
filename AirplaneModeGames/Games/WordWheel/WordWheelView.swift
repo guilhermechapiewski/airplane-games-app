@@ -39,10 +39,10 @@ struct WordWheelView: View {
                         VStack(spacing: 16) {
                             WordWheelProgress(model: model) { showRanks = true }
                             WordWheelWordList(model: model, state: state, expanded: .constant(true), alwaysExpanded: true)
-                                .frame(height: min(300, geo.size.height * 0.24), alignment: .top)
+                                .frame(height: min(340, geo.size.height * 0.25), alignment: .top)
                             playArea(state: state, puzzle: puzzle)
                         }
-                        .frame(maxWidth: 640)
+                        .frame(maxWidth: 780)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     } else {
                         VStack(spacing: 12) {
@@ -124,7 +124,7 @@ struct WordWheelView: View {
             Spacer(minLength: 0)
             WordWheelEntry(model: model, puzzle: puzzle, input: state.input)
             WordWheelDial(model: model, puzzle: puzzle, ring: state.ring)
-                .frame(maxWidth: isRegular ? 540 : 400, maxHeight: isRegular ? 540 : 400)
+                .frame(maxWidth: isRegular ? 640 : 400, maxHeight: isRegular ? 640 : 400)
                 .opacity(state.isFinished ? 0.45 : 1)
                 .layoutPriority(1)
             Spacer(minLength: 0)

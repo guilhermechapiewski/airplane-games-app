@@ -58,7 +58,7 @@ struct WaterSortBoard: View {
     var body: some View {
         GeometryReader { proxy in
             let layout = TubeLayout(count: model.tubeCount, in: proxy.size,
-                                    maxWidth: sizeClass == .regular ? 78 : 60)
+                                    maxWidth: sizeClass == .regular ? 104 : 60)
             TimelineView(.animation(minimumInterval: nil, paused: model.pours.isEmpty)) { timeline in
                 board(layout: layout, now: timeline.date)
             }
