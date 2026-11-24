@@ -62,6 +62,25 @@ final class AppSmokeTests: XCTestCase {
         XCTAssertTrue(app.navigationBars["How to Play"].waitForExistence(timeout: 3))
     }
 
+    /// Hint points at a swipe that actually moves the tiles.
+    func test2048HintSuggestsASwipe() {
+        let app = launch(["-openGame", "twentyFortyEight"])
+        let board = app.otherElements["board2048"]
+        XCTAssertTrue(board.waitForExistence(timeout: 5))
+        app.buttons["Hint"].tap()
+        let arrow = app.descendants(matching: .any)["hintArrow"]
+        XCTAssertTrue(arrow.waitForExistence(timeout: 10), "the hint arrow appears")
+        XCTAssertTrue(arrow.label.hasPrefix("Hint: swipe "), arrow.label)
+        switch arrow.label.replacingOccurrences(of: "Hint: swipe ", with: "") {
+        case "up": board.swipeUp()
+        case "down": board.swipeDown()
+        case "left": board.swipeLeft()
+        default: board.swipeRight()
+        }
+        XCTAssertTrue(arrow.waitForNonExistence(timeout: 5), "a move clears the hint")
+        XCTAssertTrue(app.buttons["Undo"].isEnabled, "the suggested swipe moved the tiles")
+    }
+
     /// Swipes that start off the board (including at the left screen edge) move the tiles and
     /// never pop back to the home screen.
     func test2048SwipesAnywhereWithoutGoingBack() {

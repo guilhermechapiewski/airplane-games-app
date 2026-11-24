@@ -130,6 +130,11 @@ struct WaterSortBoard: View {
             .offset(flight?.offset ?? CGSize(width: 0, height: selected ? -m.width * 0.42 : 0))
             .animation(flight != nil || reduceMotion ? nil : .spring(response: 0.24, dampingFraction: 0.72), value: selected)
             .modifier(Shake(trigger: model.shakeTokens[i] ?? 0, amount: reduceMotion ? 0 : m.width * 0.12))
+            .overlay(alignment: .top) {
+                if let role = hintRole(i), flight == nil {
+                    HintMarker(role: role, metrics: m, reduceMotion: reduceMotion)
+                }
+            }
             .overlay {
                 if !reduceMotion, let token = model.sparkleTokens[i] {
                     SparkleBurst(size: m.width * 2.4).id(token)
@@ -140,6 +145,12 @@ struct WaterSortBoard: View {
             .zIndex(flight != nil ? 100 : selected ? 50 : 0)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
+    }
+
+    /// Whether tube `i` is the source or the target of the hinted pour.
+    private func hintRole(_ i: Int) -> HintMarker.Role? {
+        guard case let .pour(p)? = model.hint else { return nil }
+        return p.from == i ? .from : p.to == i ? .to : nil
     }
 
     private func isFilling(_ i: Int) -> Bool { model.pours.contains { $0.pour.to == i } }
@@ -291,6 +302,38 @@ private struct TubeAccessibility: ViewModifier {
             return model.state.canPour(from: from, to: index) ? "Double-tap to pour here." : "Can't pour here."
         }
         return model.state.canPick(index) ? "Double-tap to pick up." : ""
+    }
+}
+
+// MARK: - Hint
+
+/// An amber outline around a hinted tube, with an arrow above it: up to pick it up, down to pour in.
+struct HintMarker: View {
+    enum Role { case from, to }
+    let role: Role
+    let metrics: TubeMetrics
+    let reduceMotion: Bool
+    @State private var bob = false
+
+    var body: some View {
+        let m = metrics
+        ZStack(alignment: .top) {
+            TubeShape(lip: m.lip)
+                .stroke(HintCard.amber, lineWidth: max(2, m.width * 0.07))
+                .shadow(color: HintCard.amber.opacity(0.7), radius: m.width * 0.12)
+                .frame(width: m.width + m.width * 0.16, height: m.height + m.width * 0.16)
+                .offset(y: -m.width * 0.08)
+            Image(systemName: role == .from ? "arrow.up.circle.fill" : "arrow.down.circle.fill")
+                .font(.system(size: max(14, m.width * 0.5), weight: .bold))
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(.white, HintCard.amber)
+                .offset(y: -m.width * (bob ? 0.95 : 0.8))
+        }
+        .frame(width: m.width, height: m.height, alignment: .top)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { bob = true }
+        }
     }
 }
 

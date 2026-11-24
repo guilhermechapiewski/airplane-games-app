@@ -31,6 +31,9 @@ struct MinesweeperView: View {
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity)
         .overlay { overlay }
+        #if DEBUG
+        .task { if ProcessInfo.processInfo.arguments.contains("-hintDemo") { model.showHint() } }
+        #endif
         .gameChrome(.minesweeper, rules: Self.rules,
                     stats: MinesweeperModel.statsVariants,
                     newGame: Minesweeper.Level.allCases.map { level in
@@ -129,9 +132,33 @@ struct MinesweeperView: View {
 
     // MARK: Controls
 
+    /// The tools, replaced by the hint's explanation while one is shown.
     private var controls: some View {
+        // Small phones drop the mode labels before anything gets squeezed.
+        ViewThatFits(in: .horizontal) {
+            controlRow(compact: false)
+            controlRow(compact: true)
+        }
+        .opacity(model.hint == nil ? 1 : 0)
+        .allowsHitTesting(model.hint == nil)
+        .accessibilityHidden(model.hint != nil)
+        .overlay(alignment: .bottom) {
+            if let hint = model.hint {
+                HintCard(title: hint.title, explanation: hint.explanation, answerTitle: hint.answerTitle,
+                         onAnswer: { withAnimation(.easeOut(duration: 0.2)) { model.showHintAnswer() } },
+                         onClose: { model.dismissHint() })
+                    .frame(maxWidth: 560)
+            }
+        }
+        .onChange(of: model.hint != nil) { _, shown in
+            // Show the whole field so the highlighted squares are in view.
+            if shown && isZoomed { zoomRequest = .fit }
+        }
+    }
+
+    private func controlRow(compact: Bool) -> some View {
         HStack(spacing: 14) {
-            ModeToggle(mode: Binding(get: { model.mode }, set: { model.setMode($0) }))
+            ModeToggle(mode: Binding(get: { model.mode }, set: { model.setMode($0) }), compact: compact)
             Spacer(minLength: 0)
             if canZoom {
                 ToolButton(title: isZoomed ? "Fit" : "Zoom",
@@ -140,6 +167,12 @@ struct MinesweeperView: View {
                 }
                 .accessibilityIdentifier("zoomButton")
             }
+            ToolButton(title: "Hint", systemImage: "lightbulb", isActive: model.hint != nil, tint: HintCard.amber) {
+                model.showHint()
+            }
+            .disabled(model.isOver)
+            .accessibilityHint("Explains a square you can work out next.")
+            .accessibilityIdentifier("hintButton")
             ToolButton(title: "New", systemImage: "arrow.clockwise") { start(model.level) }
                 .accessibilityIdentifier("newGameButton")
         }
@@ -198,6 +231,17 @@ struct MinesweeperView: View {
                 "Pinch to zoom and drag to move around, or use the Zoom button.",
                 "Clear every safe square to win. Your best time is kept for each level.",
             ]),
+            .init(title: "Hints", symbol: "questionmark.bubble", points: [
+                "Tap Hint and the board highlights a square you can work out, with the reasoning in plain words.",
+                "Tap the answer button to reveal or flag it for you. Hints are free.",
+            ]),
+            .init(title: "Tips", symbol: "lightbulb", points: [
+                "A number touching exactly as many hidden squares as its value: all of them are mines.",
+                "A number that already touches all its mines: every other square around it is safe. Tap the number to open them at once.",
+                "Along a straight edge of hidden squares, a 1-2-1 means mines facing both 1s; a 1-2-2-1 means mines facing the two 2s.",
+                "Compare neighboring numbers: if a 2 shares all but one of its squares with a 1, that last square is a mine.",
+                "Near the end, count: the Mines counter can settle the last few squares.",
+            ]),
         ]
     )
 }
@@ -205,6 +249,7 @@ struct MinesweeperView: View {
 /// Two-segment Reveal / Flag switch sized for thumbs; tapping anywhere flips it.
 private struct ModeToggle: View {
     @Binding var mode: MinesweeperModel.Mode
+    var compact = false
     @Namespace private var pill
 
     var body: some View {
@@ -232,6 +277,7 @@ private struct ModeToggle: View {
     private func segment(_ value: MinesweeperModel.Mode, title: String, symbol: String, tint: Color) -> some View {
         let selected = mode == value
         return Label(title, systemImage: symbol)
+            .labelStyle(SegmentLabelStyle(compact: compact))
             .font(.subheadline.weight(.semibold))
             .lineLimit(1)
             .padding(.horizontal, 14)
@@ -242,5 +288,22 @@ private struct ModeToggle: View {
                     Capsule().fill(tint).matchedGeometryEffect(id: "pill", in: pill)
                 }
             }
+    }
+}
+
+
+/// Icon and title, or just the icon when space is tight.
+private struct SegmentLabelStyle: LabelStyle {
+    let compact: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        if compact {
+            configuration.icon
+        } else {
+            HStack(spacing: 6) {
+                configuration.icon
+                configuration.title
+            }
+        }
     }
 }

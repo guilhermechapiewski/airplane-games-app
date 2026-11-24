@@ -29,6 +29,9 @@ struct WaterSortView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .overlay { overlay }
+        #if DEBUG
+        .task { if ProcessInfo.processInfo.arguments.contains("-hintDemo") { model.showHint() } }
+        #endif
         .gameChrome(.waterSort, rules: Self.rules,
                     stats: [StatsVariant(key: nil, title: model.isDaily ? "Levels" : "Levels · now on Level \(model.level)")],
                     newGame: [NewGameOption(title: "Restart Level") { restart() }],
@@ -66,9 +69,20 @@ struct WaterSortView: View {
         .animation(.snappy, value: model.moves)
     }
 
-    /// A gentle nudge when only the extra tube can help.
+    /// The suggested pour in words, or a gentle nudge when only the extra tube can help.
     @ViewBuilder private var tip: some View {
-        if model.needsExtraTube {
+        if case let .pour(p)? = model.hint {
+            Label("Pour tube \(p.from + 1) into tube \(p.to + 1).", systemImage: "lightbulb.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(HintCard.amber)
+                .transition(.opacity)
+                .accessibilityIdentifier("hintTip")
+        } else if model.isThinking {
+            Label("Thinking…", systemImage: "lightbulb")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+                .transition(.opacity)
+        } else if model.needsExtraTube {
             Label("No pours left. Add the extra tube.", systemImage: "lightbulb")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
@@ -76,8 +90,50 @@ struct WaterSortView: View {
         }
     }
 
+    /// A recovery hint (extra tube, undo, restart) is explained in place of the tools.
+    private var recoveryHint: WaterSort.Hint? {
+        if case .pour? = model.hint { return nil }
+        return model.hint
+    }
+
     private var controls: some View {
-        HStack(spacing: 26) {
+        toolRow
+            .opacity(recoveryHint == nil ? 1 : 0)
+            .allowsHitTesting(recoveryHint == nil)
+            .accessibilityHidden(recoveryHint != nil)
+            .overlay(alignment: .bottom) {
+                if let hint = recoveryHint {
+                    HintCard(title: "Can't be sorted from here", explanation: Self.recoveryText(hint),
+                             answerTitle: Self.answerTitle(hint), tint: HintCard.amber,
+                             onAnswer: { withAnimation(.easeOut(duration: 0.2)) { model.applyHint() } },
+                             onClose: { model.dismissHint() })
+                        .frame(maxWidth: 520)
+                }
+            }
+    }
+
+    static func recoveryText(_ hint: WaterSort.Hint) -> String {
+        switch hint {
+        case .pour: ""
+        case .addExtraTube: "No way to sort these tubes from here, but there is with one more empty tube."
+        case let .undo(steps): steps == 1
+            ? "Your last pour closed every way out. Take it back and you're on track again."
+            : "One of your recent pours closed every way out. Undo the last \(steps) pours to get back on track."
+        case .restart: "No way out was found from here or from your recent pours. Start the level over: every puzzle can be sorted."
+        }
+    }
+
+    static func answerTitle(_ hint: WaterSort.Hint) -> String {
+        switch hint {
+        case .pour: "OK"
+        case .addExtraTube: "Add Extra Tube"
+        case let .undo(steps): steps == 1 ? "Undo 1 Pour" : "Undo \(steps) Pours"
+        case .restart: "Restart Level"
+        }
+    }
+
+    private var toolRow: some View {
+        HStack(spacing: 20) {
             ToolButton(title: "Undo", systemImage: "arrow.uturn.backward",
                        badge: model.moves > 0 ? "\(model.moves)" : nil) {
                 withAnimation(reduceMotion ? nil : .easeOut(duration: 0.18)) { model.undo() }
@@ -89,6 +145,13 @@ struct WaterSortView: View {
             }
             .disabled(!model.canAddTube)
             .accessibilityHint(model.canAddTube ? "Adds one empty tube. Once per level." : "Already used on this level.")
+            ToolButton(title: "Hint", systemImage: "lightbulb", isActive: model.hint != nil || model.isThinking,
+                       tint: HintCard.amber) {
+                withAnimation(.easeOut(duration: 0.2)) { model.showHint() }
+            }
+            .disabled(model.state.isSolved)
+            .accessibilityHint("Suggests the next pour.")
+            .accessibilityIdentifier("hintButton")
             ToolButton(title: "Restart", systemImage: "arrow.counterclockwise") { restart() }
                 .disabled(model.moves == 0 && !model.state.extraTubeUsed)
         }
@@ -154,10 +217,18 @@ struct WaterSortView: View {
                 "Undo takes back pours, as many as you like.",
                 "Each level gives you one extra empty tube when you need more room.",
                 "Every puzzle can be solved. No clock: take your time.",
+                "Tap Hint to see the next pour. If a pour has closed every way out, Hint tells you how many to undo. Hints are free.",
             ]),
             .init(title: "Levels & daily", symbol: "calendar", points: [
                 "Levels slowly add colors, from 3 up to 12. Solve one to unlock the next.",
                 "Today's Puzzle is the same for everyone and keeps your daily streak.",
+            ]),
+            .init(title: "Tips", symbol: "lightbulb", points: [
+                "An empty tube is your most valuable space. Fill it only when you have a plan for it.",
+                "Pour onto a matching color before reaching for an empty tube.",
+                "Aim to finish one color at a time: a completed tube is out of your way for good.",
+                "Dig out colors buried under just one or two layers first; deeply buried ones can wait.",
+                "Before pouring into an empty tube, check that more of that color is within reach.",
             ]),
         ]
     )

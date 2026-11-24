@@ -50,6 +50,12 @@ final class WaterSortModel {
     private(set) var showStuck = false
     /// Out of useful pours, with the extra tube still to use.
     private(set) var needsExtraTube = false
+    /// The latest hint; a suggested pour stays highlighted until the board changes.
+    private(set) var hint: Logic.Hint?
+    /// A hint is being worked out (big puzzles can take a moment).
+    private(set) var isThinking = false
+    private var planner = Logic.HintPlanner()
+    private var hintToken = 0
     /// The level just finished (shown on the result card).
     private(set) var solvedLevel = 0
     private(set) var solvedMoves = 0
@@ -139,6 +145,7 @@ final class WaterSortModel {
         finishAnimations(touching: from)
         finishAnimations(touching: to)
         guard let pour = state.apply(from: from, to: to) else { return }
+        clearHint()
         selected = nil
         let landing: Duration
         if animated {
@@ -177,6 +184,7 @@ final class WaterSortModel {
         guard canUndo else { return }
         pours = []
         state.undo()
+        clearHint()
         selected = nil
         Feedback.play(.flip)
         updateStuck(announce: false)
@@ -188,6 +196,7 @@ final class WaterSortModel {
         guard canAddTube else { return }
         beginIfNeeded()
         state.addExtraTube()
+        clearHint()
         selected = nil
         Feedback.play(.place)
         updateStuck(announce: false)
@@ -214,6 +223,68 @@ final class WaterSortModel {
         store.remove(key: saveKey)
     }
 
+    // MARK: Hints
+
+    /// Works out the next step off the main actor. A pour is highlighted until the board changes;
+    /// when the puzzle can't be sorted from here, the hint says how to recover. Hints are free,
+    /// unlimited, and allowed on the daily too.
+    func showHint() {
+        guard !state.isSolved, !isThinking else { return }
+        hintToken += 1
+        let token = hintToken
+        let position = state
+        let current = planner
+        isThinking = true
+        Task { @MainActor [weak self] in
+            let (hint, updated) = await Task.detached(priority: .userInitiated) {
+                var planner = current
+                let hint = planner.hint(for: position)
+                return (hint, planner)
+            }.value
+            guard let self, self.hintToken == token else { return }
+            self.isThinking = false
+            self.planner = updated
+            guard let hint else { return }
+            self.selected = nil
+            withAnimation(.easeOut(duration: 0.2)) { self.hint = hint }
+            Feedback.play(.select)
+            AccessibilityNotification.Announcement(Self.describe(hint)).post()
+        }
+    }
+
+    /// The hint in words.
+    static func describe(_ hint: Logic.Hint) -> String {
+        switch hint {
+        case let .pour(p): "Pour tube \(p.from + 1) into tube \(p.to + 1)."
+        case .addExtraTube: "This can't be sorted with these tubes. Add the extra tube."
+        case let .undo(steps): steps == 1
+            ? "This can't be sorted from here. Undo your last pour."
+            : "This can't be sorted from here. Undo your last \(steps) pours."
+        case .restart: "This can't be sorted from here. Restart the level."
+        }
+    }
+
+    /// Carries out a recovery hint (Add Extra Tube, Undo or Restart).
+    func applyHint() {
+        guard let hint else { return }
+        switch hint {
+        case .pour: clearHint()
+        case .addExtraTube: addExtraTube()
+        case let .undo(steps): for _ in 0..<steps { undo() }
+        case .restart: restart()
+        }
+    }
+
+    func dismissHint() {
+        withAnimation(.easeOut(duration: 0.2)) { clearHint() }
+    }
+
+    private func clearHint() {
+        hintToken += 1
+        hint = nil
+        isThinking = false
+    }
+
     func setActive(_ active: Bool) {
         if active, hasProgress, !showWin, !showStuck { clock.start() } else { clock.pause() }
         if !active { persist() }
@@ -224,6 +295,7 @@ final class WaterSortModel {
     private var hasProgress: Bool { state.canUndo || state.extraTubeUsed }
 
     private func resetPlay() {
+        clearHint()
         clock = GameClock()
         selected = nil
         pours = []

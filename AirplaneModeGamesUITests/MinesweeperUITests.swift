@@ -88,6 +88,41 @@ final class MinesweeperUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Zoom"].waitForExistence(timeout: 3))
     }
 
+    func testHintExplainsThenAnswers() {
+        let app = launch()
+        XCTAssertTrue(cell(app, 4, 4).waitForExistence(timeout: 5))
+        let card = app.descendants(matching: .any)["hintCard"]
+
+        // Before the first tap: tap anywhere.
+        app.buttons["hintButton"].tap()
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["hintExplanation"].label.contains("first tap is always safe"))
+        app.buttons["hintShowAnswer"].tap()
+        XCTAssertTrue(card.waitForNonExistence(timeout: 3))
+        XCTAssertTrue(wait(for: cell(app, 4, 4), notValue: "Hidden"))
+
+        // Then a real deduction, explained before anything changes.
+        app.buttons["hintButton"].tap()
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        let explanation = app.staticTexts["hintExplanation"].label
+        XCTAssertTrue(explanation.hasPrefix("This ") || explanation.hasPrefix("Every ") || explanation.hasPrefix("All "),
+                      explanation)
+        let minesBefore = app.descendants(matching: .any)["minesLeft"].label
+        let answer = app.buttons["hintShowAnswer"]
+        let flags = answer.label.hasPrefix("Flag")
+        answer.tap()
+        XCTAssertTrue(card.waitForNonExistence(timeout: 3))
+        if flags {
+            XCTAssertNotEqual(app.descendants(matching: .any)["minesLeft"].label, minesBefore, "the answer planted a flag")
+        }
+
+        // Closing a hint leaves the board alone.
+        app.buttons["hintButton"].tap()
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        app.buttons["hintClose"].tap()
+        XCTAssertTrue(card.waitForNonExistence(timeout: 3))
+    }
+
     @discardableResult
     private func wait(for element: XCUIElement, value: String, timeout: TimeInterval = 3) -> Bool {
         let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: element)
