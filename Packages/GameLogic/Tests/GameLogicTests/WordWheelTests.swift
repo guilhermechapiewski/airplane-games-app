@@ -222,20 +222,6 @@ struct WordWheelTests {
         #expect(seen.count > 180)
     }
 
-    @Test func dailyWheelsAreGoodAndStable() {
-        let dictionary = W.Dictionary.bundled
-        var day = Daily.Day(year: 2026, month: 11, day: 20)
-        for _ in 0..<20 {
-            let seed = Daily.seed(day: day, game: "wordWheel")
-            var a = SeededRandom(seed: seed)
-            var b = SeededRandom(seed: seed)
-            let p = W.generate(using: &a, dictionary: dictionary)
-            #expect(p == W.generate(using: &b, dictionary: dictionary))
-            checkGenerated(p, dictionary: dictionary)
-            day = day.next
-        }
-    }
-
     @Test func generationIsFast() {
         let dictionary = W.Dictionary.bundled
         let start = threadCPUTime()

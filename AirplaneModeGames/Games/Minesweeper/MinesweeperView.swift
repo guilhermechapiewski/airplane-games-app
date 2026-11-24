@@ -2,12 +2,7 @@ import SwiftUI
 import GameLogic
 
 struct MinesweeperView: View {
-    @State private var model: MinesweeperModel
-    @Environment(\.dismiss) private var dismiss
-
-    init(daily: Daily.Day? = nil) {
-        _model = State(initialValue: MinesweeperModel(daily: daily))
-    }
+    @State private var model = MinesweeperModel()
     @State private var zoomRequest: MinesweeperBoard.ZoomRequest?
     @State private var canZoom = false
     @State private var isZoomed = false
@@ -74,11 +69,7 @@ struct MinesweeperView: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            if model.daily == nil {
-                levelMenu
-            } else {
-                StatPill(title: "Daily", value: model.level.title, tint: accent)
-            }
+            levelMenu
             Spacer(minLength: 0)
             StatPill(title: "Mines", value: "\(model.state.minesLeft)", tint: MinePalette.flag)
                 .animation(.snappy, value: model.state.minesLeft)
@@ -188,24 +179,15 @@ struct MinesweeperView: View {
             ResultOverlay(mood: won ? .win : .loss,
                           title: won ? "Field Cleared!" : "Boom!",
                           subtitle: won
-                              ? (model.daily != nil ? "Today's board is cleared."
-                                 : model.isNewBest ? "New best time for \(model.level.title)!" : "Every mine found on \(model.level.title).")
-                              : model.daily != nil ? "You hit a mine. Today's board is the same every try: give it another go."
+                              ? (model.isNewBest ? "New best time for \(model.level.title)!" : "Every mine found on \(model.level.title).")
                               : "You hit a mine. Shake it off and try again.",
                           details: won
-                              ? [("Time", model.finalTime.clockString)]
-                                + (model.daily != nil ? [("Streak", "🔥 \(DailyStore.shared.streak(.minesweeper))")]
-                                   : best.map { [("Best", $0.clockString)] } ?? [])
+                              ? [("Time", model.finalTime.clockString)] + (best.map { [("Best", $0.clockString)] } ?? [])
                               : [("Cleared", "\(model.percentCleared)%"), ("Time", model.finalTime.clockString)],
                           tint: won ? accent : MinePalette.exploded) {
-                if model.daily != nil && won {
-                    Button("Done") { dismiss() }
-                        .buttonStyle(PrimaryButtonStyle(color: accent))
-                } else {
-                    Button(model.daily != nil ? "Try Again" : "Play Again") { withAnimation { model.newGame() } }
-                        .buttonStyle(PrimaryButtonStyle(color: won ? accent : MinePalette.exploded))
-                        .accessibilityIdentifier("playAgainButton")
-                }
+                Button("Play Again") { withAnimation { model.newGame() } }
+                    .buttonStyle(PrimaryButtonStyle(color: won ? accent : MinePalette.exploded))
+                    .accessibilityIdentifier("playAgainButton")
                 Button("View Board") { withAnimation(.easeOut(duration: 0.2)) { model.showResult = false } }
                     .buttonStyle(SecondaryButtonStyle())
             }

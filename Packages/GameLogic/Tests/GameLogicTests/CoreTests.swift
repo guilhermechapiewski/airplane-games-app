@@ -21,6 +21,12 @@ struct CoreTests {
         #expect(Array(0..<50).shuffled(using: &r1) == Array(0..<50).shuffled(using: &r2))
     }
 
+    @Test func stableSeedIsAFixedValue() {
+        // FNV-1a; never change it, it would change everyone's seeded levels.
+        #expect(SeededRandom.stableSeed("") == 0xcbf2_9ce4_8422_2325)
+        #expect(SeededRandom.stableSeed("a") == 0xaf63_dc4c_8601_ec8c)
+    }
+
     @Test func gridPointBounds() {
         #expect(GridPoint(row: 0, col: 0).isInside(rows: 3, cols: 3))
         #expect(!GridPoint(row: 3, col: 0).isInside(rows: 3, cols: 3))

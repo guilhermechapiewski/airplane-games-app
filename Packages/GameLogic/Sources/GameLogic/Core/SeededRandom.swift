@@ -23,3 +23,16 @@ public struct SeededRandom: RandomNumberGenerator, Sendable, Codable, Equatable 
         return z ^ (z >> 31)
     }
 }
+
+extension SeededRandom {
+    /// A seed derived from `text` with 64-bit FNV-1a: stable across runs, devices and Swift
+    /// versions (unlike `Hasher`), so puzzles seeded from a name are the same for everyone.
+    static func stableSeed(_ text: String) -> UInt64 {
+        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+        for byte in text.utf8 {
+            hash ^= UInt64(byte)
+            hash = hash &* 0x0000_0100_0000_01b3
+        }
+        return hash
+    }
+}

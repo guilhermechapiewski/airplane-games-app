@@ -18,19 +18,8 @@ extension WaterSort {
         generate(colors: colorCount(forLevel: n), seed: levelSeed(max(1, n)))
     }
 
-    /// Colors in the daily puzzle: medium-hard, 8 or 9.
-    public static func dailyColorCount(seed: UInt64) -> Int {
-        var rng = SeededRandom(seed: seed ^ 0xDA11_C0105)
-        return 8 + Int(rng.next() % 2)
-    }
-
-    /// The daily puzzle for a date seed.
-    public static func daily(seed: UInt64) -> Puzzle {
-        generate(colors: dailyColorCount(seed: seed), seed: seed)
-    }
-
     /// Never change this: it would change everyone's levels.
-    static func levelSeed(_ n: Int) -> UInt64 { Daily.fnv1a("waterSort.level.\(n)") }
+    static func levelSeed(_ n: Int) -> UInt64 { SeededRandom.stableSeed("waterSort.level.\(n)") }
 
     // MARK: Generator
 

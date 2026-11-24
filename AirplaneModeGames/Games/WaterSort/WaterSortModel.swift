@@ -11,7 +11,7 @@ final class WaterSortModel {
         var clock: GameClock
     }
 
-    /// The level to play next (levels mode); gameplay progress, kept apart from the statistics.
+    /// The level to play next; gameplay progress, kept apart from the statistics.
     private struct Progress: Codable {
         var level: Int
     }
@@ -32,7 +32,7 @@ final class WaterSortModel {
     }
 
     private(set) var state: Logic.State
-    /// The level being played (levels mode).
+    /// The level being played.
     private(set) var level: Int
     private(set) var clock = GameClock()
 
@@ -65,30 +65,21 @@ final class WaterSortModel {
     let game = GameID.waterSort
     private static let progressKey = "waterSort.progress"
 
-    /// Today, when this is the daily puzzle (fixed by the date, saved separately, no level change).
-    let daily: Daily.Day?
-    private var saveKey: String { daily.map { game.dailySaveKey($0) } ?? game.saveKey }
-
-    init(daily: Daily.Day? = nil, store: GameStore = .shared, stats: StatsStore = .shared) {
-        self.daily = daily
+    init(store: GameStore = .shared, stats: StatsStore = .shared) {
         self.store = store
         self.stats = stats
         let progress = store.load(Progress.self, key: Self.progressKey)?.level ?? 1
-        let key = daily.map { GameID.waterSort.dailySaveKey($0) } ?? GameID.waterSort.saveKey
-        if let saved = store.load(Saved.self, key: key), !saved.state.isSolved {
+        if let saved = store.load(Saved.self, key: GameID.waterSort.saveKey), !saved.state.isSolved {
             state = saved.state
             level = saved.level
             clock = saved.clock
-        } else if let daily {
-            level = progress
-            state = Logic.State(puzzle: Logic.daily(seed: GameID.waterSort.dailySeed(daily)))
         } else {
             level = progress
             state = Logic.State(puzzle: Logic.level(progress))
         }
         #if DEBUG
         if let scenario = Self.debugScenario() { state = scenario }
-        if daily == nil, let i = ProcessInfo.processInfo.arguments.firstIndex(of: "-waterSortLevel"),
+        if let i = ProcessInfo.processInfo.arguments.firstIndex(of: "-waterSortLevel"),
            i + 1 < ProcessInfo.processInfo.arguments.count, let n = Int(ProcessInfo.processInfo.arguments[i + 1]) {
             level = n
             state = Logic.State(puzzle: Logic.level(n))
@@ -103,8 +94,7 @@ final class WaterSortModel {
     var moves: Int { state.moveCount }
     var canUndo: Bool { state.canUndo && !state.isSolved }
     var canAddTube: Bool { !state.extraTubeUsed && !state.isSolved }
-    var isDaily: Bool { daily != nil }
-    /// Levels solved so far (levels mode).
+    /// Levels solved so far.
     var levelsSolved: Int { stats.stats(for: game).won }
 
     // MARK: Actions
@@ -203,31 +193,30 @@ final class WaterSortModel {
         persist()
     }
 
-    /// Starts the current puzzle over. In levels mode an attempt with progress counts as a played level.
+    /// Starts the current puzzle over. An attempt with progress counts as a played level.
     func restart() {
         guard !state.isSolved || showWin else { return }
-        if daily == nil && !showWin && hasProgress {
+        if !showWin && hasProgress {
             stats.record(game, won: false)
         }
         state.restart()
         resetPlay()
-        store.remove(key: saveKey)
+        store.remove(key: game.saveKey)
     }
 
     /// Moves on to the next level after a win.
     func nextLevel() {
-        guard daily == nil else { return }
         level = store.load(Progress.self, key: Self.progressKey)?.level ?? level + 1
         state = Logic.State(puzzle: Logic.level(level))
         resetPlay()
-        store.remove(key: saveKey)
+        store.remove(key: game.saveKey)
     }
 
     // MARK: Hints
 
     /// Works out the next step off the main actor. A pour is highlighted until the board changes;
     /// when the puzzle can't be sorted from here, the hint says how to recover. Hints are free,
-    /// unlimited, and allowed on the daily too.
+    /// unlimited.
     func showHint() {
         guard !state.isSolved, !isThinking else { return }
         hintToken += 1
@@ -334,14 +323,10 @@ final class WaterSortModel {
         clock.pause()
         let time = clock.elapsed()
         solvedMoves = state.moveCount
-        if let daily {
-            DailyStore.shared.record(game, on: daily, won: true, time: time)
-        } else {
-            solvedLevel = level
-            stats.record(game, won: true, time: time)
-            store.save(Progress(level: level + 1), key: Self.progressKey)
-        }
-        store.remove(key: saveKey)
+        solvedLevel = level
+        stats.record(game, won: true, time: time)
+        store.save(Progress(level: level + 1), key: Self.progressKey)
+        store.remove(key: game.saveKey)
         selected = nil
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: delay)
@@ -353,9 +338,9 @@ final class WaterSortModel {
 
     private func persist() {
         if state.isSolved || !hasProgress {
-            store.remove(key: saveKey)
+            store.remove(key: game.saveKey)
         } else {
-            store.save(Saved(level: level, state: state, clock: clock), key: saveKey)
+            store.save(Saved(level: level, state: state, clock: clock), key: game.saveKey)
         }
     }
 

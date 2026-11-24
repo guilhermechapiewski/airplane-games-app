@@ -60,12 +60,7 @@ final class SolitaireModel {
 
     static let cardAnimation = Animation.spring(response: 0.32, dampingFraction: 0.86)
 
-    /// Today, when this is the daily deal (draw 1, fixed by the date, saved separately).
-    let daily: Daily.Day?
-    private var saveKey: String { daily.map { game.dailySaveKey($0) } ?? game.saveKey }
-
-    init(daily: Daily.Day? = nil, store: GameStore = .shared, stats: StatsStore = .shared) {
-        self.daily = daily
+    init(store: GameStore = .shared, stats: StatsStore = .shared) {
         self.store = store
         self.stats = stats
         #if DEBUG
@@ -81,15 +76,14 @@ final class SolitaireModel {
             return
         }
         #endif
-        if let saved = store.load(Saved.self, key: daily.map { GameID.solitaire.dailySaveKey($0) } ?? GameID.solitaire.saveKey),
-           !saved.state.isWon {
+        if let saved = store.load(Saved.self, key: GameID.solitaire.saveKey), !saved.state.isWon {
             state = saved.state
             history = saved.history
             clock = saved.clock
             provenWinnable = saved.provenWinnable
             phase = .playing
         } else {
-            let mode = daily == nil ? Self.preferredMode : .draw1
+            let mode = Self.preferredMode
             state = .deal(drawMode: mode, seed: .random(in: .min ... .max))
             phase = .preparing
             dealtCount = 0
@@ -239,15 +233,14 @@ final class SolitaireModel {
         }
     }
 
-    /// Deals a new game. On the daily, this restarts today's deal instead.
     func newGame(_ mode: Logic.DrawMode? = nil) {
-        let mode = daily == nil ? mode ?? drawMode : .draw1
-        if daily == nil { UserDefaults.standard.set(mode.rawValue, forKey: Self.modeKey) }
-        if daily == nil && phase != .won && phase != .celebrating && state.moveCount > 0 {
+        let mode = mode ?? drawMode
+        UserDefaults.standard.set(mode.rawValue, forKey: Self.modeKey)
+        if phase != .won && phase != .celebrating && state.moveCount > 0 {
             // An abandoned game with progress counts as a loss.
             stats.record(game, variant: variant, won: false, time: clock.elapsed())
         }
-        store.remove(key: saveKey)
+        store.remove(key: game.saveKey)
         history = []
         hint = nil
         showStuck = false
@@ -281,10 +274,9 @@ final class SolitaireModel {
 
     private func prepare(mode: Logic.DrawMode) {
         prepareTask?.cancel()
-        let seed = daily.map { game.dailySeed($0) } ?? UInt64.random(in: .min ... .max)
-        let deterministic = daily != nil
+        let seed = UInt64.random(in: .min ... .max)
         prepareTask = Task { [weak self] in
-            let deal = await Self.findDeal(mode: mode, seed: seed, deterministic: deterministic)
+            let deal = await Self.findDeal(mode: mode, seed: seed)
             guard !Task.isCancelled, let self else { return }
             self.state = deal.state
             self.provenWinnable = deal.provenWinnable
@@ -294,13 +286,11 @@ final class SolitaireModel {
     }
 
     /// Searches for a provably winnable deal off the main actor, giving up after a few seconds.
-    /// A `deterministic` search (the daily deal) has no time limit, so every device finds the same
-    /// deal; the attempt and node budgets still bound it.
-    nonisolated private static func findDeal(mode: Logic.DrawMode, seed: UInt64, deterministic: Bool) async -> Logic.Deal {
+    nonisolated private static func findDeal(mode: Logic.DrawMode, seed: UInt64) async -> Logic.Deal {
         await Task.detached(priority: .userInitiated) {
             let deadline = ContinuousClock.now + .seconds(3)
             return Logic.winnableDeal(drawMode: mode, seed: seed, maxAttempts: 60, nodeBudget: 6_000) {
-                !Task.isCancelled && (deterministic || ContinuousClock.now < deadline)
+                ContinuousClock.now < deadline && !Task.isCancelled
             }
         }.value
     }
@@ -377,14 +367,9 @@ final class SolitaireModel {
         timeBonus = Logic.Scoring.timeBonus(seconds: finalTime)
         finalScore = state.score + timeBonus
         let previousBest = bestScore
-        // Daily wins aren't recorded in the best scores, so they can't set one.
-        isNewBest = daily == nil && (previousBest.map { finalScore > $0 } ?? true)
-        if let daily {
-            DailyStore.shared.record(game, on: daily, won: true, time: finalTime)
-        } else {
-            stats.record(game, variant: variant, won: true, score: finalScore, time: finalTime)
-        }
-        store.remove(key: saveKey)
+        isNewBest = previousBest.map { finalScore > $0 } ?? true
+        stats.record(game, variant: variant, won: true, score: finalScore, time: finalTime)
+        store.remove(key: game.saveKey)
         hint = nil
         Feedback.play(.win)
         celebrationStart = .now
@@ -415,9 +400,9 @@ final class SolitaireModel {
         guard phase != .won, phase != .celebrating else { return }
         guard state.moveCount > 0 else {
             // Undone back to the deal: nothing worth resuming.
-            store.remove(key: saveKey)
+            store.remove(key: game.saveKey)
             return
         }
-        store.save(Saved(state: state, history: history, clock: clock, provenWinnable: provenWinnable), key: saveKey)
+        store.save(Saved(state: state, history: history, clock: clock, provenWinnable: provenWinnable), key: game.saveKey)
     }
 }

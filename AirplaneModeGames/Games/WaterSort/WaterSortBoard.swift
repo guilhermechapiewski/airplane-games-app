@@ -65,7 +65,7 @@ struct WaterSortBoard: View {
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(model.isDaily ? "Daily puzzle" : "Level \(model.level)")
+        .accessibilityLabel("Level \(model.level)")
         .accessibilityIdentifier("waterSortBoard")
     }
 

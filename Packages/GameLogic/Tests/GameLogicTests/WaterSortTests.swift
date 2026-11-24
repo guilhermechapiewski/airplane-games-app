@@ -183,7 +183,6 @@ struct WaterSortTests {
     @Test func levelsAreDeterministic() {
         #expect(W.level(7) == W.level(7))
         #expect(W.level(7) != W.level(8))
-        #expect(W.daily(seed: 42) == W.daily(seed: 42))
         // Pinned so an accidental change to the generator (which would change everyone's levels) shows up.
         #expect(W.level(1).tubes.count == 5)
     }
@@ -194,20 +193,6 @@ struct WaterSortTests {
             checkWellFormed(puzzle, colors: W.colorCount(forLevel: n))
             let pours = try #require(W.Solver.solve(puzzle.tubes, budget: 200_000), "level \(n)")
             #expect(replays(puzzle.tubes, pours), "level \(n)")
-        }
-    }
-
-    @Test func dailiesAreSolvableAndMediumHard() throws {
-        var day = Daily.Day(year: 2026, month: 11, day: 1)
-        for _ in 0..<20 {
-            let seed = Daily.seed(day: day, game: "waterSort")
-            let puzzle = W.daily(seed: seed)
-            let colors = W.dailyColorCount(seed: seed)
-            #expect((8...9).contains(colors))
-            checkWellFormed(puzzle, colors: colors)
-            let pours = try #require(W.Solver.solve(puzzle.tubes, budget: 200_000), "\(day.key)")
-            #expect(replays(puzzle.tubes, pours))
-            day = day.next
         }
     }
 

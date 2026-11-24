@@ -2,12 +2,7 @@ import SwiftUI
 import GameLogic
 
 struct WordGuessView: View {
-    @State private var model: WordGuessModel
-    @Environment(\.dismiss) private var dismiss
-
-    init(daily: Daily.Day? = nil) {
-        _model = State(initialValue: WordGuessModel(daily: daily))
-    }
+    @State private var model = WordGuessModel()
     @State private var showOptions = false
     @AppStorage(WordGuessModel.highContrastKey) private var highContrast = false
     @FocusState private var boardFocused: Bool
@@ -206,10 +201,7 @@ struct WordGuessView: View {
             HStack(spacing: 12) {
                 Button("Results") { withAnimation { model.reopenResult() } }
                     .buttonStyle(SecondaryButtonStyle())
-                if model.daily != nil {
-                    Button("Done") { dismiss() }
-                        .buttonStyle(PrimaryButtonStyle(color: accent))
-                } else if model.mode == .friend {
+                if model.mode == .friend {
                     Button("Next Round") { model.nextRound() }
                         .buttonStyle(PrimaryButtonStyle(color: accent))
                 } else {
@@ -287,25 +279,16 @@ struct WordGuessView: View {
                 ResultOverlay(mood: won ? .win : .loss,
                               title: won ? Self.praise[min(n, 6) - 1] : "Out of tries",
                               subtitle: won ? "You found \(word) in \(n) \(n == 1 ? "guess" : "guesses")." : "The word was \(word).",
-                              details: model.daily != nil
-                                ? [("Daily", won ? "Solved" : "Missed"),
-                                   ("Streak", "🔥 \(DailyStore.shared.streak(.wordGuess))"),
-                                   ("Best", "\(DailyStore.shared.bestStreak(.wordGuess))")] + hintsDetail
-                                : [("Played", "\(s.played)"),
-                                   ("Win %", s.played == 0 ? "–" : "\(Int((s.winRate * 100).rounded()))"),
-                                   ("Streak", "\(s.currentStreak)")]
+                              details: [("Played", "\(s.played)"),
+                                        ("Win %", s.played == 0 ? "–" : "\(Int((s.winRate * 100).rounded()))"),
+                                        ("Streak", "\(s.currentStreak)")]
                                 + hintsDetail,
                               tint: accent) {
                     GuessDistributionChart(distribution: model.distribution, highlight: won ? n : nil, accent: accent)
                         .padding(.bottom, 4)
-                    if model.daily != nil {
-                        Button("Done") { dismiss() }
-                            .buttonStyle(PrimaryButtonStyle(color: accent))
-                    } else {
-                        Button("Play Again") { model.newComputerGame() }
-                            .buttonStyle(PrimaryButtonStyle(color: accent))
-                            .accessibilityIdentifier("playAgain")
-                    }
+                    Button("Play Again") { model.newComputerGame() }
+                        .buttonStyle(PrimaryButtonStyle(color: accent))
+                        .accessibilityIdentifier("playAgain")
                     Button("View Board") { model.dismissResult() }
                         .buttonStyle(SecondaryButtonStyle())
                 }

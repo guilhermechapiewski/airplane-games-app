@@ -2,14 +2,10 @@ import GameLogic
 import SwiftUI
 
 struct WaterSortView: View {
-    @State private var model: WaterSortModel
+    @State private var model = WaterSortModel()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.reduceMotion) private var reduceMotion
     @Environment(\.differentiateWithoutColor) private var differentiateWithoutColor
-
-    init(daily: Daily.Day? = nil) {
-        _model = State(initialValue: WaterSortModel(daily: daily))
-    }
 
     private var accent: Color { GameID.waterSort.accent }
 
@@ -33,7 +29,7 @@ struct WaterSortView: View {
         .task { if ProcessInfo.processInfo.arguments.contains("-hintDemo") { model.showHint() } }
         #endif
         .gameChrome(.waterSort, rules: Self.rules,
-                    stats: [StatsVariant(key: nil, title: model.isDaily ? "Levels" : "Levels · now on Level \(model.level)")],
+                    stats: [StatsVariant(key: nil, title: "Levels · now on Level \(model.level)")],
                     newGame: [NewGameOption(title: "Restart Level") { restart() }],
                     onActiveChange: model.setActive,
                     freshStart: { model.restart() })
@@ -55,13 +51,8 @@ struct WaterSortView: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            if let day = model.daily {
-                StatPill(title: "Daily", value: Self.dayString(day), tint: accent)
-                    .accessibilityIdentifier("levelNumber")
-            } else {
-                StatPill(title: "Level", value: "\(model.level)", tint: accent)
-                    .accessibilityIdentifier("levelNumber")
-            }
+            StatPill(title: "Level", value: "\(model.level)", tint: accent)
+                .accessibilityIdentifier("levelNumber")
             StatPill(title: "Moves", value: "\(model.moves)")
                 .accessibilityIdentifier("movesCount")
             Spacer(minLength: 0)
@@ -159,38 +150,20 @@ struct WaterSortView: View {
 
     static func movesText(_ n: Int) -> String { n == 1 ? "1 move" : "\(n) moves" }
 
-    static func dayString(_ day: Daily.Day) -> String {
-        let date = Calendar.current.date(from: DateComponents(year: day.year, month: day.month, day: day.day, hour: 12))
-        return date?.formatted(.dateTime.month(.abbreviated).day()) ?? day.key
-    }
-
     // MARK: Overlays
 
     @ViewBuilder private var overlay: some View {
         if model.showWin {
-            if let _ = model.daily {
-                ResultOverlay(mood: .win, title: "Sorted!",
-                              subtitle: "Today's puzzle, solved in \(Self.movesText(model.solvedMoves)).",
-                              details: [("Moves", "\(model.solvedMoves)"),
-                                        ("Time", model.clock.elapsed().clockString),
-                                        ("Streak", "🔥 \(DailyStore.shared.streak(.waterSort))")],
-                              tint: accent) {
-                    Button("Done") { dismiss() }
-                        .buttonStyle(PrimaryButtonStyle(color: accent))
-                }
-                .transition(.opacity)
-            } else {
-                ResultOverlay(mood: .win, title: "Sorted!",
-                              subtitle: "Level \(model.solvedLevel) solved in \(Self.movesText(model.solvedMoves)).",
-                              details: [("Moves", "\(model.solvedMoves)"), ("Solved", "\(model.levelsSolved)")],
-                              tint: accent) {
-                    Button("Next Level") { withAnimation(.easeOut(duration: 0.25)) { model.nextLevel() } }
-                        .buttonStyle(PrimaryButtonStyle(color: accent))
-                    Button("Back to Games") { dismiss() }
-                        .buttonStyle(SecondaryButtonStyle())
-                }
-                .transition(.opacity)
+            ResultOverlay(mood: .win, title: "Sorted!",
+                          subtitle: "Level \(model.solvedLevel) solved in \(Self.movesText(model.solvedMoves)).",
+                          details: [("Moves", "\(model.solvedMoves)"), ("Solved", "\(model.levelsSolved)")],
+                          tint: accent) {
+                Button("Next Level") { withAnimation(.easeOut(duration: 0.25)) { model.nextLevel() } }
+                    .buttonStyle(PrimaryButtonStyle(color: accent))
+                Button("Back to Games") { dismiss() }
+                    .buttonStyle(SecondaryButtonStyle())
             }
+            .transition(.opacity)
         } else if model.showStuck {
             ResultOverlay(mood: .neutral, title: "No pours left",
                           subtitle: "Undo a few pours or start over. Every puzzle can be sorted.",
@@ -219,9 +192,8 @@ struct WaterSortView: View {
                 "Every puzzle can be solved. No clock: take your time.",
                 "Tap Hint to see the next pour. If a pour has closed every way out, Hint tells you how many to undo. Hints are free.",
             ]),
-            .init(title: "Levels & daily", symbol: "calendar", points: [
+            .init(title: "Levels", symbol: "stairs", points: [
                 "Levels slowly add colors, from 3 up to 12. Solve one to unlock the next.",
-                "Today's Puzzle is the same for everyone and keeps your daily streak.",
             ]),
             .init(title: "Tips", symbol: "graduationcap", points: [
                 "An empty tube is your most valuable space. Fill it only when you have a plan for it.",

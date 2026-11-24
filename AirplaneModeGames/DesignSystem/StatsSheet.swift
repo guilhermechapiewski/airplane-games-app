@@ -7,7 +7,6 @@ struct StatsSheet: View {
     let variants: [StatsVariant]
     @Environment(\.dismiss) private var dismiss
     private var stats = StatsStore.shared
-    private var daily = DailyStore.shared
 
     init(game: GameID, variants: [StatsVariant]) {
         self.game = game
@@ -18,7 +17,6 @@ struct StatsSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    if game.hasDaily { dailyCard }
                     ForEach(variants.filter { !$0.hidesWhenEmpty || stats.stats(for: game, variant: $0.key).played > 0 }) { variant in
                         card(variant)
                     }
@@ -34,25 +32,6 @@ struct StatsSheet: View {
                 }
             }
         }
-    }
-
-    /// Daily puzzle results, counted by day.
-    private var dailyCard: some View {
-        let best = stats.stats(for: game, variant: StatsVariant.dailyKey).bestTime
-        return VStack(alignment: .leading, spacing: 12) {
-            Label("Daily Puzzle", systemImage: "calendar").font(.headline).foregroundStyle(game.accent)
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                tile("Played", "\(daily.playedCount(game))")
-                tile("Solved", "\(daily.wonCount(game))")
-                tile("Streak", "\(daily.streak(game))")
-                tile("Best Streak", "\(daily.bestStreak(game))")
-                tile("Best Time", best.map { $0.clockString } ?? "–")
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cornerRadius))
-        .accessibilityIdentifier("dailyStats")
     }
 
     private func card(_ variant: StatsVariant) -> some View {
@@ -96,9 +75,6 @@ struct StatsVariant: Identifiable {
     /// Show this card only once a game has been played with it.
     var hidesWhenEmpty = false
     var id: String { key ?? "_" }
-
-    /// Statistics variant that daily puzzle wins are recorded under.
-    static let dailyKey = "daily"
 
     static func difficulties(showsTime: Bool = true) -> [StatsVariant] {
         GameLogic.Difficulty.allCases.map {

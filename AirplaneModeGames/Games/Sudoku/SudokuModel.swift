@@ -39,18 +39,12 @@ final class SudokuModel {
     let gameID = GameID.sudoku
     private static let difficultyKey = "sudoku.lastDifficulty"
 
-    /// Today, when this is the daily puzzle (fixed by the date, saved separately).
-    let daily: Daily.Day?
-    private var saveKey: String { daily.map { gameID.dailySaveKey($0) } ?? gameID.saveKey }
-
-    init(daily: Daily.Day? = nil, store: GameStore = .shared, stats: StatsStore = .shared) {
-        self.daily = daily
+    init(store: GameStore = .shared, stats: StatsStore = .shared) {
         self.store = store
         self.stats = stats
         let last = UserDefaults.standard.string(forKey: Self.difficultyKey).flatMap(Difficulty.init(rawValue:))
-        difficulty = daily.map(Daily.sudokuDifficulty) ?? last ?? .easy
-        if let saved = store.load(Saved.self, key: daily.map { GameID.sudoku.dailySaveKey($0) } ?? GameID.sudoku.saveKey),
-           !saved.game.isSolved {
+        difficulty = last ?? .easy
+        if let saved = store.load(Saved.self, key: GameID.sudoku.saveKey), !saved.game.isSolved {
             game = saved.game
             difficulty = saved.game.difficulty
             clock = saved.clock
@@ -202,7 +196,7 @@ final class SudokuModel {
             // An abandoned game with progress counts as played, not won.
             stats.record(gameID, variant: game.difficulty.rawValue, won: false, time: clock.elapsed())
         }
-        store.remove(key: saveKey)
+        store.remove(key: gameID.saveKey)
         startGeneration(difficulty)
     }
 
@@ -216,7 +210,7 @@ final class SudokuModel {
 
     private func startGeneration(_ difficulty: Difficulty) {
         self.difficulty = difficulty
-        if daily == nil { UserDefaults.standard.set(difficulty.rawValue, forKey: Self.difficultyKey) }
+        UserDefaults.standard.set(difficulty.rawValue, forKey: Self.difficultyKey)
         generation += 1
         let token = generation
         isGenerating = true
@@ -227,7 +221,7 @@ final class SudokuModel {
         hintPreview = nil
         selected = nil
         clock = GameClock()
-        let seed = daily.map { gameID.dailySeed($0) } ?? UInt64.random(in: .min ... .max)
+        let seed = UInt64.random(in: .min ... .max)
 
         Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(150))
@@ -274,12 +268,8 @@ final class SudokuModel {
         let time = clock.elapsed()
         let previousBest = bestTime
         isNewBest = previousBest.map { time < $0 } ?? true
-        if let daily {
-            DailyStore.shared.record(gameID, on: daily, won: true, time: time)
-        } else {
-            stats.record(gameID, variant: difficulty.rawValue, won: true, time: time)
-        }
-        store.remove(key: saveKey)
+        stats.record(gameID, variant: difficulty.rawValue, won: true, time: time)
+        store.remove(key: gameID.saveKey)
         Feedback.play(.win)
         wave(cells: Array(0..<Sudoku.cellCount), from: cell, step: 0.04)
         let token = generation
@@ -314,10 +304,10 @@ final class SudokuModel {
         guard let game, !isSolved, !isGenerating else { return }
         // An untouched puzzle isn't a game in progress (no "Continue Playing", no erase prompt).
         guard game.hasProgress else {
-            store.remove(key: saveKey)
+            store.remove(key: gameID.saveKey)
             return
         }
         store.save(Saved(game: game, clock: clock, selected: selected, notesMode: notesMode, isPaused: isPaused),
-                   key: saveKey)
+                   key: gameID.saveKey)
     }
 }

@@ -16,8 +16,6 @@ final class WordWheelModel {
     private struct Saved: Codable {
         var state: Logic.State
         var clock: GameClock
-        /// Daily: the solve (reaching Great) was already recorded.
-        var solvedRecorded: Bool
         /// Optional so saves from before hints existed still load.
         var clue: Logic.Clue?
         var hintsUsed: Int?
@@ -37,10 +35,6 @@ final class WordWheelModel {
     private(set) var lastFound: String?
     private(set) var showResult = false
     private(set) var celebrating = false
-    /// Daily: today's solve has been recorded (now, or on an earlier visit).
-    private(set) var solvedRecorded = false
-    /// Daily: shows the "solved" banner right after reaching Great.
-    private(set) var justSolvedDaily = false
     /// The current clue for an unfound answer, and whether its panel is showing.
     private(set) var clue: Logic.Clue?
     private(set) var showClue = false
@@ -55,19 +49,12 @@ final class WordWheelModel {
     private var isActive = false
     let game = GameID.wordWheel
 
-    /// Today, when this is the daily wheel (letters fixed by the date, saved separately).
-    let daily: Daily.Day?
-    private var saveKey: String { daily.map { game.dailySaveKey($0) } ?? game.saveKey }
-
-    init(daily: Daily.Day? = nil, store: GameStore = .shared, stats: StatsStore = .shared) {
-        self.daily = daily
+    init(store: GameStore = .shared, stats: StatsStore = .shared) {
         self.store = store
         self.stats = stats
-        let key = daily.map { GameID.wordWheel.dailySaveKey($0) } ?? GameID.wordWheel.saveKey
-        if let saved = store.load(Saved.self, key: key), !saved.state.isFinished {
+        if let saved = store.load(Saved.self, key: GameID.wordWheel.saveKey), !saved.state.isFinished {
             adopt(saved.state)
             clock = saved.clock
-            solvedRecorded = saved.solvedRecorded
             clue = saved.clue
             hintsUsed = saved.hintsUsed ?? 0
         }
@@ -106,7 +93,6 @@ final class WordWheelModel {
         } else if dictionary == nil {
             dictionary = await Self.loadDictionary()
         }
-        if let daily, DailyStore.shared.isDone(game, on: daily) { solvedRecorded = true }
     }
 
     func setActive(_ active: Bool) {
@@ -195,7 +181,6 @@ final class WordWheelModel {
         if a.rankedUp && a.isPangram {
             AccessibilityNotification.Announcement("Rank: \(a.rankAfter.title)").post()
         }
-        if a.rankedUp, a.rankAfter >= Logic.Rank.solved { recordDailySolveIfNeeded() }
         if state?.foundAllAnswers == true {
             show("Every answer found!", kind: .rank, duration: 2.4)
             celebrate()
@@ -209,18 +194,6 @@ final class WordWheelModel {
         case 5: "Nice"
         case 6: "Lovely"
         default: "Superb"
-        }
-    }
-
-    private func recordDailySolveIfNeeded() {
-        guard let daily, !solvedRecorded else { return }
-        solvedRecorded = true
-        // Recording clears the daily save; `persist()` right after saves it again so play can go on.
-        DailyStore.shared.record(game, on: daily, won: true, time: clock.elapsed())
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { justSolvedDaily = true }
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(4))
-            withAnimation(.easeOut(duration: 0.3)) { self?.justSolvedDaily = false }
         }
     }
 
@@ -295,15 +268,8 @@ final class WordWheelModel {
         clock.pause()
         showClue = false
         let won = s.rank >= Logic.Rank.solved
-        if let daily {
-            if !solvedRecorded {
-                DailyStore.shared.record(game, on: daily, won: false, time: nil)
-                solvedRecorded = true
-            }
-        } else {
-            stats.record(game, won: won, score: s.score, time: clock.elapsed())
-        }
-        store.remove(key: saveKey)
+        stats.record(game, won: won, score: s.score, time: clock.elapsed())
+        store.remove(key: game.saveKey)
         Feedback.play(won ? .win : .place)
         withAnimation { showResult = true }
     }
@@ -315,20 +281,18 @@ final class WordWheelModel {
 
     /// A new random wheel (abandoning one with progress counts it in the stats).
     func newGame() {
-        guard daily == nil else { return }
         if let s = state, !s.isFinished, s.hasProgress {
             stats.record(game, won: s.rank >= Logic.Rank.solved, score: s.score, time: clock.elapsed())
         }
-        store.remove(key: saveKey)
+        store.remove(key: game.saveKey)
         Task { await generate() }
     }
 
     private func generate() async {
         generation += 1
         let token = generation
-        let seed = daily.map { game.dailySeed($0) }
         isLoading = true
-        let (puzzle, dictionary) = await Self.makePuzzle(seed: seed)
+        let (puzzle, dictionary) = await Self.makePuzzle()
         guard generation == token else { return }
         self.dictionary = dictionary
         withAnimation(.easeOut(duration: 0.25)) {
@@ -346,17 +310,15 @@ final class WordWheelModel {
         lastFound = nil
         showResult = false
         celebrating = false
-        justSolvedDaily = false
         tapTokens = [:]
         clue = nil
         showClue = false
         hintsUsed = 0
-        if daily == nil { solvedRecorded = false }
     }
 
-    nonisolated private static func makePuzzle(seed: UInt64?) async -> (Logic.Puzzle, Logic.Dictionary) {
+    nonisolated private static func makePuzzle() async -> (Logic.Puzzle, Logic.Dictionary) {
         await Task.detached(priority: .userInitiated) {
-            var rng = seed.map { SeededRandom(seed: $0) } ?? SeededRandom()
+            var rng = SeededRandom()
             let dictionary = Logic.Dictionary.bundled
             return (Logic.generate(using: &rng, dictionary: dictionary), dictionary)
         }.value
@@ -394,10 +356,10 @@ final class WordWheelModel {
     private func persist() {
         guard let s = state else { return }
         if s.isFinished || (!s.hasProgress && hintsUsed == 0) {
-            store.remove(key: saveKey)
+            store.remove(key: game.saveKey)
         } else {
-            store.save(Saved(state: s, clock: clock, solvedRecorded: solvedRecorded, clue: clue, hintsUsed: hintsUsed),
-                       key: saveKey)
+            store.save(Saved(state: s, clock: clock, clue: clue, hintsUsed: hintsUsed),
+                       key: game.saveKey)
         }
     }
 }

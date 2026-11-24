@@ -51,22 +51,13 @@ final class TileMatchModel {
     let game = GameID.tileMatch
     private static let layoutKey = "tileMatch.layout"
 
-    /// Today, when this is the daily deal (Lantern layout, fixed by the date, saved separately).
-    let daily: Daily.Day?
-    private var saveKey: String { daily.map { game.dailySaveKey($0) } ?? game.saveKey }
-    static let dailyLayout = Logic.LayoutID.lantern
-
-    init(daily: Daily.Day? = nil, store: GameStore = .shared, stats: StatsStore = .shared) {
-        self.daily = daily
+    init(store: GameStore = .shared, stats: StatsStore = .shared) {
         self.store = store
         self.stats = stats
-        if let saved = store.load(Saved.self, key: daily.map { GameID.tileMatch.dailySaveKey($0) } ?? GameID.tileMatch.saveKey),
-           !saved.state.isCleared {
+        if let saved = store.load(Saved.self, key: GameID.tileMatch.saveKey), !saved.state.isCleared {
             state = saved.state
             clock = saved.clock
             started = saved.started
-        } else if let daily {
-            state = .newGame(layout: Self.dailyLayout, seed: GameID.tileMatch.dailySeed(daily))
         } else {
             state = .newGame(layout: Self.preferredLayout)
         }
@@ -191,19 +182,14 @@ final class TileMatchModel {
         persist()
     }
 
-    /// Deals a new game. On the daily, this restarts today's deal.
     func newGame(layout: Logic.LayoutID? = nil) {
-        if daily == nil && started && !state.isCleared && !showWin {
+        if started && !state.isCleared && !showWin {
             // Count an abandoned game that had progress.
             stats.record(game, variant: self.layout.rawValue, won: false, time: clock.elapsed())
         }
-        if let daily {
-            state = .newGame(layout: Self.dailyLayout, seed: game.dailySeed(daily))
-        } else {
-            let chosen = layout ?? self.layout
-            UserDefaults.standard.set(chosen.rawValue, forKey: Self.layoutKey)
-            state = .newGame(layout: chosen)
-        }
+        let chosen = layout ?? self.layout
+        UserDefaults.standard.set(chosen.rawValue, forKey: Self.layoutKey)
+        state = .newGame(layout: chosen)
         clock = GameClock()
         started = false
         selected = nil
@@ -223,7 +209,7 @@ final class TileMatchModel {
             self.isDealing = false
         }
         refresh()
-        store.remove(key: saveKey)
+        store.remove(key: game.saveKey)
     }
 
     func setActive(_ active: Bool) {
@@ -265,13 +251,9 @@ final class TileMatchModel {
         clock.pause()
         let time = clock.elapsed()
         let previousBest = bestTime
-        if let daily {
-            DailyStore.shared.record(game, on: daily, won: true, time: time)
-        } else {
-            stats.record(game, variant: layout.rawValue, won: true, time: time)
-        }
+        stats.record(game, variant: layout.rawValue, won: true, time: time)
         lastWinWasBest = previousBest.map { time < $0 } ?? true
-        store.remove(key: saveKey)
+        store.remove(key: game.saveKey)
         Feedback.play(.win)
         Task { @MainActor [weak self] in
             // Let the last pair finish vanishing before the celebration.
@@ -283,9 +265,9 @@ final class TileMatchModel {
 
     private func persist() {
         if state.isCleared {
-            store.remove(key: saveKey)
+            store.remove(key: game.saveKey)
         } else if started {
-            store.save(Saved(state: state, clock: clock, started: started), key: saveKey)
+            store.save(Saved(state: state, clock: clock, started: started), key: game.saveKey)
         }
     }
 }

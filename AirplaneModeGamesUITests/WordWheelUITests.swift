@@ -129,13 +129,6 @@ final class WordWheelUITests: XCTestCase {
         XCTAssertTrue(app.buttons["foundCount"].waitForLabel("1 word found", timeout: 10))
     }
 
-    func testDailyWheelOpens() {
-        let app = launch(["-daily"])
-        XCTAssertTrue(app.navigationBars["Daily Word Wheel"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.descendants(matching: .any)["wordWheelProgress"].exists)
-        app.buttons["shuffle"].tap()
-    }
-
     /// The shared audit test predates this game; audit its screen here too.
     func testAccessibilityAudit() throws {
         let app = launch(["-wordWheelScenario", "demo"])

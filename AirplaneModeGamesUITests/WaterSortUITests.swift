@@ -135,27 +135,6 @@ final class WaterSortUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Undo"].isEnabled)
     }
 
-    func testDailyOpensAndRecordsTheStreak() {
-        let app = launch(["-daily", "-waterSortScenario", "nearlySolved"])
-        XCTAssertTrue(app.navigationBars["Daily Water Sort"].exists || app.staticTexts["Daily Water Sort"].exists)
-        tube(app, 3).tap()
-        tube(app, 2).tap()
-        XCTAssertTrue(app.staticTexts["Sorted!"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS '🔥 1'")).firstMatch.exists
-                      || app.descendants(matching: .any).containing(NSPredicate(format: "label CONTAINS '🔥 1'")).firstMatch.exists,
-                      "streak pill")
-        attachScreenshot("daily-win")
-        app.buttons["Done"].tap()
-        XCTAssertTrue(app.buttons["game.waterSort"].waitForExistence(timeout: 5), "back home")
-    }
-
-    func testDailyPuzzleSize() {
-        let app = launch(["-daily"])
-        let count = tubes(app).count
-        XCTAssertTrue((10...11).contains(count), "8–9 colors plus two empty tubes, got \(count)")
-        attachScreenshot("daily")
-    }
-
     func testAccessibilityAudit() throws {
         let app = launch(["-waterSortLevel", "40"])
         try audit(app)

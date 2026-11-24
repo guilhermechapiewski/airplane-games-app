@@ -63,23 +63,14 @@ final class MinesweeperModel {
     let game = GameID.minesweeper
     private static let levelKey = "minesweeper.level"
 
-    /// Today, when this is the daily board (intermediate, fixed by the date, saved separately).
-    let daily: Daily.Day?
-    private var saveKey: String { daily.map { game.dailySaveKey($0) } ?? game.saveKey }
-
-    init(daily: Daily.Day? = nil, store: GameStore = .shared, stats: StatsStore = .shared) {
-        self.daily = daily
+    init(store: GameStore = .shared, stats: StatsStore = .shared) {
         self.store = store
         self.stats = stats
-        if let saved = store.load(Saved.self, key: daily.map { GameID.minesweeper.dailySaveKey($0) } ?? GameID.minesweeper.saveKey),
-           !saved.state.status.isOver {
+        if let saved = store.load(Saved.self, key: GameID.minesweeper.saveKey), !saved.state.status.isOver {
             level = saved.level
             state = saved.state
             clock = saved.clock
             mode = saved.mode
-        } else if let daily {
-            level = .intermediate
-            state = Self.dailyBoard(daily)
         } else {
             let level = store.load(Logic.Level.self, key: Self.levelKey) ?? .beginner
             self.level = level
@@ -184,28 +175,18 @@ final class MinesweeperModel {
         persist()
     }
 
-    /// Everyone's daily board: mines from the date's seed, with the same area already opened
-    /// (a first tap would otherwise lay the mines around each player's own tap).
-    private static func dailyBoard(_ day: Daily.Day) -> Logic.State {
-        let level = Logic.Level.intermediate
-        var state = Logic.State(level: level, seed: GameID.minesweeper.dailySeed(day))
-        state.reveal(GridPoint(row: level.rows / 2, col: level.cols / 2))
-        return state
-    }
-
-    /// Starts a new game. On the daily, this replays today's board from the start.
     func newGame(level newLevel: Logic.Level? = nil) {
-        if daily == nil && hasProgress {
+        if hasProgress {
             // An abandoned game with progress counts as played.
             stats.record(game, variant: level.rawValue, won: false, time: clock.elapsed())
         }
         pendingResult?.cancel()
-        if let newLevel, daily == nil {
+        if let newLevel {
             level = newLevel
             store.save(newLevel, key: Self.levelKey)
         }
         dismissHint()
-        state = daily.map(Self.dailyBoard) ?? Logic.State(level: level)
+        state = Logic.State(level: level)
         clock = GameClock()
         revealDelays = [:]
         explosionDelays = [:]
@@ -213,7 +194,7 @@ final class MinesweeperModel {
         isNewBest = false
         mode = .reveal
         boardID += 1
-        store.remove(key: saveKey)
+        store.remove(key: game.saveKey)
     }
 
     // MARK: Hints
@@ -312,8 +293,7 @@ final class MinesweeperModel {
         let mines = state.minePoints.filter { $0 != boom && !state[$0].isFlagged }
         let far = mines.map { distance($0, boom) }.max() ?? 1
         explosionDelays = Dictionary(uniqueKeysWithValues: mines.map { ($0, 0.15 + 0.85 * distance($0, boom) / max(far, 1)) })
-        // A lost daily board can be retried; only a cleared one counts for the day.
-        if daily == nil { stats.record(game, variant: level.rawValue, won: false, time: finalTime) }
+        stats.record(game, variant: level.rawValue, won: false, time: finalTime)
         presentResult(after: mines.isEmpty ? 0.5 : 1.4)
     }
 
@@ -322,11 +302,7 @@ final class MinesweeperModel {
         finalTime = clock.elapsed()
         let previousBest = bestTime
         isNewBest = previousBest.map { finalTime < $0 } ?? true
-        if let daily {
-            DailyStore.shared.record(game, on: daily, won: true, time: finalTime)
-        } else {
-            stats.record(game, variant: level.rawValue, won: true, time: finalTime)
-        }
+        stats.record(game, variant: level.rawValue, won: true, time: finalTime)
         Feedback.play(.win)
         presentResult(after: 0.6)
     }
@@ -348,9 +324,9 @@ final class MinesweeperModel {
 
     private func persist() {
         if state.status == .playing {
-            store.save(Saved(level: level, state: state, clock: clock, mode: mode), key: saveKey)
+            store.save(Saved(level: level, state: state, clock: clock, mode: mode), key: game.saveKey)
         } else {
-            store.remove(key: saveKey)
+            store.remove(key: game.saveKey)
         }
     }
 }

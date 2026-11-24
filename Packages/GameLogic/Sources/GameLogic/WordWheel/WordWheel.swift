@@ -63,7 +63,7 @@ public enum WordWheel {
             allCases.last { points >= $0.threshold(maxPoints: maxPoints) } ?? .starter
         }
 
-        /// The rank that marks a daily wheel as solved (and a regular wheel as won).
+        /// The rank that wins a wheel.
         public static let solved: Rank = .great
     }
 

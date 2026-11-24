@@ -89,23 +89,6 @@ final class SolitaireUITests: XCTestCase {
         XCTAssertEqual(Set(scores).count, 1, "header and result card disagree: \(scores)")
     }
 
-    /// The daily's result card shows the score (time bonus included) next to the time and streak,
-    /// and never claims a best score: daily wins aren't recorded in the best scores.
-    @MainActor func testDailyResultShowsScore() {
-        let app = launch(["-daily", "-solitaireScenario", "autocomplete"])
-        let auto = app.buttons["autoComplete"]
-        XCTAssertTrue(auto.waitForExistence(timeout: 10))
-        auto.tap()
-        XCTAssertTrue(app.staticTexts["You Won!"].waitForExistence(timeout: 20))
-        let pills = app.staticTexts.allElementsBoundByIndex.map(\.label)
-        let scores = pills.filter { $0.hasPrefix("SCORE, ") }
-        XCTAssertEqual(scores.count, 2, "header and result card should both show the score: \(pills)")
-        XCTAssertEqual(Set(scores).count, 1, "header and result card disagree: \(scores)")
-        XCTAssertTrue(pills.contains { $0.hasPrefix("STREAK, ") }, "\(pills)")
-        XCTAssertFalse(pills.contains { $0.contains("New best score") }, "\(pills)")
-        XCTAssertTrue(app.buttons["Done"].exists)
-    }
-
     /// With real animations, a rejected drag plays the shake and the card must land exactly back
     /// in its column (a short spring as the shake's last keyframe once left it 4 points off).
     @MainActor func testRejectedDragLandsExactlyBack() {

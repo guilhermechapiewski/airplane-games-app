@@ -2,12 +2,7 @@ import GameLogic
 import SwiftUI
 
 struct WordWheelView: View {
-    @State private var model: WordWheelModel
-    @Environment(\.dismiss) private var dismiss
-
-    init(daily: Daily.Day? = nil) {
-        _model = State(initialValue: WordWheelModel(daily: daily))
-    }
+    @State private var model = WordWheelModel()
 
     @State private var listExpanded = false
     @State private var showRanks = false
@@ -74,7 +69,6 @@ struct WordWheelView: View {
                     .allowsHitTesting(false)
             }
         }
-        .overlay(alignment: .top) { dailyBanner }
         .overlay { resultOverlay }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -92,9 +86,7 @@ struct WordWheelView: View {
                 .accessibilityIdentifier("confirmFinish")
             Button("Keep Playing", role: .cancel) {}
         } message: {
-            Text(model.daily != nil
-                 ? "You'll see the answers you missed. Today's wheel ends here."
-                 : "You'll see the answers you missed and your result is saved.")
+            Text("You'll see the answers you missed and your result is saved.")
         }
         .sheet(isPresented: $showRanks) {
             WordWheelRanksSheet(model: model)
@@ -147,14 +139,9 @@ struct WordWheelView: View {
             HStack(spacing: 12) {
                 Button("Results") { model.reopenResult() }
                     .buttonStyle(SecondaryButtonStyle())
-                if model.daily != nil {
-                    Button("Done") { dismiss() }
-                        .buttonStyle(PrimaryButtonStyle(color: WordWheelPalette.accent))
-                } else {
-                    Button("New Wheel") { model.newGame() }
-                        .buttonStyle(PrimaryButtonStyle(color: WordWheelPalette.accent))
-                        .accessibilityIdentifier("newWheel")
-                }
+                Button("New Wheel") { model.newGame() }
+                    .buttonStyle(PrimaryButtonStyle(color: WordWheelPalette.accent))
+                    .accessibilityIdentifier("newWheel")
             }
             .frame(minHeight: 56)
         } else {
@@ -229,22 +216,6 @@ struct WordWheelView: View {
 
     // MARK: Overlays
 
-    @ViewBuilder private var dailyBanner: some View {
-        if model.justSolvedDaily {
-            Label("Today's wheel solved! Keep going if you like.", systemImage: "calendar.badge.checkmark")
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(WordWheelPalette.accent, in: Capsule())
-                .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
-                .padding(.top, 6)
-                .padding(.horizontal, 16)
-                .transition(.move(edge: .top).combined(with: .opacity))
-                .accessibilityIdentifier("dailySolvedBanner")
-        }
-    }
-
     @ViewBuilder private var resultOverlay: some View {
         if model.showResult, let state = model.state {
             let won = state.rank >= WordWheel.Rank.solved
@@ -256,14 +227,9 @@ struct WordWheelView: View {
                 Button("See Answers") { model.dismissResult() }
                     .buttonStyle(PrimaryButtonStyle(color: WordWheelPalette.accent))
                     .accessibilityIdentifier("seeAnswers")
-                if model.daily != nil {
-                    Button("Done") { dismiss() }
-                        .buttonStyle(SecondaryButtonStyle())
-                } else {
-                    Button("New Wheel") { model.newGame() }
-                        .buttonStyle(SecondaryButtonStyle())
-                        .accessibilityIdentifier("playAgain")
-                }
+                Button("New Wheel") { model.newGame() }
+                    .buttonStyle(SecondaryButtonStyle())
+                    .accessibilityIdentifier("playAgain")
             }
             .transition(.opacity)
         }
@@ -275,18 +241,11 @@ struct WordWheelView: View {
         if !state.bonusWords.isEmpty { text += " and \(state.bonusWords.count) bonus" }
         text += "."
         if state.foundAllAnswers { text = "You found every word!" }
-        if model.daily != nil {
-            text += state.rank >= WordWheel.Rank.solved ? " Today's wheel is solved." : " Reach Great to solve a daily wheel."
-        }
         return text
     }
 
     private func details(_ state: WordWheel.State) -> [(String, String)] {
         let hints: [(String, String)] = model.hintsUsed > 0 ? [("Hints", "\(model.hintsUsed)")] : []
-        if model.daily != nil {
-            return [("Points", "\(state.score)"), ("Words", "\(state.foundAnswers.count)"),
-                    ("Streak", "\(DailyStore.shared.streak(.wordWheel))")] + hints
-        }
         return [("Points", "\(state.score)"), ("Words", "\(state.foundAnswers.count)"),
                 ("Best", "\(max(model.bestScore ?? 0, state.score))")] + hints
     }
@@ -306,7 +265,7 @@ struct WordWheelView: View {
             ]),
             .init(title: "Ranks", symbol: "chart.bar.fill", points: [
                 "Climb from Starter to Good, Great, Amazing and Genius.",
-                "Reaching Great solves the daily wheel and wins a regular wheel.",
+                "Reaching Great wins the wheel.",
                 "Tap Finish (the flag) to end a wheel and see the words you missed.",
             ]),
             .init(title: "Hint", symbol: "lightbulb", points: [

@@ -37,7 +37,7 @@ struct WordWheelProgress: View {
                     Text("Words: \(model.foundAnswerCount) / \(model.answerCount)")
                         .monospacedDigit()
                     Spacer()
-                    if let best = model.bestScore, model.daily == nil {
+                    if let best = model.bestScore {
                         Text("Best \(best) pts").monospacedDigit()
                     }
                 }
@@ -140,7 +140,7 @@ struct WordWheelRanksSheet: View {
                         .accessibilityValue(reached ? "reached" : "not reached")
                     }
                 } footer: {
-                    Text("This wheel is worth \(model.maxPoints) points in all. \(model.daily != nil ? "Reach Great to solve today's wheel." : "Reach Great to win the wheel.")")
+                    Text("This wheel is worth \(model.maxPoints) points in all. Reach Great to win the wheel.")
                 }
             }
             .navigationTitle("Ranks")
