@@ -12,6 +12,7 @@ No ads. No accounts. No tracking. No internet connection — ever.
 | **2048** | Smooth slide & merge animations, undo, best score |
 | **Sudoku** | 4 levels graded by solving technique, unique solutions, notes, explained hints |
 | **Solitaire** | Klondike draw 1 / draw 3, solver-checked winnable deals, auto-complete |
+| **FreeCell** | Numbered, solver-checked winnable deals, multi-card moves, safe auto-move, solver hints |
 | **Block Puzzle** | Drag pieces onto an 8×8 board, row & column clears, combos and streaks |
 | **Tile Match** | Mahjong-style tile matching, 6 original layouts, always-solvable deals |
 | **Water Sort** | Endless solver-checked levels, pouring animation, undo, an extra tube per level |
