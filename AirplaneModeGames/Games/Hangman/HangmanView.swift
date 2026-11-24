@@ -249,7 +249,7 @@ struct HangmanView: View {
                 "In Pass & Play it can't know your friend's words, so it suggests the most common English letter you haven't tried.",
                 "Hints never cost a balloon. The number you used is shown with your result.",
             ]),
-            .init(title: "Tips", symbol: "lightbulb.max", points: [
+            .init(title: "Tips", symbol: "graduationcap", points: [
                 "Start with vowels and the most common consonants: E, A, O, I, then T, N, S, R.",
                 "Every word needs a vowel, and Y often stands in for one in short words like SKY or GYM.",
                 "Look at the shape: a short word in a phrase is often THE, AND or OF, and a word ending in _ _ G is often -ING.",

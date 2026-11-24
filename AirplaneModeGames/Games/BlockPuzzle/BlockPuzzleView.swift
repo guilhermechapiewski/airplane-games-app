@@ -451,7 +451,7 @@ struct BlockPuzzleView: View {
                 "You can undo your last placement up to 3 times per game.",
                 "Stuck? Tap Hint to see a good spot for one of your pieces. Hints are free and don't change your score.",
             ]),
-            .init(title: "Tips", symbol: "lightbulb", points: [
+            .init(title: "Tips", symbol: "graduationcap", points: [
                 "Look at all three pieces before you place the first, and plan where each one will go.",
                 "Keep a 3×3 space open for the big square, and a clear row or column for the long bars.",
                 "Avoid leaving single empty squares boxed in: only a single block can fill them.",

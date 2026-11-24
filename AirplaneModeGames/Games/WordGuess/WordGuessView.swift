@@ -381,7 +381,7 @@ struct WordGuessView: View {
                 "It says how many words still fit and why the guess helps. Tap Type to fill it in — you still press Enter.",
                 "Hints never cost a guess. The number you used is shown with your result.",
             ]),
-            .init(title: "Tips", symbol: "lightbulb.max", points: [
+            .init(title: "Tips", symbol: "graduationcap", points: [
                 "Open with five different common letters, like those in SLATE, CRANE or TRACE, to learn the most from your first guess.",
                 "If you only have a couple of letters, a guess made of brand-new letters often teaches you more than one that just tries to fit.",
                 "Watch for double letters: words like SPEED, LLAMA or ABBEY trip people up.",

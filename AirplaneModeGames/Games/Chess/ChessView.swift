@@ -200,7 +200,7 @@ struct ChessView: View {
                 "Checkmate wins. Stalemate, threefold repetition, the 50-move rule and insufficient material are draws.",
                 "You can resign at any time from the flag button.",
             ]),
-            .init(title: "Tips", symbol: "lightbulb", points: [
+            .init(title: "Tips", symbol: "graduationcap", points: [
                 "Before every move, ask what your opponent's last move threatens: a capture, a check, a fork?",
                 "Fight for the center: pawns on e4 and d4 (or e5 and d5) give your pieces room to move.",
                 "Develop knights and bishops early, before moving the same piece twice.",

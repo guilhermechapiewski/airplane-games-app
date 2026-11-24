@@ -314,7 +314,7 @@ struct WordWheelView: View {
                 "Tap again for the first two letters, then the last letter too. After that, the next tap picks another word.",
                 "The clue also shows how many words are left of each length. Hinted words score as usual; the number of hints is shown with your result.",
             ]),
-            .init(title: "Tips", symbol: "lightbulb.max", points: [
+            .init(title: "Tips", symbol: "graduationcap", points: [
                 "Hunt for the pangram first: it's worth the most, and its long letter patterns suggest lots of shorter words.",
                 "Try common endings and beginnings with the wheel's letters: -ING, -ED, -ER, -TION, RE-, UN-.",
                 "Letters can repeat, so try doubles like -EE-, -LL- or -TT- and words like TATTOO.",

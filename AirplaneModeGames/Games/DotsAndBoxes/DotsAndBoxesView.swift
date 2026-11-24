@@ -169,7 +169,7 @@ struct DotsAndBoxesView: View {
                 "When you're given a long chain, take all but the last two boxes, then draw the line at the far end instead.",
                 "Your opponent gets those two boxes, but then has to open the next chain for you. In a loop, leave four.",
             ]),
-            .init(title: "Tips", symbol: "lightbulb", points: [
+            .init(title: "Tips", symbol: "graduationcap", points: [
                 "Never draw a box's third side unless you have to — that's a free box for your opponent.",
                 "Count long chains as safe lines run out. The player who moved first wants dots plus long chains to be even: an even number of long chains on 3×3 (16 dots), an odd number on 4×4 and 6×6. The other player wants the opposite.",
                 "Give away short chains (one or two boxes) before long ones, and open a two-box chain in the middle so it can't be turned back on you.",

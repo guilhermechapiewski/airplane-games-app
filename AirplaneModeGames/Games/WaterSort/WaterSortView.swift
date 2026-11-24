@@ -223,7 +223,7 @@ struct WaterSortView: View {
                 "Levels slowly add colors, from 3 up to 12. Solve one to unlock the next.",
                 "Today's Puzzle is the same for everyone and keeps your daily streak.",
             ]),
-            .init(title: "Tips", symbol: "lightbulb", points: [
+            .init(title: "Tips", symbol: "graduationcap", points: [
                 "An empty tube is your most valuable space. Fill it only when you have a plan for it.",
                 "Pour onto a matching color before reaching for an empty tube.",
                 "Aim to finish one color at a time: a completed tube is out of your way for good.",

@@ -235,7 +235,7 @@ struct MinesweeperView: View {
                 "Tap Hint and the board highlights a square you can work out, with the reasoning in plain words.",
                 "Tap the answer button to reveal or flag it for you. Hints are free.",
             ]),
-            .init(title: "Tips", symbol: "lightbulb", points: [
+            .init(title: "Tips", symbol: "graduationcap", points: [
                 "A number touching exactly as many hidden squares as its value: all of them are mines.",
                 "A number that already touches all its mines: every other square around it is safe. Tap the number to open them at once.",
                 "Along a straight edge of hidden squares, a 1-2-1 means mines facing both 1s; a 1-2-2-1 means mines facing the two 2s.",

@@ -157,7 +157,7 @@ struct TwentyFortyEightView: View {
                 "Made a mistake? Undo up to 20 moves.",
                 "Not sure where to swipe? Tap Hint to see the best move. Hints are free and don't change your score.",
             ]),
-            .init(title: "Tips", symbol: "lightbulb", points: [
+            .init(title: "Tips", symbol: "graduationcap", points: [
                 "Pick a corner for your biggest tile and keep it there. Mostly swipe toward it, using just two directions.",
                 "Keep the row along that corner full, so a swipe the other way can't pull the big tile out.",
                 "Line tiles up by size next to the big one, like a snake, so merges roll into the corner.",
