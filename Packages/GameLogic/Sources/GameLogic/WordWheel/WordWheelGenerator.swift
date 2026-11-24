@@ -97,6 +97,12 @@ extension WordWheel {
         return best?.puzzle ?? fallback
     }
 
+    /// The wheel with exactly these letters (for fixed scenarios such as UI tests).
+    public static func puzzle(center: Character, outer: [Character], dictionary: Dictionary = .bundled) -> Puzzle {
+        let letters = mask(String(outer) + String(center))
+        return Puzzle(center: center, outer: outer, answers: dictionary.answers(letters: letters, center: center))
+    }
+
     private static func distance(_ value: Int, _ range: ClosedRange<Int>) -> Int {
         value < range.lowerBound ? range.lowerBound - value : value > range.upperBound ? value - range.upperBound : 0
     }
