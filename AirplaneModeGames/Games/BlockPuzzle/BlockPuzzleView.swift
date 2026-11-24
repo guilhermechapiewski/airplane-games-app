@@ -57,6 +57,9 @@ struct BlockPuzzleView: View {
             }
         }
         .overlay { overlay }
+        #if DEBUG
+        .task { if ProcessInfo.processInfo.arguments.contains("-hintDemo") { model.showHint() } }
+        #endif
         .gameChrome(.blocks, rules: Self.rules,
                     stats: [StatsVariant(showsWins: false, showsScore: true)],
                     newGame: [NewGameOption(title: "New Game") { startNewGame() }],
@@ -123,6 +126,13 @@ struct BlockPuzzleView: View {
             }
             .disabled(!model.canUndo)
             .accessibilityValue("\(model.undosLeft) left")
+            ToolButton(title: "Hint", systemImage: "lightbulb", isActive: model.hint != nil || model.isThinking,
+                       tint: HintCard.amber) {
+                cancelDrag()
+                model.showHint()
+            }
+            .disabled(model.isOver)
+            .accessibilityHint("Shows a good place for one of your pieces.")
             ToolButton(title: "New", systemImage: "arrow.clockwise", tint: GameID.blocks.accent) {
                 startNewGame()
             }
@@ -140,14 +150,43 @@ struct BlockPuzzleView: View {
         let grid = layout.grid
         let ghost: (piece: Logic.Piece, origin: GridPoint)? = drag.flatMap { d in
             d.ghost.map { (d.piece, $0) }
-        }
+        } ?? hintGhost
         return BlockBoardView(model: model, grid: grid, ghost: ghost, reduceMotion: reduceMotion)
+            .overlay { if drag == nil { hintOutline(grid) } }
             .overlay { cellTargets(grid) }
             .frame(width: layout.side, height: layout.side)
             .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.space)) } action: { boardFrame = $0 }
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Board")
             .accessibilityIdentifier("blocksBoard")
+    }
+
+    /// The hinted piece where it should go (only while nothing is being dragged).
+    private var hintGhost: (piece: Logic.Piece, origin: GridPoint)? {
+        guard drag == nil, let hint = model.hint, let piece = model.piece(in: hint.slot) else { return nil }
+        return (piece, hint.origin)
+    }
+
+    /// An amber outline around the hinted spot, on top of the ghost.
+    @ViewBuilder
+    private func hintOutline(_ grid: BlockGrid) -> some View {
+        if let ghost = hintGhost, let hint = model.hint {
+            ZStack(alignment: .topLeading) {
+                ForEach(ghost.piece.cells(at: ghost.origin), id: \.self) { p in
+                    RoundedRectangle(cornerRadius: grid.cell * 0.22, style: .continuous)
+                        .strokeBorder(HintCard.amber, lineWidth: max(2, grid.cell * 0.07))
+                        .frame(width: grid.cell, height: grid.cell)
+                        .position(grid.center(p))
+                }
+            }
+            .frame(width: grid.side, height: grid.side)
+            .allowsHitTesting(false)
+            .transition(.opacity)
+            .accessibilityElement()
+            .accessibilityLabel("Hint")
+            .accessibilityValue(BlockPuzzleModel.describe(hint, piece: ghost.piece))
+            .accessibilityIdentifier("hintGhost")
+        }
     }
 
     /// Invisible per-cell targets: tap-to-place for everyone and VoiceOver cells.
@@ -219,7 +258,15 @@ struct BlockPuzzleView: View {
         let fits = model.state.canPlaceAnywhere(slot: slot)
         let selected = model.selectedSlot == slot
         let hidden = drag?.slot == slot
+        let hinted = model.hint?.slot == slot && drag == nil
         return ZStack {
+            if hinted && !selected {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(HintCard.amber.opacity(0.14))
+                    .strokeBorder(HintCard.amber.opacity(0.8), lineWidth: 2)
+                    .padding(6)
+                    .transition(.opacity)
+            }
             if selected {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(GameID.blocks.accent.opacity(0.14))
@@ -241,7 +288,7 @@ struct BlockPuzzleView: View {
         .gesture(dragGesture(slot: slot, grid: grid))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(piece.map { Self.describe($0) } ?? "Empty slot")
-        .accessibilityValue(piece == nil ? "" : fits ? (selected ? "Selected" : "") : "Doesn't fit anywhere")
+        .accessibilityValue(piece == nil ? "" : fits ? (selected ? "Selected" : hinted ? "Hinted" : "") : "Doesn't fit anywhere")
         .accessibilityAddTraits(piece != nil ? [.isButton] : [])
         .accessibilityAddTraits(selected ? .isSelected : [])
         .accessibilityHint(piece != nil ? "Selects this piece, then choose a board cell." : "")
@@ -402,6 +449,14 @@ struct BlockPuzzleView: View {
                 "The game ends when none of the remaining pieces fits anywhere.",
                 "Grayed-out pieces don't fit right now.",
                 "You can undo your last placement up to 3 times per game.",
+                "Stuck? Tap Hint to see a good spot for one of your pieces. Hints are free and don't change your score.",
+            ]),
+            .init(title: "Tips", symbol: "lightbulb", points: [
+                "Look at all three pieces before you place the first, and plan where each one will go.",
+                "Keep a 3×3 space open for the big square, and a clear row or column for the long bars.",
+                "Avoid leaving single empty squares boxed in: only a single block can fill them.",
+                "Build along the edges and corners first and keep the middle open.",
+                "Set up rows and columns that finish together: one piece clearing several lines scores a combo.",
             ]),
         ]
     )

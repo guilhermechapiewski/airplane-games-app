@@ -18,6 +18,16 @@ final class BlockPuzzleUITests: XCTestCase {
         return Int(pill.value as? String ?? "") ?? -1
     }
 
+    func testHintShowsAPlacement() {
+        let app = launch()
+        XCTAssertTrue(app.descendants(matching: .any)["blocksBoard"].waitForExistence(timeout: 5))
+        app.buttons["Hint"].tap()
+        let ghost = app.descendants(matching: .any)["hintGhost"]
+        XCTAssertTrue(ghost.waitForExistence(timeout: 20), "the hinted piece appears on the board")
+        XCTAssertTrue((ghost.value as? String ?? "").hasPrefix("Try the "), ghost.value as? String ?? "")
+        XCTAssertEqual(score(app), 0, "a hint doesn't place anything or change the score")
+    }
+
     func testTapToPlaceAndDragToPlace() {
         let app = launch()
         let board = app.descendants(matching: .any)["blocksBoard"]

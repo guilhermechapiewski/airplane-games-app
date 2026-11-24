@@ -17,17 +17,23 @@ extension BlockPuzzle {
         public static func suggestion(for state: State) -> Suggestion? {
             let board = Bits(state.board)
             let pieces = state.tray.enumerated().compactMap { slot, piece in piece.map { (slot, Shape($0)) } }
-            var best: (Suggestion, Double)?
+            // Every first move, ranked by how it looks on its own; only the most promising are
+            // planned through (which keeps a hint quick on an open board).
+            var firsts: [(suggestion: Suggestion, board: Bits, rest: [Shape], quick: Double)] = []
             for (k, (slot, shape)) in pieces.enumerated() {
                 var rest = pieces.map(\.1)
                 rest.remove(at: k)
                 for origin in shape.origins(on: board) {
                     let placed = board.placing(shape.mask(at: origin))
-                    let value = gain(placed.lines) + plan(placed.board, rest, beam: 10)
-                    if best == nil || value > best!.1 {
-                        best = (Suggestion(slot: slot, origin: origin, lines: placed.lines), value)
-                    }
+                    firsts.append((Suggestion(slot: slot, origin: origin, lines: placed.lines), placed.board, rest,
+                                   gain(placed.lines) + placed.board.quality))
                 }
+            }
+            firsts.sort { $0.quick > $1.quick }
+            var best: (Suggestion, Double)?
+            for first in firsts.prefix(rootBeam) {
+                let value = gain(first.suggestion.lines) + plan(first.board, first.rest, beam: 10)
+                if best == nil || value > best!.1 { best = (first.suggestion, value) }
             }
             return best?.0
         }
@@ -38,6 +44,8 @@ extension BlockPuzzle {
         // MARK: Search
 
         private static let unplacedPenalty = 10_000.0
+        /// First moves planned through in full.
+        private static let rootBeam = 24
 
         private static func gain(_ lines: Int) -> Double {
             Double(30 * lines + 10 * lines * lines)
@@ -87,6 +95,16 @@ extension BlockPuzzle {
             }
 
             func mask(at origin: GridPoint) -> UInt64 { mask << UInt64(origin.row * size + origin.col) }
+
+            func fitsAnywhere(on board: Bits) -> Bool {
+                guard width <= size, height <= size else { return false }
+                for r in 0...(size - height) {
+                    for c in 0...(size - width) where board.filled & (mask << UInt64(r * size + c)) == 0 {
+                        return true
+                    }
+                }
+                return false
+            }
 
             func origins(on board: Bits) -> [GridPoint] {
                 guard width <= size, height <= size else { return [] }
@@ -145,7 +163,7 @@ extension BlockPuzzle {
                 var score = Double(empty.nonzeroBitCount) * 2
                 score -= Double(holes.nonzeroBitCount) * 25
                 score -= Double(horizontal.nonzeroBitCount + vertical.nonzeroBitCount) * 3
-                for shape in Self.roomShapes where !shape.origins(on: self).isEmpty { score += 18 }
+                for shape in Self.roomShapes where shape.fitsAnywhere(on: self) { score += 18 }
                 return score
             }
 

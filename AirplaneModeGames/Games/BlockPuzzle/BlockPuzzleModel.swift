@@ -50,6 +50,11 @@ final class BlockPuzzleModel {
     var selectedSlot: Int?
     /// Best score before this game started, to detect a new record.
     private(set) var bestAtStart: Int
+    /// A suggested placement, shown as a ghost on the board for a few seconds.
+    private(set) var hint: Logic.Advisor.Suggestion?
+    /// A hint is being worked out.
+    private(set) var isThinking = false
+    private var hintToken = 0
 
     private let store: GameStore
     private let stats: StatsStore
@@ -93,6 +98,7 @@ final class BlockPuzzleModel {
         }
         undoState = previous
         selectedSlot = nil
+        clearHint()
         clock.start()
         lastPlaced = Set(result.placedCells)
         placementToken += 1
@@ -138,6 +144,7 @@ final class BlockPuzzleModel {
         state = previous
         undoState = nil
         undosLeft -= 1
+        clearHint()
         selectedSlot = nil
         bursts = []
         floaters = []
@@ -152,6 +159,7 @@ final class BlockPuzzleModel {
             // Count an abandoned game that had progress.
             stats.record(game, won: false, score: state.score, time: clock.elapsed())
         }
+        clearHint()
         state = .newGame()
         undoState = nil
         undosLeft = Self.undosPerGame
@@ -165,6 +173,57 @@ final class BlockPuzzleModel {
         placementToken += 1
         clock = GameClock()
         store.remove(key: game.saveKey)
+    }
+
+    /// Finds a good placement off the main actor and shows it as a ghost for a few seconds.
+    /// Hints are free and leave the score alone.
+    func showHint() {
+        guard !isOver, !isThinking else { return }
+        hintToken += 1
+        let token = hintToken
+        let position = state
+        isThinking = true
+        Task { @MainActor [weak self] in
+            let suggestion = await Task.detached(priority: .userInitiated) {
+                Logic.Advisor.suggestion(for: position)
+            }.value
+            guard let self, self.hintToken == token else { return }
+            self.isThinking = false
+            guard let suggestion, let piece = self.piece(in: suggestion.slot) else {
+                Feedback.play(.invalid)
+                return
+            }
+            withAnimation(.easeOut(duration: 0.2)) { self.hint = suggestion }
+            Feedback.play(.select)
+            AccessibilityNotification.Announcement(Self.describe(suggestion, piece: piece)).post()
+            try? await Task.sleep(for: Self.hintDuration)
+            guard self.hintToken == token else { return }
+            withAnimation(.easeOut(duration: 0.3)) { self.hint = nil }
+        }
+    }
+
+    /// "Try the L piece at row 3, column 5. It clears a line."
+    static func describe(_ hint: Logic.Advisor.Suggestion, piece: Logic.Piece) -> String {
+        var name = BlockPuzzleView.describe(piece).components(separatedBy: ",").first ?? "piece"
+        // "Single block" reads "single block"; letter names like "L piece" keep their capital.
+        if name.dropFirst().first != " " { name = name.prefix(1).lowercased() + name.dropFirst() }
+        var text = "Try the \(name) with its top-left corner at row \(hint.origin.row + 1), column \(hint.origin.col + 1)."
+        if hint.lines > 0 { text += hint.lines == 1 ? " It clears a line." : " It clears \(hint.lines) lines." }
+        return text
+    }
+
+    /// How long a hint stays up (DEBUG `-hintDemo` keeps it for screenshots).
+    private static var hintDuration: Duration {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-hintDemo") { return .seconds(600) }
+        #endif
+        return .seconds(4)
+    }
+
+    private func clearHint() {
+        hintToken += 1
+        hint = nil
+        isThinking = false
     }
 
     func setActive(_ active: Bool) {
