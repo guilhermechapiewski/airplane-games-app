@@ -23,6 +23,8 @@ final class HangmanModel {
         var state: Logic.State
         var difficulty: Difficulty
         var categoryID: String?
+        /// Optional so saves from before hints existed still load.
+        var hintsUsed: Int?
     }
 
     private(set) var mode: HangmanMode = .computer
@@ -35,6 +37,12 @@ final class HangmanModel {
     /// Bumped on each miss / hit so views can animate.
     private(set) var missToken = 0
     private(set) var hitToken = 0
+    /// The suggested letter, while its card is showing.
+    private(set) var letterHint: Logic.LetterHint?
+    /// Hints asked for this game (they don't cost a balloon; shown on the result).
+    private(set) var hintsUsed = 0
+    /// Guesses made when the last hint was counted: asking again before guessing doesn't count twice.
+    private var hintedAt: Int?
 
     private let store: GameStore
     private let stats: StatsStore
@@ -57,6 +65,7 @@ final class HangmanModel {
             state = saved.state
             difficulty = saved.difficulty
             categoryID = saved.categoryID
+            hintsUsed = saved.hintsUsed ?? 0
         } else {
             state = Self.computerPuzzle(categoryID: savedCategory, difficulty: savedDifficulty)
         }
@@ -92,6 +101,7 @@ final class HangmanModel {
 
     func guess(_ letter: Character) {
         guard canGuess else { return }
+        dismissHint()
         let result = state.guess(letter)
         switch result {
         case .ignored:
@@ -105,6 +115,40 @@ final class HangmanModel {
         }
         if state.isOver { finish() }
         persist()
+    }
+
+    // MARK: Hints
+
+    /// Words the answer could be: the category's entries vs. the computer. A friend's phrase can
+    /// be anything, so its hints use English letter frequency.
+    private var hintEntries: [String] {
+        guard mode == .computer, let title = state.category,
+              let category = WordCategory.all.first(where: { $0.title == title }) else { return [] }
+        return category.entries.filter { WordLists.isClean($0) && Logic.problem(with: $0) == nil }
+    }
+
+    /// Suggests the most likely letter using only what's on the board.
+    func showHint() {
+        guard canGuess, let hint = Logic.suggestLetter(for: state, entries: hintEntries) else { return }
+        if hintedAt != state.guessed.count {
+            hintedAt = state.guessed.count
+            hintsUsed += 1
+            persist()
+        }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { letterHint = hint }
+        Feedback.play(.select)
+        AccessibilityNotification.Announcement("\(hint.title). \(hint.explanation)").post()
+    }
+
+    /// Guesses the suggested letter.
+    func guessHint() {
+        guard let letter = letterHint?.letter else { return }
+        guess(letter)
+    }
+
+    func dismissHint() {
+        guard letterHint != nil else { return }
+        withAnimation(.easeOut(duration: 0.2)) { letterHint = nil }
     }
 
     private func finish() {
@@ -176,6 +220,9 @@ final class HangmanModel {
     private func reset(_ newState: Logic.State) {
         state = newState
         showResult = false
+        letterHint = nil
+        hintsUsed = 0
+        hintedAt = nil
     }
 
     private func abandonIfNeeded() {
@@ -193,7 +240,8 @@ final class HangmanModel {
         if state.isOver || !hasProgress {
             store.remove(key: game.saveKey)
         } else {
-            store.save(Saved(mode: mode, phase: phase, state: state, difficulty: difficulty, categoryID: categoryID),
+            store.save(Saved(mode: mode, phase: phase, state: state, difficulty: difficulty, categoryID: categoryID,
+                             hintsUsed: hintsUsed),
                        key: game.saveKey)
         }
     }

@@ -67,6 +67,11 @@ struct HangmanView: View {
             return .handled
         }
         .onAppear { focused = model.phase == .playing }
+        #if DEBUG
+        .task {   // `-showHint`: open the hint card (screenshots)
+            if ProcessInfo.processInfo.arguments.contains("-showHint") { model.showHint() }
+        }
+        #endif
         .onChange(of: model.phase) { _, phase in focused = phase == .playing }
     }
 
@@ -106,9 +111,32 @@ struct HangmanView: View {
                     .accessibilityLabel("Difficulty: \(model.difficulty.title)")
             }
             Spacer(minLength: 4)
+            if model.canGuess { hintButton }
             LivesView(lives: model.state.livesLeft)
         }
         .frame(maxWidth: isRegular ? 780 : 560)
+    }
+
+    private var hintButton: some View {
+        Button { model.showHint() } label: {
+            HStack(spacing: 4) {
+                Image(systemName: model.letterHint != nil ? "lightbulb.fill" : "lightbulb")
+                if model.hintsUsed > 0 {
+                    Text("\(model.hintsUsed)").monospacedDigit()
+                }
+            }
+            .font(.footnote.weight(.bold))
+            .foregroundStyle(Color(light: Color(hex: 0xA86A00), dark: HintCard.amber))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .frame(minWidth: 34, minHeight: 28)
+            .background(HintCard.amber.opacity(0.16), in: Capsule())
+        }
+        .buttonStyle(PressableStyle())
+        .accessibilityLabel("Hint")
+        .accessibilityValue(model.hintsUsed > 0 ? "\(model.hintsUsed) used" : "")
+        .accessibilityHint("Suggests a letter to try")
+        .accessibilityIdentifier("hangmanHint")
     }
 
     private func chip(_ title: String, systemImage: String, showsChevron: Bool = false) -> some View {
@@ -137,6 +165,16 @@ struct HangmanView: View {
             .frame(height: 150)
         } else {
             HangmanKeyboard(model: model, accent: accent)
+                .opacity(model.letterHint == nil ? 1 : 0)
+                .allowsHitTesting(model.letterHint == nil)
+                .accessibilityHidden(model.letterHint != nil)
+                .overlay(alignment: .bottom) {
+                    if let hint = model.letterHint {
+                        HintCard(title: hint.title, explanation: hint.explanation,
+                                 answerTitle: "Guess \(String(hint.letter).uppercased())",
+                                 onAnswer: { model.guessHint() }, onClose: { model.dismissHint() })
+                    }
+                }
                 .frame(maxWidth: isRegular ? 680 : 560)
         }
     }
@@ -172,8 +210,9 @@ struct HangmanView: View {
                           title: won ? "Up, up and away!" : "Touchdown!",
                           subtitle: won ? "You solved \(model.state.phrase.uppercased())."
                                         : "The answer was \(model.state.phrase.uppercased()).",
-                          details: won ? [("Lives", "\(model.state.livesLeft)"), ("Streak", "\(s.currentStreak)")]
-                                       : [("Played", "\(s.played)"), ("Won", "\(s.won)")],
+                          details: (won ? [("Lives", "\(model.state.livesLeft)"), ("Streak", "\(s.currentStreak)")]
+                                        : [("Played", "\(s.played)"), ("Won", "\(s.won)")])
+                                   + (model.hintsUsed > 0 ? [("Hints", "\(model.hintsUsed)")] : []),
                           tint: accent) {
                 Button(model.mode == .friend ? "New Word" : "Play Again") { model.playAgain() }
                     .buttonStyle(PrimaryButtonStyle(color: accent))
@@ -204,6 +243,18 @@ struct HangmanView: View {
             .init(title: "Modes", symbol: "person.2", points: [
                 "vs. Computer: pick a category (or Random) and a difficulty. Hard words are short with unusual letters.",
                 "Pass & Play: a friend secretly types a word or phrase and an optional hint, then hands you the phone.",
+            ]),
+            .init(title: "Hint", symbol: "lightbulb", points: [
+                "Tap the light bulb for the best letter to try next: the one found in the most category words that still fit the board.",
+                "In Pass & Play it can't know your friend's words, so it suggests the most common English letter you haven't tried.",
+                "Hints never cost a balloon. The number you used is shown with your result.",
+            ]),
+            .init(title: "Tips", symbol: "lightbulb.max", points: [
+                "Start with vowels and the most common consonants: E, A, O, I, then T, N, S, R.",
+                "Every word needs a vowel, and Y often stands in for one in short words like SKY or GYM.",
+                "Look at the shape: a short word in a phrase is often THE, AND or OF, and a word ending in _ _ G is often -ING.",
+                "Once a few letters are in, say the word out loud with the blanks, and think of what fits the category.",
+                "Save rare letters like J, Q, X and Z until the pattern points to them.",
             ]),
         ]
     )
