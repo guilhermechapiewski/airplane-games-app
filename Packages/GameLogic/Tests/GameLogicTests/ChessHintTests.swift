@@ -67,6 +67,19 @@ struct ChessHintTests {
         #expect(retreat.explanation == "Gets your queen out of danger.")
     }
 
+    @Test func attackingAPieceIsExplained() throws {
+        // After 1.e4 d5 2.Nf3 Qd6 3.Nc3 Qb4, a3 kicks the queen with a defended pawn.
+        var g = C.Game()
+        for uci in ["e2e4", "d7d5", "g1f3", "d8d6", "b1c3", "d6b4"] { g.play(uci: uci) }
+        let kick = C.Engine.makeHint(try #require(g.position.move(uci: "a2a3")), in: g.position, mateIn: nil)
+        #expect(kick.reason == .attacks(.queen))
+        #expect(kick.explanation == "Attacks the queen.")
+        // A pawn push into an undefended attacker's reach isn't a threat worth naming.
+        let p = game("4k3/8/8/2q5/8/8/1P6/4K3 w - - 0 1").position
+        let push = C.Engine.makeHint(try #require(p.move(uci: "b2b4")), in: p, mateIn: nil)
+        #expect(push.reason == nil)
+    }
+
     @Test func threatsAccountForDefenders() {
         // Attacked and undefended.
         let open = game("4k3/8/3n4/8/4N3/8/8/4K3 w - - 0 1").position

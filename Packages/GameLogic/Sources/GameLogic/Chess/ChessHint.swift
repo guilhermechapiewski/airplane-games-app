@@ -10,6 +10,8 @@ extension Chess {
             /// The moving piece was attacked (and not safely defended) and this move saves it.
             case escapes(PieceKind)
             case givesCheck
+            /// Threatens to win this enemy piece next move.
+            case attacks(PieceKind)
             case castles
             case develops(PieceKind)
             case takesCenter
@@ -31,6 +33,7 @@ extension Chess {
                 return "Captures a \(kind.name)" + (check ? " with check." : ".")
             case .escapes(let kind): return "Gets your \(kind.name) out of danger."
             case .givesCheck: return "Gives check."
+            case .attacks(let kind): return "Attacks the \(kind.name)."
             case .castles: return "Castles: tucks your king away and brings a rook into play."
             case .develops(let kind): return "Develops a \(kind.name) toward the center."
             case .takesCenter: return "Claims space in the center."
@@ -94,6 +97,7 @@ extension Chess.Engine {
             return .escapes(piece.kind)
         }
         if check { return .givesCheck }
+        if let target = attackedTarget(of: move.to, after: after) { return .attacks(target) }
         if move.isCastle { return .castles }
         if position.fullmoveNumber <= 12 {
             let homeRank = piece.side == .white ? 0 : 7
@@ -105,6 +109,24 @@ extension Chess.Engine {
             }
         }
         return nil
+    }
+
+    /// The most valuable enemy piece the piece that just moved to `square` now threatens to win
+    /// (undefended, or worth more than the attacker) — provided the mover itself is safe there.
+    static func attackedTarget(of square: Chess.Square, after position: Chess.Position) -> Chess.PieceKind? {
+        guard let mover = position.piece(at: square), !isThreatened(square, afterMove: position) else { return nil }
+        var swapped = position
+        _ = swapped.makeNull()
+        var moves: [Chess.Move] = []
+        swapped.generatePseudoLegal(into: &moves, capturesOnly: true)
+        return moves
+            .filter { $0.from == square && !$0.isEnPassant }
+            .compactMap { m -> Chess.PieceKind? in
+                guard let victim = swapped.piece(at: m.to), victim.kind != .king else { return nil }
+                let defended = swapped.isSquareAttacked(m.to, by: victim.side)
+                return !defended || value(victim.kind) > value(mover.kind) ? victim.kind : nil
+            }
+            .max { value($0) < value($1) }
     }
 
     /// Whether the side to move's piece on `square` can be won: attacked and either undefended
