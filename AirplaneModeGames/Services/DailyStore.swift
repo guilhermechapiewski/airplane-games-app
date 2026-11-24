@@ -4,7 +4,8 @@ import Observation
 
 extension GameID {
     /// Games with a daily puzzle: ones where a fixed puzzle of the day makes sense.
-    static let withDaily: [GameID] = [.sudoku, .wordGuess, .solitaire, .minesweeper, .wordSearch, .tileMatch]
+    static let withDaily: [GameID] = [.sudoku, .wordGuess, .solitaire, .minesweeper, .wordSearch, .tileMatch,
+                                       .waterSort, .wordWheel]
 
     var hasDaily: Bool { Self.withDaily.contains(self) }
 

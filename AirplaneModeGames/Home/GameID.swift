@@ -16,9 +16,12 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
     case solitaire
     case blocks
     case tileMatch
+    case waterSort
     case minesweeper
     case chess
+    case dotsAndBoxes
     case wordGuess
+    case wordWheel
     case nonograms
     case wordSearch
     case snake
@@ -33,6 +36,9 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .solitaire: "Solitaire"
         case .blocks: "Block Puzzle"
         case .tileMatch: "Tile Match"
+        case .waterSort: "Water Sort"
+        case .dotsAndBoxes: "Dots and Boxes"
+        case .wordWheel: "Word Wheel"
         case .minesweeper: "Minesweeper"
         case .chess: "Chess"
         case .wordGuess: "Word Guess"
@@ -50,6 +56,9 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .solitaire: "Klondike patience"
         case .blocks: "Fit blocks, clear lines"
         case .tileMatch: "Match pairs of free tiles"
+        case .waterSort: "Pour until each tube is one color"
+        case .dotsAndBoxes: "Close boxes, claim the board"
+        case .wordWheel: "Spell words around the center"
         case .minesweeper: "Clear the field safely"
         case .chess: "Vs. computer or a friend"
         case .wordGuess: "Find the word in 6 tries"
@@ -67,6 +76,9 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .solitaire: "suit.spade.fill"
         case .blocks: "square.stack.3d.up.fill"
         case .tileMatch: "rectangle.stack.fill"
+        case .waterSort: "testtube.2"
+        case .dotsAndBoxes: "circle.grid.3x3.fill"
+        case .wordWheel: "circle.hexagongrid.fill"
         case .minesweeper: "flag.fill"
         case .chess: "crown.fill"
         case .wordGuess: "character.textbox"
@@ -80,10 +92,10 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
     var category: GameCategory {
         switch self {
         case .twentyFortyEight: .numbers
-        case .sudoku, .minesweeper, .nonograms: .logic
+        case .sudoku, .minesweeper, .nonograms, .waterSort: .logic
         case .solitaire, .tileMatch: .cards
-        case .chess: .board
-        case .wordGuess, .wordSearch, .hangman: .words
+        case .chess, .dotsAndBoxes: .board
+        case .wordGuess, .wordSearch, .hangman, .wordWheel: .words
         case .blocks, .snake: .arcade
         }
     }
@@ -96,6 +108,9 @@ enum GameID: String, CaseIterable, Identifiable, Codable, Sendable {
         case .solitaire: [Color(hex: 0x2FBF71), Color(hex: 0x14845A)]
         case .blocks: [Color(hex: 0xA77BFF), Color(hex: 0x6A4BE0)]
         case .tileMatch: [Color(hex: 0xFF8FA3), Color(hex: 0xE0527A)]
+        case .waterSort: [Color(hex: 0x4FD8E8), Color(hex: 0x1A9FB8)]
+        case .dotsAndBoxes: [Color(hex: 0xD47BEA), Color(hex: 0xA044C2)]
+        case .wordWheel: [Color(hex: 0x7C86F0), Color(hex: 0x4A4CC4)]
         case .minesweeper: [Color(hex: 0x8A9BB5), Color(hex: 0x56657E)]
         case .chess: [Color(hex: 0xC69B6D), Color(hex: 0x8B5E3C)]
         case .wordGuess: [Color(hex: 0x44C9C1), Color(hex: 0x1E9690)]
