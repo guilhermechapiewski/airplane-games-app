@@ -32,6 +32,30 @@ final class MinesweeperModel {
     var showResult = false
     private(set) var isNewBest = false
     private(set) var finalTime: TimeInterval = 0
+    /// The hint being explained (the board highlights its squares until it's answered or closed).
+    private(set) var hint: HintPreview?
+    private var hintToken = 0
+
+    /// A hint on screen: the logic's step, or a note that no square can be settled right now.
+    struct HintPreview: Equatable {
+        let step: Logic.Hint?
+        let title: String
+        let explanation: String
+
+        var targets: Set<GridPoint> { Set(step?.cells ?? []) }
+        var clues: Set<GridPoint> { Set(step?.clues ?? []) }
+
+        var answerTitle: String {
+            guard let step else { return "OK" }
+            let one = step.cells.count == 1
+            switch step.kind {
+            case .start: return "Reveal the Middle"
+            case .safe: return one ? "Reveal It" : "Reveal Them"
+            case .mine: return one ? "Flag It" : "Flag Them"
+            case .wrongFlag: return one ? "Fix the Flag" : "Fix the Flags"
+            }
+        }
+    }
 
     private let store: GameStore
     private let stats: StatsStore
@@ -154,6 +178,7 @@ final class MinesweeperModel {
 
     func toggleFlag(_ p: GridPoint) {
         guard state.toggleFlag(p) else { return }
+        dismissHint()
         revealDelays = [:]
         if state[p].isFlagged { Feedback.play(.place) } else { Feedback.play(.flip) }
         persist()
@@ -179,6 +204,7 @@ final class MinesweeperModel {
             level = newLevel
             store.save(newLevel, key: Self.levelKey)
         }
+        dismissHint()
         state = daily.map(Self.dailyBoard) ?? Logic.State(level: level)
         clock = GameClock()
         revealDelays = [:]
@@ -188,6 +214,55 @@ final class MinesweeperModel {
         mode = .reveal
         boardID += 1
         store.remove(key: saveKey)
+    }
+
+    // MARK: Hints
+
+    /// Finds the next logical step (off the main actor) and explains it; the board doesn't change
+    /// until the player taps the answer. Hints are free and unlimited.
+    func showHint() {
+        guard !isOver, hint == nil else { return }
+        hintToken += 1
+        let token = hintToken
+        let position = state
+        Task { @MainActor [weak self] in
+            let step = await Task.detached(priority: .userInitiated) { position.hint() }.value
+            guard let self, self.hintToken == token, !self.isOver else { return }
+            let preview = step.map { HintPreview(step: $0, title: $0.title, explanation: $0.explanation) }
+                ?? HintPreview(step: nil, title: "No sure move",
+                               explanation: "The numbers on the board don't settle any square right now. "
+                                   + "Check your flags: a wrong one can hide the answer.")
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { self.hint = preview }
+            Feedback.play(.select)
+            var spoken = preview.title + ". " + preview.explanation
+            if let first = step?.cells.first {
+                let more = (step?.cells.count ?? 0) > 1 ? " and \((step?.cells.count ?? 1) - 1) more" : ""
+                spoken += " Row \(first.row + 1), column \(first.col + 1)\(more)."
+            }
+            AccessibilityNotification.Announcement(spoken).post()
+        }
+    }
+
+    /// Carries out the explained hint.
+    func showHintAnswer() {
+        guard let preview = hint else { return }
+        dismissHint()
+        guard let step = preview.step, !isOver else { return }
+        switch step.kind {
+        case .start, .safe:
+            for p in step.cells where state[p].mark == .hidden && !isOver { reveal(p) }
+        case .mine:
+            for p in step.cells where state[p].mark == .hidden { toggleFlag(p) }
+        case .wrongFlag:
+            for p in step.cells where state[p].isFlagged { toggleFlag(p) }
+            for p in step.cells where state[p].mark == .hidden && !isOver { reveal(p) }
+        }
+    }
+
+    func dismissHint() {
+        hintToken += 1
+        guard hint != nil else { return }
+        withAnimation(.easeOut(duration: 0.2)) { hint = nil }
     }
 
     func setMode(_ newMode: Mode) {
@@ -205,6 +280,7 @@ final class MinesweeperModel {
 
     private func apply(_ outcome: Logic.Outcome) {
         guard !outcome.isEmpty else { return }
+        dismissHint()
         clock.start()
         revealDelays = Self.rippleDelays(outcome.revealed)
 

@@ -61,6 +61,12 @@ struct MinesweeperBoard: View {
                               model: model)
                     .equatable()
                     .frame(width: boardSize.width, height: boardSize.height)
+                    .overlay(alignment: .topLeading) {
+                        if let hint = model.hint {
+                            HintHighlight(hint: hint, cell: cell, reduceMotion: reduceMotion)
+                                .transition(.opacity)
+                        }
+                    }
                     .scaleEffect(pinchScale, anchor: .topLeading)
                     .offset(x: shown.x, y: shown.y)
                     .frame(width: viewport.width, height: viewport.height, alignment: .topLeading)
@@ -296,6 +302,45 @@ private struct MinefieldGrid: View, Equatable {
             return c.adjacent == 0 ? "Empty" : (c.adjacent == 1 ? "1 mine nearby" : "\(c.adjacent) mines nearby")
         case .hidden:
             return over && c.isMine ? "Mine" : "Hidden"
+        }
+    }
+}
+
+// MARK: - Hint
+
+/// Rings the squares a hint is about (solid, pulsing) and the numbers it reasons from (soft).
+private struct HintHighlight: View {
+    let hint: MinesweeperModel.HintPreview
+    let cell: CGFloat
+    let reduceMotion: Bool
+    @State private var pulse = false
+
+    var body: some View {
+        let inset = max(1, cell * 0.05)
+        let radius = cell * 0.2
+        ZStack(alignment: .topLeading) {
+            ForEach(Array(hint.clues), id: \.self) { p in
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(HintCard.amber.opacity(0.16))
+                    .strokeBorder(HintCard.amber.opacity(0.7), style: StrokeStyle(lineWidth: max(1.5, cell * 0.05), dash: [cell * 0.12, cell * 0.08]))
+                    .padding(inset)
+                    .frame(width: cell, height: cell)
+                    .offset(x: CGFloat(p.col) * cell, y: CGFloat(p.row) * cell)
+            }
+            ForEach(Array(hint.targets), id: \.self) { p in
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(HintCard.amber.opacity(pulse ? 0.38 : 0.22))
+                    .strokeBorder(HintCard.amber, lineWidth: max(2, cell * 0.08))
+                    .padding(inset)
+                    .frame(width: cell, height: cell)
+                    .offset(x: CGFloat(p.col) * cell, y: CGFloat(p.row) * cell)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) { pulse = true }
         }
     }
 }
