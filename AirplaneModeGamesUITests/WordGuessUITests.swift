@@ -36,6 +36,44 @@ final class WordGuessUITests: XCTestCase {
         XCTAssertTrue(next.label.contains("typing"), "row label was \(next.label)")
     }
 
+    func testHintSuggestsAGuessAndTypesIt() {
+        let app = launch()
+        let hint = app.buttons["wordGuessHint"]
+        XCTAssertTrue(hint.waitForExistence(timeout: 5))
+        // Before the first guess: a strong opener.
+        hint.tap()
+        let card = app.descendants(matching: .any)["hintCard"]
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        let explanation = app.staticTexts["hintExplanation"]
+        XCTAssertTrue(explanation.label.contains("strong first guess"), explanation.label)
+        let typeButton = app.buttons["hintShowAnswer"]
+        XCTAssertTrue(typeButton.label.hasPrefix("Type "), typeButton.label)
+        let suggested = String(typeButton.label.dropFirst(5))
+        typeButton.tap()
+        XCTAssertFalse(card.exists)
+        let row0 = app.descendants(matching: .any)["row0"]
+        XCTAssertTrue(row0.label.contains(suggested.map(String.init).joined(separator: " ")), row0.label)
+        XCTAssertEqual(hint.value as? String, "1 used")
+
+        // Asking again before guessing shows the same hint without counting another.
+        hint.tap()
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        app.buttons["hintClose"].tap()
+        XCTAssertEqual(hint.value as? String, "1 used")
+
+        // After a guess the hint explains how many words still fit.
+        app.buttons["key.enter"].tap()
+        let row1 = app.descendants(matching: .any)["row1"]
+        XCTAssertTrue(row0.waitForLabel(containing: suggested, timeout: 3))
+        sleep(2)   // let the tiles flip
+        guard row1.label.contains("empty") else { return }   // the opener was the answer
+        hint.tap()
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        let text = explanation.label
+        XCTAssertTrue(text.contains("still fit") || text.contains("Every clue points"), text)
+        XCTAssertEqual(hint.value as? String, "2 used")
+    }
+
     func testPassAndPlayRound() {
         let app = launch()
         XCTAssertTrue(app.buttons["gameMenu"].waitForExistence(timeout: 5))
@@ -58,5 +96,13 @@ final class WordGuessUITests: XCTestCase {
         XCTAssertTrue(app.buttons["nextRound"].waitForExistence(timeout: 6))
         app.buttons["nextRound"].tap()
         XCTAssertTrue(app.secureTextFields["secretField"].waitForExistence(timeout: 3))
+    }
+}
+
+private extension XCUIElement {
+    func waitForLabel(containing text: String, timeout: TimeInterval) -> Bool {
+        let predicate = NSPredicate(format: "label CONTAINS %@", text)
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: self)
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 }

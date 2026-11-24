@@ -72,6 +72,11 @@ struct WordGuessView: View {
         .focusEffectDisabled()
         .onKeyPress(phases: .down) { press in handleKey(press) }
         .onAppear { boardFocused = model.phase == .playing }
+        #if DEBUG
+        .task {   // `-showHint`: open the hint card (screenshots)
+            if ProcessInfo.processInfo.arguments.contains("-showHint") { model.showHint() }
+        }
+        #endif
         .onChange(of: model.phase) { _, phase in boardFocused = phase == .playing }
     }
 
@@ -88,9 +93,43 @@ struct WordGuessView: View {
             if model.mode == .friend {
                 ScoreChip(match: model.match, accent: accent)
             }
+            if model.phase == .playing && !model.state.isOver {
+                hintButton
+            }
         }
         .frame(maxWidth: isRegular ? 700 : 520)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
+    }
+
+    private var hintButton: some View {
+        Button { model.showHint() } label: {
+            HStack(spacing: 5) {
+                if model.isThinking {
+                    ProgressView().controlSize(.mini).tint(HintCard.amber)
+                } else {
+                    Image(systemName: model.hint != nil ? "lightbulb.fill" : "lightbulb")
+                }
+                Text("Hint")
+                if model.hintsUsed > 0 {
+                    Text("\(model.hintsUsed)")
+                        .monospacedDigit()
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 5)
+                        .background(HintCard.amber, in: Capsule())
+                }
+            }
+            .font(.footnote.weight(.bold))
+            .foregroundStyle(Color(light: Color(hex: 0xA86A00), dark: HintCard.amber))
+            .padding(.horizontal, 11)
+            .padding(.vertical, 6)
+            .background(HintCard.amber.opacity(0.16), in: Capsule())
+        }
+        .buttonStyle(PressableStyle())
+        .disabled(!model.canHint)
+        .accessibilityLabel("Hint")
+        .accessibilityValue(model.hintsUsed > 0 ? "\(model.hintsUsed) used" : "")
+        .accessibilityHint("Suggests a good next guess")
+        .accessibilityIdentifier("wordGuessHint")
     }
 
     // MARK: Board
@@ -180,9 +219,18 @@ struct WordGuessView: View {
             }
             .frame(height: 170)
         } else {
-            WordGuessKeyboard(keyboard: model.keyboard, palette: palette, enabled: model.canType,
+            WordGuessKeyboard(keyboard: model.keyboard, palette: palette, enabled: model.canType && model.hint == nil,
                               keyHeight: isRegular ? 66 : 58,
                               onLetter: model.type, onEnter: model.submit, onDelete: model.deleteLetter)
+                .opacity(model.hint == nil ? 1 : 0)
+                .accessibilityHidden(model.hint != nil)
+                .overlay(alignment: .bottom) {
+                    if let hint = model.hint {
+                        HintCard(title: hint.title, explanation: hint.explanation,
+                                 answerTitle: "Type \(hint.word.uppercased())",
+                                 onAnswer: { model.typeHint() }, onClose: { model.dismissHint() })
+                    }
+                }
                 .frame(maxWidth: isRegular ? 700 : 560)
         }
     }
@@ -242,10 +290,11 @@ struct WordGuessView: View {
                               details: model.daily != nil
                                 ? [("Daily", won ? "Solved" : "Missed"),
                                    ("Streak", "🔥 \(DailyStore.shared.streak(.wordGuess))"),
-                                   ("Best", "\(DailyStore.shared.bestStreak(.wordGuess))")]
+                                   ("Best", "\(DailyStore.shared.bestStreak(.wordGuess))")] + hintsDetail
                                 : [("Played", "\(s.played)"),
                                    ("Win %", s.played == 0 ? "–" : "\(Int((s.winRate * 100).rounded()))"),
-                                   ("Streak", "\(s.currentStreak)")],
+                                   ("Streak", "\(s.currentStreak)")]
+                                + hintsDetail,
                               tint: accent) {
                     GuessDistributionChart(distribution: model.distribution, highlight: won ? n : nil, accent: accent)
                         .padding(.bottom, 4)
@@ -268,7 +317,7 @@ struct WordGuessView: View {
                               subtitle: won
                                 ? "\(word) in \(n) · +\(WordGuessMatch.points(forSolvingIn: n)) points"
                                 : "\(match.setterName)'s word was \(word).",
-                              details: [(match.names[0], "\(match.scores[0])"), (match.names[1], "\(match.scores[1])")],
+                              details: [(match.names[0], "\(match.scores[0])"), (match.names[1], "\(match.scores[1])")] + hintsDetail,
                               tint: accent) {
                     Button("Next Round: \(match.guesserName) picks") { model.nextRound() }
                         .buttonStyle(PrimaryButtonStyle(color: accent))
@@ -279,6 +328,11 @@ struct WordGuessView: View {
                 .transition(.opacity)
             }
         }
+    }
+
+    /// Hints used, when any: shown with the result.
+    private var hintsDetail: [(String, String)] {
+        model.hintsUsed > 0 ? [("Hints", "\(model.hintsUsed)")] : []
     }
 
     // MARK: Hardware keyboard
@@ -321,6 +375,18 @@ struct WordGuessView: View {
                 "vs. Computer: a random everyday word, as many games as you like.",
                 "Pass & Play: a friend secretly types a word, then hands you the phone. Swap roles each round — solving faster scores more points.",
                 "Hard Mode: any revealed hints must be used in later guesses.",
+            ]),
+            .init(title: "Hint", symbol: "lightbulb", points: [
+                "Stuck? Tap Hint for a good next guess: a word that fits every clue so far (and Hard Mode), picked to rule out as many answers as possible.",
+                "It says how many words still fit and why the guess helps. Tap Type to fill it in — you still press Enter.",
+                "Hints never cost a guess. The number you used is shown with your result.",
+            ]),
+            .init(title: "Tips", symbol: "lightbulb.max", points: [
+                "Open with five different common letters, like those in SLATE, CRANE or TRACE, to learn the most from your first guess.",
+                "If you only have a couple of letters, a guess made of brand-new letters often teaches you more than one that just tries to fit.",
+                "Watch for double letters: words like SPEED, LLAMA or ABBEY trip people up.",
+                "Think about where letters like to sit: S, C and B often start words, while E, Y and K often end them.",
+                "When several words differ by one letter (BILLS, FILLS, HILLS…), spend a guess that covers several of those letters at once — outside Hard Mode.",
             ]),
         ]
     )
