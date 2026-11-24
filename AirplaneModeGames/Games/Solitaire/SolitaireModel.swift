@@ -377,7 +377,8 @@ final class SolitaireModel {
         timeBonus = Logic.Scoring.timeBonus(seconds: finalTime)
         finalScore = state.score + timeBonus
         let previousBest = bestScore
-        isNewBest = previousBest.map { finalScore > $0 } ?? true
+        // Daily wins aren't recorded in the best scores, so they can't set one.
+        isNewBest = daily == nil && (previousBest.map { finalScore > $0 } ?? true)
         if let daily {
             DailyStore.shared.record(game, on: daily, won: true, time: finalTime)
         } else {

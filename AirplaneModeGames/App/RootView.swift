@@ -16,12 +16,13 @@ struct RootView: View {
         .onAppear(perform: openGameFromLaunchArguments)
     }
 
-    /// `-openGame <id>` jumps straight into a game (used by UI tests and screenshots).
+    /// `-openGame <id>` jumps straight into a game (used by UI tests and screenshots);
+    /// adding `-daily` opens its daily puzzle instead.
     private func openGameFromLaunchArguments() {
         let args = ProcessInfo.processInfo.arguments
         guard path.isEmpty, let i = args.firstIndex(of: "-openGame"), i + 1 < args.count,
               let game = GameID(rawValue: args[i + 1]) else { return }
-        path = [GameRoute(game: game)]
+        path = [args.contains("-daily") ? GameRoute(game: game, launch: .daily) : GameRoute(game: game)]
     }
 }
 

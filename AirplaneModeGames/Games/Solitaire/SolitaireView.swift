@@ -147,7 +147,7 @@ struct SolitaireView: View {
         if model.phase == .won {
             ResultOverlay(mood: .win, title: "You Won!", subtitle: winSubtitle,
                           details: model.daily != nil
-                            ? [("Time", model.finalTime.clockString), ("Moves", "\(model.state.moveCount)"),
+                            ? [("Score", "\(model.finalScore)"), ("Time", model.finalTime.clockString),
                                ("Streak", "🔥 \(DailyStore.shared.streak(.solitaire))")]
                             : [("Score", "\(model.finalScore)"),
                                ("Time", model.finalTime.clockString),
