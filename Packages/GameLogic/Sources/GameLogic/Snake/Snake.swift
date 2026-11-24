@@ -6,12 +6,13 @@ public enum Snake {
     public static let maxQueuedTurns = 2
 
     public enum Speed: String, CaseIterable, Codable, Sendable, Identifiable {
-        case relaxed, normal, fast
+        case slow, relaxed, normal, fast
 
         public var id: String { rawValue }
 
         public var title: String {
             switch self {
+            case .slow: "Slow"
             case .relaxed: "Relaxed"
             case .normal: "Normal"
             case .fast: "Fast"
@@ -21,10 +22,41 @@ public enum Snake {
         /// Seconds between ticks.
         public var interval: Double {
             switch self {
+            case .slow: 0.3
             case .relaxed: 0.2
             case .normal: 0.135
             case .fast: 0.085
             }
+        }
+    }
+
+    /// Square board sizes, smallest first.
+    public enum BoardSize: String, CaseIterable, Codable, Sendable, Identifiable {
+        case classic, big, huge
+
+        public var id: String { rawValue }
+
+        /// Cells per side.
+        public var side: Int {
+            switch self {
+            case .classic: 15
+            case .big: 20
+            case .huge: 25
+            }
+        }
+
+        public var title: String {
+            switch self {
+            case .classic: "Classic"
+            case .big: "Big"
+            case .huge: "Huge"
+            }
+        }
+
+        /// The size whose side is `side`, if it's one of these.
+        public init?(side: Int) {
+            guard let match = Self.allCases.first(where: { $0.side == side }) else { return nil }
+            self = match
         }
     }
 
@@ -69,6 +101,11 @@ public enum Snake {
         public private(set) var ticks: Int
         private var rng: SeededRandom
 
+        public static func newGame(size: BoardSize, wallMode: WallMode = .walls,
+                                   seed: UInt64 = .random(in: .min ... .max)) -> State {
+            newGame(width: size.side, height: size.side, wallMode: wallMode, seed: seed)
+        }
+
         public static func newGame(width: Int = defaultSize, height: Int = defaultSize,
                                    wallMode: WallMode = .walls,
                                    seed: UInt64 = .random(in: .min ... .max)) -> State {
@@ -100,6 +137,8 @@ public enum Snake {
         }
 
         public var head: GridPoint { body[0] }
+        /// The board size, when the board is one of the standard square sizes.
+        public var boardSize: BoardSize? { width == height ? BoardSize(side: width) : nil }
         public var length: Int { body.count }
         public var cellCount: Int { width * height }
         public var isOver: Bool { status != .playing }

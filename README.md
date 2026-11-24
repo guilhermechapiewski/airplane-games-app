@@ -19,7 +19,7 @@ No ads. No accounts. No tracking. No internet connection — ever.
 | **Word Guess** | 5-letter word in 6 tries, hard mode, high-contrast colors, pass & play |
 | **Nonograms** | 44 original picture puzzles, all solvable by logic alone, explained hints |
 | **Word Search** | 15 themes, 3 sizes, drag selection that snaps to 8 directions |
-| **Snake** | Fluid motion, 3 speeds, walls or wrap-around, swipe or D-pad |
+| **Snake** | Fluid motion, 4 speeds, 3 board sizes, walls or wrap-around, swipe or D-pad |
 | **Hangman** | Friendly hot-air balloon illustration, categories, pass & play |
 
 Sudoku, Word Guess, Solitaire, Minesweeper, Word Search and Tile Match have a **daily puzzle**,

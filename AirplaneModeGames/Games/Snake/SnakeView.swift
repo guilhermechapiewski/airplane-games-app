@@ -41,9 +41,7 @@ struct SnakeView: View {
         }
         .overlay { overlay }
         .gameChrome(.snake, rules: Self.rules,
-                    stats: Logic.Speed.allCases.map {
-                        StatsVariant(key: $0.rawValue, title: $0.title, showsWins: false, showsScore: true)
-                    },
+                    stats: Self.statsVariants,
                     newGame: newGameOptions,
                     onActiveChange: model.setActive,
                     swipeBack: .all,
@@ -95,9 +93,21 @@ struct SnakeView: View {
 
     static func symbol(for speed: Logic.Speed) -> String {
         switch speed {
-        case .relaxed: "tortoise.fill"
-        case .normal: "figure.walk"
+        case .slow: "tortoise.fill"
+        case .relaxed: "figure.walk"
+        case .normal: "figure.run"
         case .fast: "hare.fill"
+        }
+    }
+
+    /// One card per speed on the classic board; bigger boards appear once they've been played.
+    static var statsVariants: [StatsVariant] {
+        Logic.BoardSize.allCases.flatMap { size in
+            Logic.Speed.allCases.map { speed in
+                StatsVariant(key: SnakeModel.statsVariant(speed: speed, size: size),
+                             title: size == .classic ? speed.title : "\(speed.title) · \(size.title) \(size.side)×\(size.side)",
+                             showsWins: false, showsScore: true, hidesWhenEmpty: size != .classic)
+            }
         }
     }
 
@@ -115,7 +125,7 @@ struct SnakeView: View {
                 } icon: {
                     Image(systemName: Self.symbol(for: model.speed)).foregroundStyle(accent)
                 }
-                Text(model.wallMode == .wrap ? "Wrap-around" : "Walls")
+                Text("\(model.wallMode == .wrap ? "Wrap-around" : "Walls") · \(model.boardSize.side)×\(model.boardSize.side)")
                     .foregroundStyle(.secondary)
             }
             .font(.caption.weight(.semibold))
@@ -275,10 +285,10 @@ struct SnakeView: View {
             ]),
             .init(title: "Scoring", symbol: "star.fill", points: [
                 "Each berry is worth one point and grows the snake by one.",
-                "Fill the whole board to win. Best scores are kept for each speed.",
+                "Fill the whole board to win. Best scores are kept for each speed and board size.",
             ]),
             .init(title: "Options", symbol: "slider.horizontal.3", points: [
-                "Relaxed, Normal or Fast — choose before you start or from New Game.",
+                "Slow, Relaxed, Normal or Fast, and a Classic 15×15, Big 20×20 or Huge 25×25 board: choose before you start.",
                 "Walls: touching the edge ends the game. Wrap-around: you come out the other side.",
                 "The game pauses when you leave and resumes after a 3-2-1 countdown.",
             ]),
@@ -305,6 +315,13 @@ private struct ReadyCard: View {
                 Text("Wrap-Around").tag(Snake.WallMode.wrap)
             }
             .pickerStyle(.segmented)
+            Picker("Board", selection: Binding(get: { model.boardSize }, set: { model.configure(size: $0) })) {
+                ForEach(Snake.BoardSize.allCases) { size in
+                    Text("\(size.title) \(size.side)²").tag(size)
+                }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("snakeBoardSize")
             Button("Play") { model.play() }
                 .buttonStyle(PrimaryButtonStyle(color: accent))
                 .accessibilityIdentifier("snakePlay")

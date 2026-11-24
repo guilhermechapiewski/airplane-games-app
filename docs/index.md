@@ -41,7 +41,7 @@ For iPhone and iPad.
 | **Word Guess** | Find the five-letter word in six tries |
 | **Nonograms** | 44 original picture puzzles, all solvable by logic |
 | **Word Search** | 15 themes in three sizes |
-| **Snake** | Three speeds, walls or wrap-around, swipe or D-pad |
+| **Snake** | Four speeds, three board sizes, walls or wrap-around, swipe or D-pad |
 | **Hangman** | A friendly hot-air balloon version, with categories |
 
 Six games have a **daily puzzle**, the same for everyone that day and made on your device, with

@@ -33,6 +33,13 @@ final class SnakeModel {
     private enum Keys {
         static let speed = "snake.speed"
         static let wallMode = "snake.wallMode"
+        static let boardSize = "snake.boardSize"
+    }
+
+    /// Statistics are kept per speed and board size. The classic board keeps the plain speed
+    /// key, so its scores carry over from before board sizes existed.
+    static func statsVariant(speed: Logic.Speed, size: Logic.BoardSize) -> String {
+        size == .classic ? speed.rawValue : "\(speed.rawValue)-\(size.rawValue)"
     }
 
     private(set) var state: Logic.State
@@ -65,6 +72,7 @@ final class SnakeModel {
         self.defaults = defaults
         let savedSpeed = defaults.string(forKey: Keys.speed).flatMap(Logic.Speed.init(rawValue:)) ?? .normal
         let savedMode = defaults.string(forKey: Keys.wallMode).flatMap(Logic.WallMode.init(rawValue:)) ?? .walls
+        let savedSize = defaults.string(forKey: Keys.boardSize).flatMap(Logic.BoardSize.init(rawValue:)) ?? .classic
         if let saved = store.load(Saved.self, key: GameID.snake.saveKey), !saved.state.isOver {
             state = saved.state
             speed = saved.speed
@@ -72,13 +80,14 @@ final class SnakeModel {
             frozenProgress = saved.progress
             clock = saved.clock
             phase = .paused
-            bestAtStart = stats.stats(for: .snake, variant: saved.speed.rawValue).bestScore ?? 0
+            bestAtStart = stats.stats(for: .snake, variant: Self.statsVariant(
+                speed: saved.speed, size: saved.state.boardSize ?? .classic)).bestScore ?? 0
         } else {
-            let fresh = Logic.State.newGame(wallMode: savedMode)
+            let fresh = Logic.State.newGame(size: savedSize, wallMode: savedMode)
             state = fresh
             speed = savedSpeed
             previousBody = fresh.body
-            bestAtStart = stats.stats(for: .snake, variant: savedSpeed.rawValue).bestScore ?? 0
+            bestAtStart = stats.stats(for: .snake, variant: Self.statsVariant(speed: savedSpeed, size: savedSize)).bestScore ?? 0
         }
         foodBorn = .now
         #if DEBUG
@@ -102,7 +111,9 @@ final class SnakeModel {
     #endif
 
     var wallMode: Logic.WallMode { state.wallMode }
-    var best: Int { max(stats.stats(for: game, variant: speed.rawValue).bestScore ?? 0, state.score) }
+    var boardSize: Logic.BoardSize { state.boardSize ?? .classic }
+    var statsVariant: String { Self.statsVariant(speed: speed, size: boardSize) }
+    var best: Int { max(stats.stats(for: game, variant: statsVariant).bestScore ?? 0, state.score) }
     var isNewBest: Bool { bestAtStart > 0 && state.score > bestAtStart }
     var isRunning: Bool { phase == .running }
 
@@ -114,36 +125,43 @@ final class SnakeModel {
 
     // MARK: Setup
 
-    /// Changes speed / edges before the first move.
-    func configure(speed newSpeed: Logic.Speed? = nil, wallMode newMode: Logic.WallMode? = nil) {
+    /// Changes speed / edges / board size before the first move.
+    func configure(speed newSpeed: Logic.Speed? = nil, wallMode newMode: Logic.WallMode? = nil,
+                   size newSize: Logic.BoardSize? = nil) {
         guard phase == .ready else { return }
         if let newSpeed {
             speed = newSpeed
             defaults.set(newSpeed.rawValue, forKey: Keys.speed)
-            bestAtStart = stats.stats(for: game, variant: newSpeed.rawValue).bestScore ?? 0
         }
-        if let newMode, newMode != state.wallMode {
-            defaults.set(newMode.rawValue, forKey: Keys.wallMode)
-            state = .newGame(wallMode: newMode)
+        let mode = newMode ?? state.wallMode
+        let size = newSize ?? boardSize
+        if mode != state.wallMode || size != boardSize {
+            defaults.set(mode.rawValue, forKey: Keys.wallMode)
+            defaults.set(size.rawValue, forKey: Keys.boardSize)
+            state = .newGame(size: size, wallMode: mode)
             previousBody = state.body
             foodBorn = .now
         }
+        bestAtStart = stats.stats(for: game, variant: statsVariant).bestScore ?? 0
         Feedback.play(.select)
     }
 
-    func newGame(speed newSpeed: Logic.Speed? = nil, wallMode newMode: Logic.WallMode? = nil, autoStart: Bool) {
+    func newGame(speed newSpeed: Logic.Speed? = nil, wallMode newMode: Logic.WallMode? = nil,
+                 size newSize: Logic.BoardSize? = nil, autoStart: Bool) {
         stopTasks()
         if phase != .over && phase != .ready && (state.score > 0 || state.ticks > 0) {
             // Count an abandoned game that had progress.
-            stats.record(game, variant: speed.rawValue, won: false, score: state.score, time: clock.elapsed())
+            stats.record(game, variant: statsVariant, won: false, score: state.score, time: clock.elapsed())
         }
         if let newSpeed {
             speed = newSpeed
             defaults.set(newSpeed.rawValue, forKey: Keys.speed)
         }
         let mode = newMode ?? state.wallMode
+        let size = newSize ?? boardSize
         defaults.set(mode.rawValue, forKey: Keys.wallMode)
-        state = .newGame(wallMode: mode)
+        defaults.set(size.rawValue, forKey: Keys.boardSize)
+        state = .newGame(size: size, wallMode: mode)
         previousBody = state.body
         frozenProgress = 1
         eatEvents = []
@@ -151,7 +169,7 @@ final class SnakeModel {
         showGameOver = false
         clock = GameClock()
         foodBorn = .now
-        bestAtStart = stats.stats(for: game, variant: speed.rawValue).bestScore ?? 0
+        bestAtStart = stats.stats(for: game, variant: statsVariant).bestScore ?? 0
         store.remove(key: game.saveKey)
         phase = .ready
         if autoStart { startCountdown() }
@@ -269,7 +287,7 @@ final class SnakeModel {
             if eatEvents.count > 6 { eatEvents.removeFirst() }
             foodBorn = .now
             Feedback.play(.eat)
-            stats.submitScore(game, variant: speed.rawValue, score: state.score)
+            stats.submitScore(game, variant: statsVariant, score: state.score)
             AccessibilityNotification.Announcement("Score \(state.score)").post()
         }
         if result.died != nil || result.won {
@@ -285,7 +303,7 @@ final class SnakeModel {
         phase = .over
         deathDate = won ? nil : .now
         clock.pause()
-        stats.record(game, variant: speed.rawValue, won: won, score: state.score, time: clock.elapsed())
+        stats.record(game, variant: statsVariant, won: won, score: state.score, time: clock.elapsed())
         store.remove(key: game.saveKey)
         Feedback.play(won ? .win : .lose)
         let message = won ? "You filled the board! Score \(state.score)." : "Game over. Score \(state.score)."

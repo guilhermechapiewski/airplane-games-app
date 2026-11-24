@@ -58,4 +58,25 @@ final class SnakeUITests: XCTestCase {
         app.buttons["How to Play"].tap()
         XCTAssertTrue(app.navigationBars["How to Play"].waitForExistence(timeout: 3))
     }
+
+    /// The start card offers the slowest speed and bigger boards, and the header shows the size.
+    func testSlowSpeedAndHugeBoard() {
+        let app = launch()
+        XCTAssertTrue(app.descendants(matching: .any)["snakeBoard"].waitForExistence(timeout: 5))
+        app.buttons["Slow"].tap()
+        app.buttons["Huge 25²"].tap()
+        let ready = XCTAttachment(screenshot: app.screenshot())
+        ready.name = "ready-card"
+        ready.lifetime = .keepAlways
+        add(ready)
+        XCTAssertTrue(app.staticTexts["Walls · 25×25"].exists || app.staticTexts["Wrap-around · 25×25"].exists)
+        app.buttons["snakePlay"].tap()
+        XCTAssertTrue(app.buttons["snakePause"].waitForExistence(timeout: 3))
+        sleep(3)
+        let playing = XCTAttachment(screenshot: app.screenshot())
+        playing.name = "huge-board"
+        playing.lifetime = .keepAlways
+        add(playing)
+        XCTAssertEqual(app.buttons["snakePause"].label, "Pause", "the snake is still alive at slow speed")
+    }
 }

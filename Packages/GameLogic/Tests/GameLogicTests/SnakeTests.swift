@@ -246,7 +246,19 @@ struct SnakeTests {
     }
 
     @Test func speedsAreOrdered() {
+        #expect(S.Speed.slow.interval > S.Speed.relaxed.interval)
+        #expect(S.Speed.allCases.first == .slow, "speeds are listed slowest first")
         #expect(S.Speed.relaxed.interval > S.Speed.normal.interval)
         #expect(S.Speed.normal.interval > S.Speed.fast.interval)
+    }
+
+    @Test(arguments: S.BoardSize.allCases)
+    func everyBoardSizeStartsAPlayableGame(size: S.BoardSize) {
+        let s = S.State.newGame(size: size, wallMode: .walls, seed: 5)
+        #expect(s.width == size.side && s.height == size.side)
+        #expect(s.body.allSatisfy { $0.isInside(rows: s.height, cols: s.width) })
+        #expect(s.food.map { !s.body.contains($0) } == true)
+        #expect(S.BoardSize.classic.side == S.defaultSize)
+        #expect(S.BoardSize.allCases.map(\.side) == S.BoardSize.allCases.map(\.side).sorted())
     }
 }

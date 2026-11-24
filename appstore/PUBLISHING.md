@@ -156,7 +156,7 @@ App Store Connect → your app → **iOS App 1.0** (left column).
    • Word Guess: find the five-letter word in six tries, alone or with a friend
    • Nonograms: 44 original picture puzzles, all solvable by logic, with hints that explain why
    • Word Search: 15 themes in three sizes
-   • Snake: three speeds, walls or wrap-around, swipe or D-pad
+   • Snake: four speeds from slow to fast, three board sizes, walls or wrap-around
    • Hangman: a friendly hot-air balloon version, with categories and pass & play
 
    A NEW PUZZLE EVERY DAY

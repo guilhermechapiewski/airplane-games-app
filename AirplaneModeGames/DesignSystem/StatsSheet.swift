@@ -19,7 +19,7 @@ struct StatsSheet: View {
             ScrollView {
                 VStack(spacing: 16) {
                     if game.hasDaily { dailyCard }
-                    ForEach(variants) { variant in
+                    ForEach(variants.filter { !$0.hidesWhenEmpty || stats.stats(for: game, variant: $0.key).played > 0 }) { variant in
                         card(variant)
                     }
                 }
@@ -93,6 +93,8 @@ struct StatsVariant: Identifiable {
     var showsWins = true
     var showsScore = false
     var showsTime = false
+    /// Show this card only once a game has been played with it.
+    var hidesWhenEmpty = false
     var id: String { key ?? "_" }
 
     /// Statistics variant that daily puzzle wins are recorded under.

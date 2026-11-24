@@ -74,10 +74,13 @@ final class TileMatchUITests: XCTestCase {
     func testBlockedTileTapDoesNotSelect() {
         let app = launch()
         XCTAssertTrue(app.otherElements["tileMatchBoard"].waitForExistence(timeout: 5))
-        let blocked = tiles(app, value: "blocked").firstMatch
-        guard blocked.exists else { return }
+        let match = tiles(app, value: "blocked").firstMatch
+        guard match.exists else { return }
+        // Pin the tile: tiles overlap (and have a 3D edge), so the tap can land on a free
+        // neighbour, which may rightly get selected. What matters is that this one doesn't.
+        let blocked = app.buttons[match.identifier]
         blocked.tap()
-        XCTAssertEqual(tiles(app, value: "selected").count, 0)
+        XCTAssertFalse((blocked.value as? String ?? "").contains("selected"), "a blocked tile can't be selected")
     }
 
     func testLayoutMenuStartsNewGame() {
