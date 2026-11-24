@@ -66,6 +66,34 @@ final class DotsAndBoxesUITests: XCTestCase {
         XCTAssertEqual(status.label, "Player 2's turn")
     }
 
+    func testHintSuggestsTakingAFreeBox() {
+        let app = launch()
+        startGame(app, opponent: "friend", size: 3)
+        let hint = app.buttons["hint"]
+        XCTAssertTrue(hint.isEnabled)
+
+        // An opening hint is a safe line.
+        hint.tap()
+        let banner = element(app, "hintBanner")
+        XCTAssertTrue(banner.waitForExistence(timeout: 5))
+        XCTAssertEqual(banner.label, "Hint: Safe line. It doesn't give away a box.")
+        app.buttons["hintClose"].tap()
+        XCTAssertTrue(banner.waitForNonExistence(timeout: 3))
+
+        draw(app, "h.0.0")                      // Player 1
+        draw(app, "h.1.0")                      // Player 2
+        draw(app, "v.0.0")                      // Player 1 leaves box (0,0) on three sides
+        hint.tap()                              // Player 2 asks
+        XCTAssertTrue(banner.waitForExistence(timeout: 5))
+        XCTAssertTrue(banner.label.hasPrefix("Hint: Take this box."), banner.label)
+        XCTAssertEqual(element(app, "line.v.0.1").value as? String, "Hint, completes a box")
+
+        // Drawing it clears the hint.
+        draw(app, "v.0.1")
+        XCTAssertTrue(banner.waitForNonExistence(timeout: 3))
+        XCTAssertEqual(element(app, "box.0.0").value as? String, "Player 2's")
+    }
+
     func testComputerReplies() {
         let app = launch()
         startGame(app, opponent: "computer", size: 3, level: 1)

@@ -63,6 +63,48 @@ final class ChessUITests: XCTestCase {
         XCTAssertEqual(square(app, "f3").label, "f3, white knight")
     }
 
+    func testHintSuggestsAMoveForWhoeverIsToMove() {
+        let app = launch()
+        startGame(app, mode: "passAndPlay")
+        let hint = app.buttons["hint"]
+        XCTAssertTrue(hint.waitForExistence(timeout: 5))
+        hint.tap()
+
+        let banner = app.descendants(matching: .any)["hintBanner"]
+        XCTAssertTrue(banner.waitForExistence(timeout: 5), "a suggestion appears within about a second")
+        XCTAssertTrue(banner.label.hasPrefix("Hint: "), banner.label)
+        // The suggested piece's square is marked for VoiceOver.
+        let marked = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier BEGINSWITH 'square.' AND value CONTAINS 'hint: move this piece'"))
+        XCTAssertEqual(marked.count, 1)
+        XCTAssertTrue(marked.firstMatch.label.contains("white"), "White is to move")
+
+        // Closing it clears the highlight; Black can then ask after White moves.
+        app.buttons["hintClose"].tap()
+        XCTAssertTrue(banner.waitForNonExistence(timeout: 3))
+        square(app, "e2").tap()
+        square(app, "e4").tap()
+        XCTAssertTrue(moveList(app).staticTexts["e4"].waitForExistence(timeout: 3))
+        hint.tap()
+        XCTAssertTrue(banner.waitForExistence(timeout: 5))
+        XCTAssertTrue(marked.firstMatch.waitForExistence(timeout: 3))
+        XCTAssertTrue(marked.firstMatch.label.contains("black"), "Black is to move")
+    }
+
+    func testHintFindsMateInOne() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-openGame", "chess", "-chessMode", "passAndPlay",
+                               "-chessMoves", "f2f3 e7e5 g2g4"]
+        app.launch()
+        let hint = app.buttons["hint"]
+        XCTAssertTrue(hint.waitForExistence(timeout: 5))
+        hint.tap()
+        let banner = app.descendants(matching: .any)["hintBanner"]
+        XCTAssertTrue(banner.waitForExistence(timeout: 5))
+        XCTAssertEqual(banner.label, "Hint: queen from d8 to h4. Checkmate!")
+        XCTAssertEqual(square(app, "h4").value as? String, "hint: move here")
+    }
+
     func testComputerReplies() {
         let app = launch()
         startGame(app, mode: "computer")
