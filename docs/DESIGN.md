@@ -48,6 +48,7 @@ docs/                         Design notes
 | 2048 | `twentyFortyEight` | — |
 | Sudoku | `sudoku` | — |
 | Solitaire (Klondike) | `solitaire` | — |
+| FreeCell | `freeCell` | — |
 | Block Puzzle | `blocks` | — |
 | Tile Match (Mahjong solitaire) | `tileMatch` | — |
 | Water Sort | `waterSort` | — |

@@ -36,6 +36,7 @@ For iPhone and iPad.
 | **2048** | Slide and merge tiles, with undo |
 | **Sudoku** | Four difficulty levels, notes, and hints that explain the next step |
 | **Solitaire** | Classic Klondike, draw 1 or draw 3, with auto-complete |
+| **FreeCell** | Every card face up and every deal winnable, with hints that find the way |
 | **Block Puzzle** | Fit blocks on the board and clear rows and columns |
 | **Tile Match** | Match pairs of free tiles across six original layouts |
 | **Water Sort** | Pour until every tube holds one color, with endless levels |

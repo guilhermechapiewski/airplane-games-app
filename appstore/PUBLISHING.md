@@ -149,6 +149,7 @@ App Store Connect → your app → **iOS App 1.0** (left column).
    • 2048: slide and merge tiles, with undo
    • Sudoku: four difficulty levels, notes, and hints that explain the next step
    • Solitaire: classic Klondike, draw 1 or draw 3, with auto-complete
+   • FreeCell: every card face up, numbered deals that can all be won, and hints that find the way
    • Block Puzzle: fit blocks on the board and clear rows and columns
    • Tile Match: match pairs of free tiles across six original layouts
    • Water Sort: pour until every tube is one color, with endless levels
