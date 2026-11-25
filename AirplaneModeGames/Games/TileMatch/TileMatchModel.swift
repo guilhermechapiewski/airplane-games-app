@@ -69,7 +69,8 @@ final class TileMatchModel {
 
     var layout: Logic.LayoutID { state.layout }
     var tilesLeft: Int { state.tiles.count }
-    var canUndo: Bool { !state.history.isEmpty && !showWin }
+    /// Not once the board is cleared: the win is recorded at once, before the result card shows.
+    var canUndo: Bool { !state.history.isEmpty && !showWin && !state.isCleared }
     var bestTime: TimeInterval? { stats.stats(for: game, variant: layout.rawValue).bestTime }
 
     private static var preferredLayout: Logic.LayoutID {

@@ -134,6 +134,8 @@ final class TileMatchUITests: XCTestCase {
             app.buttons[ids[0]].tap()
             app.buttons[ids[1]].tap()
         }
+        // The win is recorded with the last match: Undo is off at once, not only once the card shows.
+        XCTAssertFalse(app.buttons["Undo"].isEnabled, "the cleared board can still be undone")
         XCTAssertTrue(app.staticTexts["Board Cleared!"].waitForExistence(timeout: 4))
         attachScreenshot("win")
         app.buttons["Play Again"].tap()
