@@ -348,13 +348,13 @@ final class FreeCellModel {
                 Feedback.play(.invalid)
                 self.show(result.status == .unsolvable
                           ? "There's no way to win from here. Try Undo."
-                          : "No winning line found from here. Try Undo.")
+                          : "Couldn't find a sure way to win from here. Try Undo, or keep playing.")
             }
         }
     }
 
     nonisolated private static func solve(_ state: Logic.State) async -> Logic.Solver.Result {
-        await Task.detached(priority: .userInitiated) { Logic.Solver.solve(state) }.value
+        await Task.detached(priority: .userInitiated) { Logic.Solver.solve(state, timeLimit: .seconds(4)) }.value
     }
 
     /// The next move of the stored winning line, if the table is still on it.

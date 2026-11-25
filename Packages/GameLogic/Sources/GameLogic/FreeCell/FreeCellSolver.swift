@@ -25,7 +25,11 @@ extension FreeCell {
 
         public static let defaultBudget = 40_000
 
-        public static func solve(_ start: State, nodeBudget: Int = defaultBudget) -> Result {
+        /// Searches until a win is found, every position is tried, `nodeBudget` positions are
+        /// expanded, or `timeLimit` passes (unoptimized builds are ~35× slower, so hints cap time too).
+        public static func solve(_ start: State, nodeBudget: Int = defaultBudget, timeLimit: Duration? = nil) -> Result {
+            let clock = ContinuousClock()
+            let deadline = timeLimit.map { clock.now + $0 }
             var root = FreeCellPosition(start)
             var rootMoves: [Move] = []
             root.playSafe(into: &rootMoves)
@@ -70,6 +74,9 @@ extension FreeCell {
             expand(0)
             while let next = heap.pop() {
                 if nodes >= nodeBudget { return Result(status: .gaveUp, moves: [], nodes: nodes) }
+                if let deadline, nodes % 256 == 0, clock.now >= deadline {
+                    return Result(status: .gaveUp, moves: [], nodes: nodes)
+                }
                 nodes += 1
                 var position = closed[Int(next.parent)].position
                 var moves = [next.move]

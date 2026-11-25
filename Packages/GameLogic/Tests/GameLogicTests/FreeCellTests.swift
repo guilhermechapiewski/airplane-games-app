@@ -357,4 +357,12 @@ struct FreeCellTests {
         let moves = [F.Move(from: .cell(1), to: .tableau(4), count: 1), F.Move(from: .tableau(2), to: .foundation(3), count: 1)]
         #expect(try JSONDecoder().decode([F.Move].self, from: JSONEncoder().encode(moves)) == moves)
     }
+
+    @Test func solverStopsAtItsTimeLimit() {
+        // A real deal needs thousands of positions; no time at all must give up rather than hang.
+        let result = F.Solver.solve(F.State.deal(number: 2024), timeLimit: .zero)
+        #expect(result.status == .gaveUp)
+        #expect(result.nodes <= 256)
+        #expect(F.Solver.solve(F.State.deal(number: 2024), timeLimit: .seconds(30)).solved)
+    }
 }
