@@ -81,6 +81,19 @@ final class AppSmokeTests: XCTestCase {
         XCTAssertTrue(app.buttons["Undo"].isEnabled, "the suggested swipe moved the tiles")
     }
 
+    /// A move that makes 2048 and also fills the board ends the game: Keep Going leads to the
+    /// final result instead of a board that can't move (and no game-over).
+    func test2048WinOnTheLastPossibleMoveEndsTheGame() {
+        let app = launch(["-openGame", "twentyFortyEight", "-twentyFortyEightWinsOnLastMove"])
+        let board = app.otherElements["board2048"]
+        XCTAssertTrue(board.waitForExistence(timeout: 5))
+        board.swipeLeft()
+        XCTAssertTrue(app.staticTexts["2048!"].waitForExistence(timeout: 5))
+        app.buttons["Keep Going"].tap()
+        XCTAssertTrue(app.staticTexts["No more moves"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Play Again"].exists)
+    }
+
     /// Swipes that start off the board (including at the left screen edge) move the tiles and
     /// never pop back to the home screen.
     func test2048SwipesAnywhereWithoutGoingBack() {
