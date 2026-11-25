@@ -65,6 +65,9 @@ struct ToolButton: View {
                 Text(title)
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.secondary)
+                    // At the largest text sizes a row of tools has no room: shrink, never break mid-word.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
             }
             .opacity(isEnabled ? 1 : 0.4)
         }

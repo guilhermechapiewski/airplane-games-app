@@ -99,6 +99,8 @@ struct MinesweeperView: View {
                 Text("LEVEL")
                     .font(.caption2.weight(.bold))
                     .tracking(0.6)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                     .foregroundStyle(.secondary)
                 HStack(spacing: 4) {
                     Text(model.level.title)

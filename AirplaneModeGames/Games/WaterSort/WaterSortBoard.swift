@@ -324,10 +324,12 @@ struct HintMarker: View {
                 .frame(width: m.width + m.width * 0.16, height: m.height + m.width * 0.16)
                 .offset(y: -m.width * 0.08)
             Image(systemName: role == .from ? "arrow.up.circle.fill" : "arrow.down.circle.fill")
-                .font(.system(size: max(14, m.width * 0.5), weight: .bold))
+                .font(.system(size: max(14, m.width * 0.42), weight: .bold))
                 .symbolRenderingMode(.palette)
                 .foregroundStyle(.white, HintCard.amber)
-                .offset(y: -m.width * (bob ? 0.95 : 0.8))
+                // Kept close to the room above each row (`TubeLayout.liftRatio`): higher, it
+                // ran into the header above the board.
+                .offset(y: -m.width * (bob ? 0.64 : 0.58))
         }
         .frame(width: m.width, height: m.height, alignment: .top)
         .onAppear {

@@ -46,6 +46,12 @@ final class TwentyFortyEightModel {
         } else {
             state = .newGame()
         }
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-twentyFortyEightWinsOnLastMove") {
+            // Swiping left makes 2048 and fills the board with no merges left (UI tests).
+            state = Logic.State(grid: [[1024, 1024, 8, 16], [32, 64, 128, 256], [4, 8, 16, 32], [2, 4, 8, 2]], seed: 1)
+        }
+        #endif
     }
 
     var best: Int { max(stats.stats(for: game).bestScore ?? 0, state.score) }
@@ -76,10 +82,11 @@ final class TwentyFortyEightModel {
         if state.hasWon && !keepPlaying {
             showWin = true
             clock.pause()
-            Feedback.play(.win)
-        } else if !state.canMove {
-            finish()
+            if state.canMove { Feedback.play(.win) }
         }
+        // The winning move can also fill the board: the game is over even while "2048!" shows,
+        // so Keep Going leads to the final result instead of a board that can't move.
+        if !state.canMove { finish() }
         persist()
 
         // Drop ghosts once the slide animation has finished.
@@ -146,7 +153,7 @@ final class TwentyFortyEightModel {
     func continueAfterWin() {
         keepPlaying = true
         showWin = false
-        clock.start()
+        if !isOver { clock.start() }
         persist()
     }
 
