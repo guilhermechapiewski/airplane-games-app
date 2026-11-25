@@ -174,7 +174,9 @@ struct FreeCellTable: View {
         for (c, column) in s.tableau.enumerated() {
             for (i, card) in column.enumerated() {
                 let deal = FreeCellModel.dealIndex(column: c, row: i)
-                let dealt = deal < model.dealtCount
+                // Once the deal is done every card is in play: cards built past the dealt rows have
+                // deal indices of 52 and up, so comparing those against the count would hide them.
+                let dealt = model.dealtCount >= 52 || deal < model.dealtCount
                 result[card.id] = Placement(
                     center: dealt ? layout.tableauCenter(column: c, index: i, count: column.count) : layout.deckPoint,
                     z: dealt ? 100 + Double(i) : 60 - Double(deal) / 10, pile: .tableau(c), index: i,
@@ -365,7 +367,10 @@ struct FreeCellTable: View {
                 .position(center)
                 .zIndex(3000)
                 .allowsHitTesting(false)
-                .accessibilityHidden(true)
+                // VoiceOver hears the hint on the cards; UI tests need to find where it points.
+                .accessibilityElement()
+                .accessibilityIdentifier("hintTarget")
+                .accessibilityHidden(!LaunchOptions.isUITesting)
                 .transition(.opacity)
         }
     }
