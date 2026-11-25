@@ -74,6 +74,28 @@ final class WordGuessUITests: XCTestCase {
         XCTAssertEqual(hint.value as? String, "2 used")
     }
 
+    /// Leaving right after the winning guess (while its tiles still flip) must still count the win.
+    func testWinCountsWhenLeavingDuringTheReveal() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-openGame", "wordGuess", "-demoState"]   // answer CRANE, "CR" typed
+        app.launch()
+        XCTAssertTrue(app.buttons["key.a"].waitForExistence(timeout: 5))
+        typeOnScreen("ane", in: app)
+        app.buttons["key.enter"].tap()
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.buttons["settingsButton"].waitForExistence(timeout: 5))
+        sleep(2)   // longer than the reveal
+
+        let card = app.buttons["game.wordGuess"]
+        var attempts = 0
+        while !card.isHittable && attempts < 6 { app.swipeUp(velocity: .slow); attempts += 1 }
+        card.tap()
+        XCTAssertTrue(app.buttons["gameMenu"].waitForExistence(timeout: 5))
+        app.buttons["gameMenu"].tap()
+        app.buttons["Statistics"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["1, Won"].waitForExistence(timeout: 3))
+    }
+
     func testPassAndPlayRound() {
         let app = launch()
         XCTAssertTrue(app.buttons["gameMenu"].waitForExistence(timeout: 5))

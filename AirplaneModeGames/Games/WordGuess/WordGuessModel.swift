@@ -71,6 +71,7 @@ final class WordGuessModel {
     private(set) var toast: String?
     private(set) var showResult = false
     private var toastToken = 0
+    private var revealToken = 0
     /// The suggested next guess, while its card is showing.
     private(set) var hint: Logic.Suggestion?
     /// Hints asked for this game (shown on the result card).
@@ -205,13 +206,18 @@ final class WordGuessModel {
         persist()
         let total = Self.revealStep * Double(Logic.wordLength - 1) + Self.flipDuration
         revealedRows = row + 1
+        revealToken += 1
+        let token = revealToken
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(total))
-            self?.finishReveal()
+            guard let self, self.revealToken == token else { return }
+            self.finishReveal()
         }
     }
 
+    /// Ends the tile flip: colors the keyboard and, if the guess ended the game, records the result.
     private func finishReveal() {
+        guard isRevealing else { return }
         isRevealing = false
         withAnimation(.easeOut(duration: 0.2)) { keyboard = state.keyboard }
         switch state.status {
@@ -422,7 +428,11 @@ final class WordGuessModel {
     }
 
     func setActive(_ active: Bool) {
-        if !active { persist() }
+        guard !active else { return }
+        // Leaving while the last row flips must still record a finished game (the model may be
+        // released before the reveal ends).
+        if isRevealing { finishReveal() }
+        persist()
     }
 
     private func persist() {
