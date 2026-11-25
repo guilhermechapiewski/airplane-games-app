@@ -481,7 +481,8 @@ private struct CountingScorePill: View, Animatable {
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(tint.opacity(0.9))
                 .tracking(0.6)
-            Text("\(Int(value.rounded()))")
+            // Verbatim, like the Best pill beside it: a localized key would add a separator ("1,007" next to "1007").
+            Text(verbatim: "\(Int(value.rounded()))")
                 .font(.system(.title3, design: .rounded).weight(.bold))
                 .monospacedDigit()
                 .lineLimit(1)
