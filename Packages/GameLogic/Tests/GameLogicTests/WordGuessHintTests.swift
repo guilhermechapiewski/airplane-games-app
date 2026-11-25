@@ -104,6 +104,17 @@ struct WordGuessHintTests {
         #expect(G.fits(s.word, guesses: state.guesses))
     }
 
+    @Test func friendsWordIsNeverRuledOut() throws {
+        // ABAFT isn't a common answer; SHAFT is the only common answer that fits these clues, but
+        // the friend's word could be any valid word, so the hint mustn't claim it's the only one.
+        let state = play(["crane", "pilot"], answer: "abaft")
+        let all = WordLists.validGuesses.sorted()
+        let s = try #require(G.suggestion(after: state.guesses, hardMode: false, allWords: all))
+        #expect(s.kind == .narrow)
+        #expect(s.remaining == all.filter { G.fits($0, guesses: state.guesses) }.count)
+        #expect(s.remaining > 1)
+    }
+
     @Test func isFastEnough() {
         let start = threadCPUTime()
         _ = G.suggestion(after: [], hardMode: false)

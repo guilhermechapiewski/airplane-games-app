@@ -70,18 +70,23 @@ extension WordGuess {
 
     /// The best next guess: always a word that fits every clue (so it also obeys Hard Mode), chosen
     /// to leave the fewest possible answers on average. Uses only what the guesses revealed.
+    /// With `allWords` (a friend's word, which can be any valid word) the guess still comes from
+    /// `answers` when one fits, but every fitting word counts as a possible answer.
     public static func suggestion(after guesses: [Guess], hardMode: Bool,
                                   answers: [String] = WordLists.answers,
                                   allWords: [String] = []) -> Suggestion? {
         var candidates = remainingWords(after: guesses, answers: answers, allWords: allWords).sorted()
         if hardMode { candidates = candidates.filter { hardModeViolation(for: $0, previous: guesses) == nil } }
         guard !candidates.isEmpty else { return nil }
+        // The words the answer could be (the guess is scored against these).
+        let possible = allWords.isEmpty ? candidates : Array(Set(allWords.filter { fits($0, guesses: guesses) })).sorted()
         let tested = Set(guesses.flatMap { Array($0.word) })
-        if candidates.count == 1 {
+        if possible.count <= 1 {
             return Suggestion(word: candidates[0], kind: .onlyOne, remaining: 1, expectedLeft: 1, newLetters: [])
         }
 
-        let words = candidates.map { Array($0.utf8).map { $0 &- 97 } }
+        let guessWords = candidates.map { Array($0.utf8).map { $0 &- 97 } }
+        let words = possible.map { Array($0.utf8).map { $0 &- 97 } }
         let n = words.count
         // How many candidates contain each letter, and each letter in each spot.
         var contains = [Int](repeating: 0, count: 26)
@@ -106,7 +111,7 @@ extension WordGuess {
             }
             return total
         }
-        let ranked = words.indices.map { (index: $0, quick: quick(words[$0])) }
+        let ranked = guessWords.indices.map { (index: $0, quick: quick(guessWords[$0])) }
             .sorted { $0.quick != $1.quick ? $0.quick > $1.quick : $0.index < $1.index }
         // Exact check on the most promising: the average size of the group of answers that would
         // give the same colors (smaller is better).
@@ -114,7 +119,7 @@ extension WordGuess {
         var buckets = [Int](repeating: 0, count: 243)
         for entry in ranked.prefix(40) {
             for i in buckets.indices { buckets[i] = 0 }
-            let g = words[entry.index]
+            let g = guessWords[entry.index]
             for a in words { buckets[pattern(g, a)] += 1 }
             let expected = Double(buckets.reduce(0) { $0 + $1 * $1 }) / Double(n)
             if best.map({ expected < $0.expected - 1e-9 }) ?? true { best = (entry.index, expected) }
