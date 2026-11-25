@@ -22,6 +22,29 @@ final class WordSearchUITests: XCTestCase {
         app.buttons["Hint"].tap()
     }
 
+    /// The clock stays stopped under How to Play, even after leaving the app and coming back.
+    func testClockStaysPausedUnderRulesAfterReturningToTheApp() {
+        let app = launch()
+        XCTAssertTrue(app.descendants(matching: .any)["wordSearchGrid"].waitForExistence(timeout: 5))
+        sleep(2)
+        let before = seconds(app)
+        app.buttons["gameMenu"].tap()
+        app.buttons["How to Play"].tap()
+        XCUIDevice.shared.press(.home)
+        sleep(2)
+        app.activate()
+        sleep(10)
+        app.swipeDown(velocity: .fast)
+        XCTAssertLessThan(seconds(app) - before, 6, "the clock ran while How to Play was open")
+    }
+
+    /// Seconds shown by the Time pill ("TIME, 0:05").
+    private func seconds(_ app: XCUIApplication) -> Int {
+        let label = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH[c] 'time,'")).firstMatch.label
+        let parts = label.split(separator: " ").last?.split(separator: ":").compactMap { Int($0) } ?? []
+        return parts.reduce(0) { $0 * 60 + $1 }
+    }
+
     /// Reads the grid, finds the first listed word itself, and drags across it.
     func testDragSelectsAWord() throws {
         let app = launch()

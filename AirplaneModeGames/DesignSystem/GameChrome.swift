@@ -81,7 +81,8 @@ struct GameChrome: ViewModifier {
             .onDisappear { onActiveChange?(false) }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { warmUpFeedback() }
-                onActiveChange?(phase == .active)
+                // Coming back to the app with How to Play or Statistics open keeps the game paused.
+                onActiveChange?(phase == .active && !showRules && !showStats)
             }
             .onChange(of: showRules) { _, shown in onActiveChange?(!shown && !showStats && scenePhase == .active) }
             .onChange(of: showStats) { _, shown in onActiveChange?(!shown && !showRules && scenePhase == .active) }
