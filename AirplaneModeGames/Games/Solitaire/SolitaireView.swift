@@ -56,6 +56,8 @@ struct SolitaireView: View {
             Spacer(minLength: 0)
             Text(model.drawMode.title)
                 .font(.caption.weight(.bold))
+                .lineLimit(1)
+                .fixedSize()
                 .foregroundStyle(.white)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
