@@ -12,6 +12,8 @@ struct StatPill: View {
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(tint.map { $0.opacity(0.9) } ?? .secondary)
                 .tracking(0.6)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
             Text(value)
                 .font(.system(.title3, design: .rounded).weight(.bold))
                 .monospacedDigit()

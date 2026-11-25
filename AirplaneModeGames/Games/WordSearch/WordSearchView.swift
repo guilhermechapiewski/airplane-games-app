@@ -353,7 +353,7 @@ private struct WordListView: View {
                     .strikethrough(found != nil, color: .primary.opacity(0.6))
                     .foregroundStyle(found != nil ? Color.primary.opacity(0.55) : .primary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.6)
+                    .minimumScaleFactor(0.5)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 6)
                     .frame(maxWidth: .infinity)
@@ -374,6 +374,8 @@ private struct WordListView: View {
             }
         }
         .animation(.easeOut(duration: 0.25), value: state.found)
+        // Accessibility sizes would cut long words off (or, with wider chips, squeeze the grid).
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 }
 
