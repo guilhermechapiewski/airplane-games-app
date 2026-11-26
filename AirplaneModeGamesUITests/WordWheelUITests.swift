@@ -116,6 +116,23 @@ final class WordWheelUITests: XCTestCase {
         XCTAssertTrue(app.buttons["newWheel"].exists)
     }
 
+    /// With hints used the result shows four stats; they used to run off the sides of the card.
+    func testResultStatsStayOnScreenWithHints() {
+        let app = launch(["-wordWheelScenario", "demo"])
+        let hint = app.buttons["wordWheelHint"]
+        for _ in 0..<3 { hint.tap() }
+        app.buttons["finishWheel"].tap()
+        app.buttons["Finish and Reveal Answers"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["seeAnswers"].waitForExistence(timeout: 3))
+        let window = app.windows.firstMatch.frame
+        for title in ["POINTS", "WORDS", "BEST", "HINTS"] {
+            let stat = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH[c] %@", title)).firstMatch
+            XCTAssertTrue(stat.exists, "\(title) is shown")
+            XCTAssertTrue(window.contains(stat.frame), "\(title) runs off the screen: \(stat.frame) in \(window)")
+        }
+        let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = "result"; shot.lifetime = .keepAlways; add(shot)
+    }
+
     func testResumesWhereItLeftOff() {
         var app = launch()
         spell("train", in: app)

@@ -5,6 +5,8 @@ struct StatPill: View {
     let title: String
     let value: String
     var tint: Color?
+    /// Tighter boxes, for fitting a row of them on a narrow screen.
+    var compact = false
 
     var body: some View {
         VStack(spacing: 2) {
@@ -22,8 +24,8 @@ struct StatPill: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
         }
-        .frame(minWidth: 72)
-        .padding(.horizontal, 12)
+        .frame(minWidth: compact ? 56 : 72)
+        .padding(.horizontal, compact ? 8 : 12)
         .padding(.vertical, 8)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .combine)
