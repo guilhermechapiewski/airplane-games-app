@@ -18,6 +18,7 @@ LIMITS = {
     "**Promotional Text** (170)": 170,
     "**Description** (4000)": 4000,
     "**Keywords** (100": 100,
+    "**Notes** (4000": 4000,
 }
 
 

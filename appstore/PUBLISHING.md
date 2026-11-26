@@ -104,9 +104,10 @@ Your app → **General** → **App Privacy**.
 ## Step 7. Build and upload
 
 1. `git pull`. In Xcode: scheme **AirplaneModeGames** → destination **Any iOS Device (arm64)**.
-2. Target → **General** → **Identity**: Version `1.0`, Build `1`. Every upload needs a higher
-   build number: change **Build** (`CURRENT_PROJECT_VERSION`) before re-uploading, and commit
-   that change (it holds nothing private).
+2. Target → **General** → **Identity**: Version `1.0`, Build `2` (build 1 was the first upload,
+   2026-11-23). Every upload needs a higher build number: change **Build**
+   (`CURRENT_PROJECT_VERSION`) before re-uploading, and commit that change (it holds nothing
+   private). Keep the Version at `1.0` until the first release is out.
 3. **Product → Archive** (Release configuration: no debug launch arguments).
 4. The **Organizer** opens → the archive → **Distribute App** → **App Store Connect** →
    **Distribute**.
@@ -198,13 +199,54 @@ App Store Connect → your app → **iOS App 1.0** (left column).
 9. **App Review Information**:
    - Sign-in required: **off** (the app has no accounts).
    - Contact: your first and last name, phone **with +1**, and email. Typed here only.
-   - Notes:
+   - **Attachment**: the screen recording from [Step 9a](#step-9a-the-screen-recording-for-app-review).
+   - **Notes** (4000; fill in the two `[...]` in item 1 first):
      ```
-     Airplane Games has no accounts, no in-app purchases and no network access; every game works offline, including in Airplane Mode. Tap any game's card on the home screen to play. The gear icon opens Settings (sound, haptics, theme, reset statistics) and About.
+     1. SCREEN RECORDING
+     Attached. Recorded on [iPhone model] running iOS [version], starting from launching the app with Airplane Mode on, then playing several games. The app has no account registration or login, no user-generated content and no paid content, so there are no such flows to show.
+
+     2. PURPOSE AND AUDIENCE
+     Airplane Games is a free collection of classic puzzle, card, board, word and arcade games (Sudoku, Solitaire, FreeCell, Chess, Minesweeper, Word Guess, 2048 and more) that work completely offline. It is for anyone who wants something good to play without an internet connection: on flights, trains and subways, abroad without data, or anywhere with poor reception. Many game apps need a connection for ads, accounts or downloads and stop working offline; this one needs nothing after it is installed, and has no ads, no in-app purchases and no tracking.
+
+     3. HOW TO USE THE APP
+     No login, setup or sample files are needed. Open the app and tap any game's card on the home screen to start playing. Inside every game, the menu (top right) has How to Play with the rules and tips, and the toolbar has Undo, Hint and New Game where the game supports them. Chess and Dots and Boxes can be played against the computer or with a friend on the same device; Word Guess and Hangman also have a pass-and-play mode where a friend picks the secret word. Games save automatically: leave a game and it appears under Continue Playing on the home screen. The gear icon opens Settings (sound, haptics, appearance, reset statistics) and About (version, privacy policy, source code).
+
+     4. EXTERNAL SERVICES
+     None. The app makes no network requests and contains no third-party SDKs: no analytics, advertising, authentication, payment, cloud or AI services. All game logic, puzzles and word lists are bundled in the app.
+
+     5. REGIONAL DIFFERENCES
+     None. The app works the same in every region. Its interface and word games are in English.
+
+     6. REGULATED INDUSTRY OR THIRD-PARTY MATERIAL
+     Not applicable. The app is not in a regulated industry and contains no protected third-party material. The games are traditional games implemented from scratch; the artwork, puzzles and themed word lists are original, and the dictionary word lists are public domain. The source code is public under the MIT license: https://github.com/guilhermechapiewski/airplane-games-app
      ```
 10. **Version Release**: **Manual** (you pick the launch moment after approval) or
     **Automatic**.
 11. **Save**.
+
+## Step 9a. The screen recording for App Review
+
+App Review asked for this on 2026-11-25. Record it on a physical iPhone with the latest iOS,
+running the TestFlight build you're submitting.
+
+1. **Settings → Control Center**: make sure **Screen Recording** is in Control Center.
+2. Close Airplane Games if it's open (swipe it away in the app switcher), so the recording
+   shows a real launch.
+3. Open Control Center, turn on **Airplane Mode** (so the recording shows it working offline),
+   tap **Screen Recording**, and wait for the countdown.
+4. On the home screen, tap **Airplane Games** to launch it. Then, in about 2–3 minutes:
+   - Scroll the home screen to show the games.
+   - Play a few moves of Sudoku: tap a cell, a number, then **Hint**.
+   - Back. Open Solitaire: move a card or two; tap **Undo**.
+   - Back. Open Chess: make a move against the computer and wait for its reply.
+   - Back. Open Word Guess: type a guess and submit it.
+   - Back: the games you left appear under **Continue Playing**; tap one to resume it.
+   - In a game, open the menu → **How to Play**.
+   - The gear → **Settings** → **About**.
+5. Stop the recording (the red indicator at the top → **Stop**). It's saved to Photos.
+6. Trim it in Photos if needed, AirDrop it to your Mac, and add it under **App Review
+   Information → Attachment**. (If the file is too large, export it at a lower resolution
+   from Photos or QuickTime.)
 
 ## Step 10. Submit
 
