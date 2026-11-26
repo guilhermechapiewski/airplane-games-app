@@ -127,9 +127,11 @@ Your app → **General** → **App Privacy**.
    - [ ] On an iPad, if you have one: portrait and landscape.
 4. Anything wrong? Fix it before submitting.
 
-## Step 9. The version page (1.0)
+## Step 9. The version page (1.1)
 
-App Store Connect → your app → **iOS App 1.0** (left column).
+App Store Connect → your app → **iOS App 1.1** (left column). If it isn't there, click **+**
+next to **iOS App** and enter `1.1`. A new version page copies the previous version's text and
+screenshots, so check them rather than retyping them.
 
 1. **Screenshots** (drag them in, in this order):
    - **iPhone 6.9" display** (1320 × 2868): [`screenshots/iphone/`](./screenshots/iphone/)
@@ -138,11 +140,18 @@ App Store Connect → your app → **iOS App 1.0** (left column).
      [`screenshots/iphone-medium/`](./screenshots/iphone-medium/)
    - **iPad 13" display** (2064 × 2752): [`screenshots/ipad/`](./screenshots/ipad/)
    App Store Connect scales these down for the other devices.
-2. **Promotional Text** (170):
+2. **What's New in This Version** (4000; Apple shows this box only for updates, not the first
+   version):
+   ```
+   Fixes and polish:
+   • Result cards now keep every stat on screen, even when a game shows four of them on a smaller iPhone.
+   • A result card taller than the screen, like Word Guess with large text, now scrolls, so its buttons are always reachable.
+   ```
+3. **Promotional Text** (170):
    ```
    Beautifully made games that never need Wi-Fi: Sudoku, Solitaire, Chess, 2048, Word Guess and more. Free, with no ads, no accounts and no tracking.
    ```
-3. **Description** (4000):
+4. **Description** (4000):
    ```
    Airplane Games is a collection of polished games that work completely offline. Made for long flights, train rides and anywhere without Wi-Fi: no ads, no accounts, no tracking and nothing to download once it's installed.
 
@@ -178,25 +187,25 @@ App Store Connect → your app → **iOS App 1.0** (left column).
    FREE AND OPEN SOURCE
    Airplane Games is completely free, with nothing to unlock. Its source code is published on GitHub under the MIT license.
    ```
-4. **Keywords** (100, commas without spaces; words already in the name, like "offline", "games"
+5. **Keywords** (100, commas without spaces; words already in the name, like "offline", "games"
    and "fun", are searched anyway, so they're left out):
    ```
    brain,no wifi,airplane mode,travel,flight,sudoku,solitaire,2048,chess,minesweeper,nonogram,puzzle
    ```
-5. **Support URL**:
+6. **Support URL**:
    ```
    https://github.com/guilhermechapiewski/airplane-games-app/issues
    ```
-6. **Marketing URL**:
+7. **Marketing URL**:
    ```
    https://guilhermechapiewski.github.io/airplane-games-app/
    ```
-7. **Version**: `1.0`. **Copyright** (Apple adds the "©"):
+8. **Version**: `1.1`. **Copyright** (Apple adds the "©"):
    ```
    2026 Guilherme Chapiewski
    ```
-8. **Build** → **+** → the build you tested in step 8.
-9. **App Review Information**:
+9. **Build** → **+** → the build you tested in step 8.
+10. **App Review Information**:
    - Sign-in required: **off** (the app has no accounts).
    - Contact: your first and last name, phone **with +1**, and email. Typed here only.
    - **Attachment**: the screen recording from [Step 9a](#step-9a-the-screen-recording-for-app-review).
@@ -220,9 +229,9 @@ App Store Connect → your app → **iOS App 1.0** (left column).
      6. REGULATED INDUSTRY OR THIRD-PARTY MATERIAL
      Not applicable. The app is not in a regulated industry and contains no protected third-party material. The games are traditional games implemented from scratch; the artwork, puzzles and themed word lists are original, and the dictionary word lists are public domain. The source code is public under the MIT license: https://github.com/guilhermechapiewski/airplane-games-app
      ```
-10. **Version Release**: **Manual** (you pick the launch moment after approval) or
+11. **Version Release**: **Manual** (you pick the launch moment after approval) or
     **Automatic**.
-11. **Save**.
+12. **Save**.
 
 ## Step 9a. The screen recording for App Review
 

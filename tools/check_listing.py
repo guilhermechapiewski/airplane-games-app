@@ -15,6 +15,7 @@ DOC = os.path.join(ROOT, "appstore", "PUBLISHING.md")
 LIMITS = {
     "Name (30 characters at most)": 30,
     "**Subtitle** (30)": 30,
+    "**What's New in This Version** (4000": 4000,
     "**Promotional Text** (170)": 170,
     "**Description** (4000)": 4000,
     "**Keywords** (100": 100,
