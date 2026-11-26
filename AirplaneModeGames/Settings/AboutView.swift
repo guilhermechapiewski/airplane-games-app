@@ -16,6 +16,7 @@ struct AboutView: View {
         Form {
             Section {
                 LabeledContent("Version", value: version)
+                    .accessibilityIdentifier("appVersion")
             }
             Section {
                 notice("Your privacy", systemImage: "lock.shield.fill") {

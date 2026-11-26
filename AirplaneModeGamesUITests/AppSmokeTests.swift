@@ -22,6 +22,13 @@ final class AppSmokeTests: XCTestCase {
         app.buttons["aboutLink"].tap()
         XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.descendants(matching: .any)["reportBugLink"].waitForExistence(timeout: 3))
+        // The version row shows the app's version and build from its Info.plist, e.g. "1.0 (1)".
+        // (Checked by shape: the test runner's own Info.plist isn't the app's.)
+        let row = app.descendants(matching: .any)["appVersion"]
+        XCTAssertTrue(row.exists)
+        let shown = [row.label, row.value as? String ?? ""].joined(separator: " ")
+        XCTAssertNotNil(shown.range(of: #"\d+(\.\d+)* \(\d+\)"#, options: .regularExpression),
+                        "About shows \(shown), not \"version (build)\"")
         XCTAssertTrue(app.descendants(matching: .any)["privacyPolicyLink"].exists, "App Store 5.1.1(i): privacy policy reachable in the app")
         app.navigationBars["About"].buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
