@@ -104,10 +104,10 @@ Your app → **General** → **App Privacy**.
 ## Step 7. Build and upload
 
 1. `git pull`. In Xcode: scheme **AirplaneModeGames** → destination **Any iOS Device (arm64)**.
-2. Target → **General** → **Identity**: Version `1.0`, Build `2` (build 1 was the first upload,
-   2026-11-23). Every upload needs a higher build number: change **Build**
+2. Target → **General** → **Identity**: Version `1.1`, Build `3` (builds 1 and 2 were uploaded
+   as 1.0). Every upload needs a higher build number: change **Build**
    (`CURRENT_PROJECT_VERSION`) before re-uploading, and commit that change (it holds nothing
-   private). Keep the Version at `1.0` until the first release is out.
+   private). The Version must match the version page in App Store Connect.
 3. **Product → Archive** (Release configuration: no debug launch arguments).
 4. The **Organizer** opens → the archive → **Distribute App** → **App Store Connect** →
    **Distribute**.
